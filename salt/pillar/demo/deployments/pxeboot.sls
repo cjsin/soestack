@@ -50,7 +50,7 @@ deployments:
                 provisioning:
                     scripts:  /soestack/provision/
                     pw:
-										    # default passwords are 'password'. These should be changed before deployment using 'openssl passwd -1' and 'grub2-mkpasswd-pbkdf2'
+                        # default passwords are 'password'. These should be changed before deployment using 'openssl passwd -1' and 'grub2-mkpasswd-pbkdf2'
                         root: $1$CQhozIp2$9tY0XzTSDJybkrvsbHiaZ/
                         ssh:  $1$CQhozIp2$9tY0XzTSDJybkrvsbHiaZ/
                         grub: grub.pbkdf2.sha512.10000.1C11D162AB8114362039617C2D4729E60D2FA57572974E9BB4B60B496F5D8E105D87E4114763A2DCD7DF451E5653C68C05A90595A48D3217D8B5A61DF0DA2198.B1C27FE16CCF44335EA9D2942009B30F2BB4EC760AEFD3AFC515F2A778D71D14A56E229DFAE5B79B2A3F1B0A5FA96B771661E37FD6640DB1A5F3D23C5F7446BE
