@@ -1,0 +1,21 @@
+[Unit]
+Description=Prometheus metrics daemon
+After=NetworkManager-wait-online.service network.target docker.service
+
+[Service]
+Environment="PORTS=-p 9090"
+Environment=VOLUMES=
+Environment=IMAGE=prom/prometheus:v2.3.2
+Environment=OPTIONS=
+EnvironmentFile=-/etc/sysconfig/prometheus
+ExecStartPre=-/usr/bin/docker stop %p
+ExecStartPre=-/usr/bin/docker rm %p
+ExecStart=/usr/bin/docker run --rm --name %p $PORTS $VOLUMES $IMAGE $OPTIONS
+ExecStop=/usr/bin/docker stop %p
+Type=simple
+User=root
+Group=root
+UMask=0007
+
+[Install]
+WantedBy=multi-user.target

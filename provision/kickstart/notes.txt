@@ -1,0 +1,89 @@
+%traceback [--erroronfail] [--interpreter /usr/bin/python] [--log LOG]
+
+pre-install runs after partitioning but while stuff is mounted under /mnt/sysimage
+%pre-install [--erroronfail] [--interpreter /usr/bin/python] [--log LOG]
+
+%packages [--excludedocs] [--ignoremissing] [--nobase] [--nocore]
+      [--ignoredeps] [--resolvedeps] [--default] [--instLangs INSTLANGS]
+      [--multilib] [--excludeWeakdeps] [--timeout TIMEOUT]
+      [--retries RETRIES]
+@IncludeThisGroup --nodefaults --optional
+@^ExcludeThisGroup 
+kde-i18n-*pattern-*
+-excludethisone
+-@excludethisgroup
+%end
+autopart [--encrypted] [--passphrase PASSPHRASE] [--escrowcert <url>]
+     [--backuppassphrase] [--nolvm] [--type TYPE(lvm,plain)] [--cipher CIPHER]
+     [--fstype ext4] [--nohome] [--noboot] [--noswap]
+     [--luks-version LUKS_VERSION] [--pbkdf PBKDF]
+     [--pbkdf-memory PBKDF_MEMORY] [--pbkdf-time PBKDF_TIME]
+     [--pbkdf-iterations PBKDF_ITERATIONS]
+
+
+
+linux inst.ks=floppy
+linux inst.ks=cdrom:<device>:/ks.cfg
+inst.ks=http://<server>/<path>
+inst.ks=hd:<device>:/<file>
+inst.ks=bd:<biosdev>:/<path>
+inst.ks=file:/<file>
+inst.ks=cdrom:<cdrom device>:/<path>
+inst.ks (will trigger dhcp and get tftp bootfile, and look for /kicstart 
+    in fs server), otherwise it will look for /1.2.3.4-kickstart
+
+inst.ks.device= specify which network card to use
+rootpw  --iscrypted $6$s9i1bQbmW4oSWMJc$0oHfSz0b/d90EvHx7cy70RJGIHrP1awzAgL9A3x2tbkyh72P3kN41vssaI3/SJf4Y4qSo6zxc2gZ3srzc4ACX1
+network --onboot yes --device eth0 --bootproto dhcp --noipv6
+cdrom
+firewall --service=ssh
+
+
+generate anaconda rootpw option:
+openssl passwd -1 "password here"
+grub-crypt --md5
+echo 'import crypt,getpass; print crypt.crypt(getpass.getpass(), "$1$8_CHARACTER_SALT_HERE")' | python -
+
+
+
+
+#INTERESTING = inst.nosave=input_ks,output_ks,all_ks,logs,all  selinux=0 and inst.selinux=0 inst.gpt inst.kexec
+#the inst.nokill option doesn't work  (or rather, it halts ok but then has an error when you tell it to continue)
+
+
+#inst.waitfornet=
+#bond=bond0:em1,em2:mode=active-backup,tx_queues=32,downdelay=5000
+# Using this option without any parameters will assume bond=bond0:eth0,eth1:mode=balance-rr. 
+# ifname=eth0:01:23:45:67:89:ab
+# bootdev=
+# nameserver=
+#  ip=ip::gateway:netmask:hostname:interface:none 
+#  inst.kdump_addon=off
+#  inst.sshd
+#  inst.sshd=0
+#  modprobe.blacklist=
+#  inst.usefbx
+#  inst.xdriver=
+#  inst.headless
+#  inst.resolution=800x600 (lowest0)
+#  inst.cmdline
+#  inst.text
+#  inst.geoloc=0
+#  noshell
+#  console=ttyS0 console=ttyS1
+
+#  inst.ks.sendsn
+#  inst.ks.sendmac
+#  inst.ks=nfs:next-server:/filename
+#  Additionally, starting with Red Hat Enterprise Linux 7.2, the installer will attempt to load a Kickstart file named ks.cfg from a volume with a label of OEMDRV if present. If your Kickstart file is in this location, you do not need to use the inst.ks= boot option at all. 
+
+#  inst.stage2=
+#    Specifies the location of the installation program runtime image to be loaded. The syntax is the same as in Specifying the Installation Source. This option expects a path to a directory containing a valid .treeinfo file; the location of the runtime image will be read from this file if found. If a .treeinfo file is not available, Anaconda will try to load the image from LiveOS/squashfs.img
+
+#inst.nokill
+
+#rd.live.ram
+# inst.repo=hd:device:/path 
+
+#nameserver=
+

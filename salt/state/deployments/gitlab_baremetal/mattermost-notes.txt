@@ -1,0 +1,67 @@
+
+#
+# NOTE: an Application must be manually configured by an admin within
+# the Gitlab web interface
+# with redirect URIs as follows:
+# http(or https)://(mattermost hostname)/login/gitlab/complete
+# http(or https)://(mattermost hostname)/signup/gitlab/complete
+# also need to patch /var/opt/gitlab/mattermost/config.json
+# "EmailSettings": {
+#        "EnableSignUpWithEmail": false,
+#
+# AFTER INITIAL GITLAB INSTALL.
+# DONT EDIT THE SETTINGS YET, except for making sure
+# that the setting "RequireEmailVerification" is false (should already be false).
+# JUST BRING UP THE WEB PAGE AND 'CREATE AN ACCOUNT WITH EMAIL'
+# AND SPECIFY 'root@localhost.localdomain'
+# I just did this and it worked and gave me access to the console.
+Also I enabled 'EnableOpenServer'
+(use gitlab-ctl stop mattermost, gitlab-ctl start mattermost to restart it)
+
+# Gitlab stores the key and secret in:
+/var/opt/gitlab/mattermost/env/MM_GITLABSETTINGS_ID:20707d768479b2cec8ffd0a3148a27a8e2faf88c3b145ab0672fe40787dd366c
+and
+/var/opt/gitlab/mattermost/config.json:
+ Application ID 
+ 59989bf8fac66233dc04924eded0a861bbb893fdad67ec06f6234bc335ba7182 
+ Secret 
+ 5671f0cdcf45e59fe8168aaf11be93ac8c43cdc089fb65a94a983d994460a17a 
+ http://mattermost.demo/login/gitlab/complete
+ http://mattermost.demo/signup/gitlab/complete 
+
+gitlab has files:
+/var/opt/gitlab/mattermost/env/MM_GITLABSETTINGS_ID
+20707d768479b2cec8ffd0a3148a27a8e2faf88c3b145ab0672fe40787dd366c
+and
+/var/opt/gitlab/mattermost/env/MM_GITLABSETTINGS_SECRET
+7699e8a4d6b8c5b60c2a0ddf700511df72312681fe534f6295afa83403b2bed5
+
+I'm changing them to the ones I created above.
+[root@infra ~]# echo "5671f0cdcf45e59fe8168aaf11be93ac8c43cdc089fb65a94a983d994460a17a" > /var/opt/gitlab/mattermost/env/MM_GITLABSETTINGS_SECRET
+[root@infra ~]# echo "20707d768479b2cec8ffd0a3148a27a8e2faf88c3b145ab0672fe40787dd366c" >  /var/opt/gitlab/mattermost/env/MM_GITLABSETTINGS_ID
+
+* THIS DID WORK *
+the next time i logged in as a user, selecting 'use gitlab auth',
+it did the whole outh thing, asking if i wanted to authorize mattermost.
+
+
+
+#"GitLabSettings": {
+#    "Enable": true,
+#    "Secret": "{mattermost-app-secret-from-gitlab}",
+#    "Id": "{mattermost-app-application-id-from-gitlab}",
+#    "Scope": "",
+#    "AuthEndpoint": "https://{gitlab-site-name}/oauth/authorize",
+#    "TokenEndpoint": "https://{gitlab-site-name}/oauth/token",
+#    "UserApiEndpoint": "https://{gitlab-site-name}/api/v4/user"
+#}
+# The problem with this token,
+# is that gitlab service is 
+# specifying it via an environemt variable when running 
+# the service, so that it is ignoring what is in the config file.
+# (I believe)
+# ALSO, I created subdirectories /plugins and /client/plugins and chmodded them to be
+# owned by mattermost, then it was able to install the config plugin and jira plugin
+# The system console does not show th AD/LDAP at all -
+# it may be that it is a plugin which isn't installed!.
+root user is devuser, email root@localhost.localdomain, 

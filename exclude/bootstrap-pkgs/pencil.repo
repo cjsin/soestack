@@ -1,0 +1,5 @@
+[bootstrap-pencil]
+name=bootstrap-pencil
+baseurl=file:///e/bundled/bootstrap-pkgs/pencil
+enabled=1
+gpgcheck=1

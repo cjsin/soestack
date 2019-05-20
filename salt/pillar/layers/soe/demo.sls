@@ -1,0 +1,679 @@
+# Overrides for the demo test soe
+
+soe:
+    name:         soestack-demo
+    description:  Example soe implementation using vagrant
+
+# The remaining items are in alphabetical order
+
+
+build:
+
+    rpm:
+
+        python37:
+            package_url:       https://www.python.org
+            subdir:            Python-VERSION
+            configure_flags:   --enable-optimizations --with-ensurepip=upgrade CFLAGS=-Wno-error=coverage-mismatch
+            install_flags:     altinstall DESTDIR=${DESTDIR}
+            source_url:        http://nexus:7081/repository/interwebs/www.python.org/ftp/python/VERSION/Python-VERSION.tar.xz
+
+            rpm_version:       1
+
+            required_packages:
+                - openssl-devel
+                - valgrind-devel 
+                - ncurses-devel
+                - gdbm-devel 
+                - sqlite-devel
+                - readline-devel
+                - xz-devel
+                - zlib-devel 
+                # need libuuid-devel and must not have uuid-devel installed (they both provide conflicting headers)
+                - libuuid-devel
+                - libffi-devel
+                - bzip2-devel
+                - tcl-devel
+                - tk-devel
+
+filesystem:
+    dirs:
+        common:
+            /d:
+                description:     Data storage area
+
+            /d/local:
+                description:     Data storage area for local data
+
+            /var/log/everything: 
+                mode:            '0750'
+                description:     Logs split by day
+
+        # TODO - move this instead into a role layer
+        by-role:
+            primary-server:
+                /e:
+                    description: Top directory for nfs exports
+                    export:
+                        0-toplevel:
+                            # The insecure option allows ports over 1024.
+                            # This is required when developing with virtual machines because
+                            # the virtual network performs NAT and low port numbers are 
+                            # shifted up above 1024. This results in the NFS server denying
+                            # access, unless this opt is added. This won't be needed when
+                            # deployed on real hardware.
+                            '*':              ro,async,root_squash,insecure
+                            '192.168.121.*':  rw,async,insecure
+                            '10.0.2.*':       rw,async,insecure
+
+                /e/home:
+                    user: root
+                    group: root
+                    mode: '0755'
+                    mkdirs: True
+                    description: Export home directories for clients
+                    export:
+                        1-home:
+                            - '*':       rw,async,root_squash,insecure
+                    bind:
+                        dev:       /home
+                        readwrite: True
+
+                /home:
+                    description: Home directories
+
+                /var/log/clients: 
+                    mode:        '0750'
+                    description: Client logs split by day
+
+
+# This data is not used yet but I am just recording the
+# configuration which is performed, so it can be automated
+# later.
+ipa-configuration:
+    automounts:
+        maps:
+            auto.home: 
+                type: direct
+                keys:
+                    '*': '-fstype=nfs4 infra.demo:/home/&'
+
+    dns:
+        reverse-zones:
+            # the 10.0.2 network for the libvirt/qemu kickstart clients
+            2.0.10.in-addr.arpa: 
+
+
+issue: |
+    Welcome to the SoeStack example soe
+
+motd: |
+    Welcome to the SoeStack example soe
+
+network:
+    
+    # Just until IPA is configured to add these.
+    #hostfile-additions:
+    #    192.168.121.102: wildcard.demo wildcard prometheus.demo prometheus grafana.demo grafana 
+    #    192.168.121.103: gitlab.demo gitlab pages.demo pages mattermost.demo mattermost
+    devices:
+        # Note, in this configuration, eth0 is used for Vagrant,
+        # so it is not modified.
+        
+        eth0:
+            sysconfig: |
+                TYPE="Ethernet"
+                PROXY_METHOD="none"
+                #BROWSER_ONLY="no"
+                BOOTPROTO="dhcp"
+                DEFROUTE="yes"
+                IPV4_FAILURE_FATAL="no"
+                IPV6INIT="no"
+                IPV6_AUTOCONF="no"
+                IPV6_DEFROUTE="no"
+                IPV6_FAILURE_FATAL="no"
+                IPV6_ADDR_GEN_MODE="stable-privacy"
+                ONBOOT="yes"
+                NM_CONTROLLED="no"
+                PEERDNS="no"
+                PEERROUTES=no
+
+nexus-repos:
+    defaults:
+        kubernetes: True 
+        built-rpms: True
+        dockerce:   True
+        # gitlab:   True # add only on the infra server
+        nodesource: True
+        #prometheus: 
+        saltstack: True
+        vscode: True
+    # Redhat and centos are both so crappy and ancient
+    # that they both need these three
+    redhat,centos:
+        rpmfusion:
+            # This is really for fedora, but still useful here. 
+            # can cause some conflicts though so it's disabled unless
+            # explicitly enabled
+            enabled: 0 
+        epel:       True
+        ius:        True
+    centos:
+        centos:     True
+    fedora:
+        fedora:     True
+        rpmfusion:  True
+
+
+
+service-status:
+
+    service-sets: {} 
+        # Example of enabling a service
+        # Note, these are expected to be the name of a service set
+        # not the service itself (though that may be the same depending on the OS)
+
+        # enabled:
+        #    - dhcp-server-dnsmasq
+        # disabled:
+        #    - dhcp-server-dhcpd
+        
+        # Or, an example of enabling/disabling different implementations:
+        # enabled:
+        #     - dhcp-server-dhcpd
+        #     - tftp-server-xinetd
+        # disabled:
+        #     - pxeboot-server-dnsmasq
+
+    services:
+        disabled:
+            # polkit is left enabled simply for convenience because in the test environment we are using a single all-in-one node ie including workstation functionality
+            # - polkit
+            # Can't disable NetworkManager in my test env as I need the wifi!
+            # - NetworkManager
+            - libvirtd
+            - virtlockd
+            - virtlogd
+            - avahi-daemon
+            - xinetd
+            
+
+# NOTE - while this key houses nexus configuration,
+# the separate key nexus-repos (above) selects which 
+# repositories are selected for particular hosts.
+nexus:
+
+    http_address:   nexus:7081
+    docker_address: nexus:7082
+
+    urls:
+        centos:          http://nexus:7081/repository/centos
+        docker:          nexus:7082
+        dockerce:        http://nexus:7081/repository/dockerce
+        epel:            http://nexus:7081/repository/epel
+        fedora:          http://nexus:7081/repository/dl-fedora
+        github:          http://nexus:7081/repository/github
+        gitlab:          http://nexus:7081/repository/gitlab
+        grafana:         http://nexus:7081/repository/grafana
+        ius:             http://nexus:7081/repository/ius
+        nodesource:      http://nexus:7081/repository/nodesource
+        npmjs:           http://nexus:7081/repository/npmjs
+        pypi:            http://nexus:7081/repository/pypi
+        rpmfusion:       http://nexus:7081/repository/rpmfusion
+        saltstack:       http://nexus:7081/repository/saltstack
+        kubernetes:      http://nexus:7081/repository/kubernetes 
+        vscode:          http://nexus:7081/repository/vscode
+        elasticsearch:   http://nexus:7081/repository/elasticsearch
+        elastic-docker:  http://nexus:7081/repository/elastic-docker
+        #elastic-docker: nexus:7082
+        rubygems:
+        interwebs:       http://nexus:7081/repository/interwebs
+        built-rpms:      http://nexus:7081/repository/built-rpms
+
+    blobstores:
+        dockerhub:
+        dockerce:
+        fedora-dl:
+        nodesource:
+        npmjs:
+        pypi:
+        rpmfusion:
+        microsoft:
+        elasticsearch:
+        elastic-docker:
+        rubygems:
+        interwebs:
+        built-rpms:
+
+    repos:
+
+        built-rpms:
+            type:           hosted
+            format:         yum
+            blobstore:      built-rpms
+            repodata_depth: 2
+            deploy_policy:  Permissive
+            yum:
+                centos:
+                    enabled: 1
+                    repos:
+                        built-rpms:
+                            description: Packages built for this SOE
+                            path:        soestack/demo/
+
+        centos:
+            type:           proxy
+            format:         yum
+            blobstore:      centos
+            remote_url:     http://mirror.centos.org/
+            yum:
+                centos:
+                    gpgkey_url:  http://mirror.centos.org/centos/RPM-GPG-KEY-CentOS-7
+                    enabled:     1
+                    gpgcheck:    1
+                    gpgkey:      RPM-GPG-KEY-CentOS-7
+                    repos:
+                        os:
+                            description: Centos $releasever - $basearch
+                            path:        centos/$releasever/os/$basearch
+
+                        updates:
+                            description: Centos $releasever - $basearch - Updates
+                            path:        centos/$releasever/updates/$basearch
+                        
+                        # extras repo is needed for container-selinux
+                        centos-extras:
+                            description: Centos $releasever - $basearch - Extras
+                            path:        centos/$releasever/extras/$basearch
+
+                        centos-plus:
+                            description: Centos $releasever - $basearch - Plus
+                            path:        centos/$releasever/centosplus/$basearch
+                            enabled:     0
+
+        dockerhub:
+            type:           proxy
+            format:         docker
+            blobstore:      dockerhub
+            remote_url:     https://registry-1.docker.io/
+            docker:
+                # Note this port is 8082 within the container, 7082 on the host
+                http_connector: 8082
+                docker_index:   'Use Docker Hub'
+                enable_v1_api:  True
+                force_basic_authentication: 'unchecked'
+
+        dockerce:
+            type:           proxy
+            format:         yum
+            blobstore:      dockerce
+            remote_url:     https://download.docker.com/
+            yum:
+                fedora:
+                    gpgkey_url:  https://download.docker.com/linux/fedora/gpg
+                    enabled:     1
+                    gpgcheck:    1
+                    gpgkey:      RPM-GPG-KEY-DOCKERCE-fedora
+                    repos:
+                        dockerce:
+                            description: Docker CE Stable - $basearch
+                            path:        linux/fedora/$releasever/$basearch/stable
+
+                        dockerce-edge:
+                            description: Docker CE Edge - $basearch
+                            path:        linux/fedora/$releasever/$basearch/edge
+                            enabled:     0
+
+                centos:
+                    gpgkey_url:  https://download.docker.com/linux/centos/gpg
+                    enabled:     1
+                    gpgcheck:    1
+                    gpgkey:      RPM-GPG-KEY-DOCKERCE-centos
+                    repos:
+                        dockerce:
+                            description: Docker CE Stable - $basearch
+                            path:        linux/centos/$releasever/$basearch/stable
+
+                        dockerce-edge:
+                            description: Docker CE Edge - $basearch
+                            path:        linux/centos/$releasever/$basearch/edge
+                            enabled:     0
+
+        fedora:
+            type:           proxy
+            format:         yum
+            blobstore:      fedora-dl
+            remote_url:     https://dl.fedoraproject.org/
+            yum:
+                fedora:
+                    gpgkey_url: https://getfedora.org/static/9DB62FB1.txt
+                    gpgkey:     RPM-GPG-KEY-fedora-28-x86_64
+                    enabled:    1
+                    gpgcheck:   1
+                    repos:
+                        os:
+                            description: Fedora $releasever - $basearch
+                            path:        pub/fedora/linux/releases/$releasever/Everything/$basearch/os
+
+                        updates:
+                            description: Fedora $releasever - $basearch - Updates
+                            path:        pub/fedora/linux/updates/$releasever/Everything/$basearch
+
+        elastic-docker:
+            type:           proxy
+            format:         docker
+            blobstore:      elastic-docker
+            remote_url:     https://docker.elastic.co/
+            docker:
+                # Note this port is 8082 within the container, 7082 on the host
+                http_connector: 8083
+                docker_index:   'Use proxy registry' #'Use Docker Hub'
+                enable_v1_api:  True
+                force_basic_authentication: 'unchecked'
+
+        elasticsearch:
+            type:           proxy
+            format:         raw
+            blobstore:      elasticsearch
+            remote_url:     https://artifacts.elastic.co/
+                            #downloads/elasticsearch/elasticsearch-6.4.0.rpm
+
+
+        epel:
+            type:           proxy
+            format:         yum
+            blobstore:      epel
+            remote_url:     https://dl.fedoraproject.org/
+            yum:
+                centos:
+                    gpgkey_url:  https://dl.fedoraproject.org/pub/epel/RPM-GPG-KEY-EPEL-7
+                    enabled:     1
+                    gpgcheck:    1
+                    gpgkey:      RPM-GPG-KEY-EPEL-7
+                    repos:
+                        epel:
+                            description: EPEL for Centos $releasever
+                            path:        pub/epel/$releasever/$basearch
+
+        github:
+            type:                proxy
+            format:              raw
+            blobstore:           raw
+            remote_url:          http://github.com/
+
+        gitlab:
+            type:                proxy
+            format:              yum
+            blobstore:           gitlab
+            remote_url:          https://packages.gitlab.com/
+            yum:
+                gpgkey_url:      https://packages.gitlab.com/gitlab/gitlab-ce/gpgkey/gitlab-gitlab-ce-3D645A26AB9FBD22.pub.gpg
+                gpgkey:          gitlab-gitlab-ce-3D645A26AB9FBD22.pub.gpg
+                enabled:         1
+                gpgcheck:        1
+                centos:
+                    repos:
+                        gitlab-ce:
+                            description: "Gitlab Community Edition"
+                            path:        gitlab/gitlab-ce/el/7/$basearch
+                        gitlab-runner:
+                            description: "Gitlab Community Edition - runner"
+                            path:        runner/gitlab-runner/el/7/$basearch
+                # fedora:
+                #     repos:
+                #         gitlab-ce:
+                #             description: "Gitlab Community Edition"
+                #             path:        gitlab/gitlab-ce/fedora/$releasever/$basearch
+                #         gitlab-runner:
+                #             description: "Gitlab Community Edition - runner"
+                #             path:        runner/gitlab-runner/fedora/$releasever/$basearch
+        
+        grafana:
+            type:                proxy
+            format:              raw
+            blobstore:           raw
+            remote_url:          https://s3-us-west-2.amazonaws.com/
+
+        # The "Inline with Upstream Stable" repos
+        ius:
+            type:           proxy
+            format:         yum
+            blobstore:      ius
+            remote_url:     https://dl.iuscommunity.org/
+            yum:
+                centos:
+                    # IUS repo is explicitly disabled because its packages
+                    # have upgrades that cause issues with the IPA server installation.
+                    # However we will enable it later for git package installation.
+                    enabled:     0
+                    gpgcheck:    1
+                    gpgkey:      IUS-COMMUNITY-GPG-KEY
+                    gpgkey_url:  https://dl.iuscommunity.org/pub/ius/IUS-COMMUNITY-GPG-KEY
+                    repos:
+                        ius:
+                            description: IUS for Centos $releasever
+                            path:        pub/ius/stable/CentOS/$releasever/$basearch
+
+        kubernetes:
+            type:           proxy
+            format:         yum
+            remote_url:     https://packages.cloud.google.com/
+            blobstore:      google
+            yum:
+                enabled:    1
+                gpgcheck:   1
+                # gpgkey_url:  https://packages.cloud.google.com/yum/doc/yum-key.gpg 
+                gpgkey_url:  https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg
+                gpgkey:     RPM-GPG-KEY-GOOGLE-CLOUD-PACKAGES
+                centos,fedora,rhel:
+                    repos:
+                        kubernetes:
+                            description: Kubernetes packages for RedHat family of operating systems
+                            path:        yum/repos/kubernetes-el7-x86_64
+
+        nodesource:
+            type:           proxy
+            format:         yum
+            remote_url:     https://rpm.nodesource.com/
+            blobstore:      nodesource
+            yum:
+                enabled:     1
+                gpgcheck:    1
+                gpgkey_url:  https://rpm.nodesource.com/pub/el/NODESOURCE-GPG-SIGNING-KEY-EL
+                gpgkey:      NODESOURCE-GPG-SIGNING-KEY-EL
+                centos:
+                    repos:
+                        nodesource:
+                            description: Node.js Packages for Centos $releasever - $basearch
+                            path:        pub_10.x/el/$releasever/$basearch
+                fedora:
+                    repos:
+                        nodesource:
+                            description: Node.js Packages for Fedora $releasever - $basearch
+                            path:        pub_10.x/fc/$releasever/$basearch
+
+        npmjs:
+            type:           proxy
+            format:         npm
+            remote_url:     https://registry.npmjs.org/
+            blobstore:      npmjs
+
+        prometheus:
+            type:           proxy
+            format:         yum
+            remote_url:     
+            blobstore:      prometheus
+
+        pypi:
+            type:           proxy
+            format:         pypi
+            remote_url:     https://pypi.org/
+            blobstore:      pypi
+
+        rpmfusion:
+            type:           proxy
+            format:         yum
+            blobstore:      rpmfusion
+            remote_url:     http://download1.rpmfusion.org/
+            
+            yum:
+                enabled:     1
+                gpgcheck:    1
+                fedora:
+                    repos:
+                        rpmfusion-free:
+                            description: RPM Fusion for Fedora $releasever - Free
+                            path:        free/fedora/releases/$releasever/Everything/$basearch/os
+                            gpgkey:      RPM-GPG-KEY-rpmfusion-free-fedora-28
+                            gpgkey_url:  https://rpmfusion.org/keys?action=AttachFile&do=get&target=RPM-GPG-KEY-rpmfusion-free-fedora-28
+                        rpmfusion-free-updates:
+                            description: RPM Fusion for Fedora $releasever - Free - Updates
+                            path:        free/fedora/updates/$releasever/$basearch
+                            gpgkey:      RPM-GPG-KEY-rpmfusion-free-fedora-28
+                            gpgkey_url:  https://rpmfusion.org/keys?action=AttachFile&do=get&target=RPM-GPG-KEY-rpmfusion-free-fedora-28
+                        rpmfusion-nonfree:
+                            description: RPM Fusion for Fedora $releasever - Nonfree
+                            path:        nonfree/fedora/releases/$releasever/Everything/$basearch
+                            gpgkey:      RPM-GPG-KEY-rpmfusion-nonfree-fedora-28
+                            gpgkey_url:  https://rpmfusion.org/keys?action=AttachFile&do=get&target=RPM-GPG-KEY-rpmfusion-nonfree-fedora-28
+                        rpmfusion-nonfree-updates:
+                            description: RPM Fusion for Fedora $releasever - Nonfree - Updates
+                            path:        nonfree/fedora/updates/$releasever/$basearch
+                            gpgkey:      RPM-GPG-KEY-rpmfusion-nonfree-fedora-28
+                            gpgkey_url:  https://rpmfusion.org/keys?action=AttachFile&do=get&target=RPM-GPG-KEY-rpmfusion-nonfree-fedora-28
+                centos:
+                    repos:
+                        # NOTE: The base (non-updates) repo does not seem to exist for EL?
+                        rpmfusion-free-updates:
+                            description: RPM Fusion for EL $releasever - Free - Updates
+                            path:        free/el/updates/$releasever/$basearch
+                            gpgkey:      RPM-GPG-KEY-rpmfusion-free-el-7
+                            gpgkey_url:  https://rpmfusion.org/keys?action=AttachFile&do=get&target=RPM-GPG-KEY-rpmfusion-free-el-7
+                        rpmfusion-nonfree-updates:
+                            description: RPM Fusion for EL $releasever - Nonfree - Updates
+                            path:        nonfree/el/updates/$releasever/$basearch
+                            gpgkey:      RPM-GPG-KEY-rpmfusion-nonfree-el-7
+                            gpgkey_url:  https://rpmfusion.org/keys?action=AttachFile&do=get&target=RPM-GPG-KEY-rpmfusion-nonfree-el-7
+
+
+        rubygems:
+            type:           proxy
+            format:         rubygems
+            blobstore:      rubygems
+            remote_url:     https://rubygems.org
+
+
+        saltstack:
+            type:           proxy
+            format:         yum
+            blobstore:      saltstack
+            remote_url:     https://repo.saltstack.com/
+            
+            yum:
+                enabled:     1
+                gpgcheck:    1
+                gpgkey:      saltstack-signing-key
+
+                # Note, saltstack is already included in Fedora repos, so is not included here.
+
+                centos,redhat:
+                    repos:
+                        saltstack:
+                            description: Saltstack for EL$releasever
+                            path:        yum/redhat/$releasever/$basearch/latest
+
+        vscode:
+            type:           proxy
+            format:         yum
+            blobstore:      microsoft
+            remote_url:     https://packages.microsoft.com/
+            
+            yum:
+                enabled:     1
+                gpgcheck:    1
+                gpgkey_url:  https://packages.microsoft.com/keys/microsoft.asc
+                gpgkey:      microsoft.asc
+
+                # Note, saltstack is already included in Fedora repos, so is not included here.
+
+                centos,fedora,redhat:
+                    repos:
+                        vscode:
+                            description: Visual Studio Code 
+                            path:        yumrepos/vscode/
+
+
+
+
+#node_exporter:
+#    port:     9100
+#    storage:  /d/local/node_exporter
+#
+#    options:
+#        - --collector.textfile.directory /d/local/node_exporter/textfile_collector
+#        - --collector.filesystem.ignored-mount-points=^(/sys$|/proc$|/dev$|/var/lib/docker/.*|/run.*|/sys/fs/.*)
+#        - --collector.filesystem.ignored-fs-types=^(sysfs|procfs|autofs|overlay|nsfs|securityfs|pstore)$
+
+npm:
+    host_config:
+        send-metrics:     false
+        metrics-registry: 
+
+rsyslog:
+    enabled: True
+
+    client:
+        enabled: True
+
+        # Send endpoints will be added in the lan layer
+        send: {}
+
+    # The server will be enabled in a host or role override
+    server:
+        enabled: False
+
+rubygems:
+    mirror: http://nexus:7081/repository/rubygems/
+
+ssh:
+    sshd:
+        sshd_config: |
+            Port 22
+            ListenAddress 0.0.0.0
+            HostKey /etc/ssh/ssh_host_rsa_key
+            HostKey /etc/ssh/ssh_host_ecdsa_key
+            HostKey /etc/ssh/ssh_host_ed25519_key
+            SyslogFacility AUTHPRIV
+            PermitRootLogin yes
+            AuthorizedKeysFile	.ssh/authorized_keys
+            PasswordAuthentication yes
+            ChallengeResponseAuthentication no
+            GSSAPIAuthentication yes
+            GSSAPICleanupCredentials no
+            UsePAM yes
+            X11Forwarding yes
+            PrintMotd no
+            AcceptEnv LANG LC_CTYPE LC_NUMERIC LC_TIME LC_COLLATE LC_MONETARY LC_MESSAGES
+            AcceptEnv LC_PAPER LC_NAME LC_ADDRESS LC_TELEPHONE LC_MEASUREMENT
+            AcceptEnv LC_IDENTIFICATION LC_ALL LANGUAGE
+            AcceptEnv XMODIFIERS
+            Subsystem	sftp	/usr/libexec/openssh/sftp-server
+
+sudoers:
+
+    files:
+
+        # In vagrant dev environment, allow sudo without password
+        vagrant: |
+            %vagrant ALL=(root) NOPASSWD: ALL
+
+        wheel: |
+            ## Allows people in group wheel to run all commands
+            %wheel    ALL=(ALL)       ALL
+            
+        net-restart: |
+            Cmnd_Alias NETWORK_RESTART = /usr/bin/systemctl restart network
+            Cmnd_Alias NETWORK_STOP    = /usr/bin/systemctl stop network
+            Cmnd_Alias NETWORK_START    = /usr/bin/systemctl stop network
+            ALL ALL=(root) NOPASSWD: NETWORK_RESTART, NETWORK_STOP, NETWORK_START
+

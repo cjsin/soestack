@@ -1,0 +1,15 @@
+option domain-name "{{pillar.network.domain}}";
+{%- if 'nameservers' in dns %}
+option domain-name-servers {{ dns.nameservers.join(', ') }};
+{%- endif %}
+default-lease-time {{dhcp.lease_time * 60}};
+max-lease-time {{dhcp.lease_time * 60}};
+ddns-update-style none;
+authoritative;
+log-facility local7;
+{%- if 'subnets' in dhcp %}
+{%- for subnet, info in dhcp.subnets.iteritems() %}
+subnet {{subnet}} netmask {{subnet.netmask}} {
+    option routers {{dhcp.routers}};
+}
+

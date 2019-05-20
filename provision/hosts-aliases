@@ -1,0 +1,2 @@
+infra gitlab pages gitlab.demo pages.gitlab.demo prometheus.demo prometheus grafana grafana.demo 
+gateway  nexus.demo

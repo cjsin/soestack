@@ -1,0 +1,37 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+Vagrant.configure("2") do |config|
+    #config.vm.box = "centos/1805"
+    config.vm.box = "centos/7.1902.01"
+    config.vm.box_check_update = false
+    #config.ssh.username = "root"
+    #config.ssh.password = "vagrant"
+    #config.ssh.insert_key = "true"
+    #config.vm.synced_folder ".", "/home/vagrant/sync", type: "rsync"
+
+    config.vm.provider "libvirt" do |libvirt, override|
+        libvirt.driver = "kvm"
+        libvirt.memory = 4096
+        libvirt.cpus = 2
+        libvirt.storage_pool_name = 'linux'
+    end
+        
+    config.vm.define "infra" do |infra|
+        config.vm.network "private_network", ip: "192.168.121.101", auto_config: false
+        
+        config.vm.synced_folder ".", "/vagrant", type: "rsync", rsync__exclude: [".git"]
+        config.vm.synced_folder "../../", "/soestack/", type: "rsync", rsync__exclude: [".git", "*.raw", "*.qcow2","*.iso","usb","exclude"] 
+        config.vm.synced_folder "../../exclude", "/e/bundled/", type: "rsync", rsync__exclude: [] 
+
+        infra.vm.hostname = "infra.demo"
+
+        #config.vm.provider "libvirt" do |lv|
+        #    lv.storage :file, :path=> "infra-data-0.disk", :size => "50G", :type=> "qcow2"
+        #end
+
+        config.vm.provision "shell", inline: "/soestack/provision/vagrant/provision.sh infra.cfg"
+    end
+
+end
+

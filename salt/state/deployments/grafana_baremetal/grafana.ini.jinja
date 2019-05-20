@@ -1,0 +1,165 @@
+#################################### Paths ####################################
+[paths]
+# Path to where grafana can store temp files, sessions, and the sqlite3 db (if that is used)
+data = {{container.storage[0]}}
+
+#################################### Server ####################################
+[server]
+# Protocol (http, https, socket)
+protocol = http
+
+# The ip address to bind to, empty will bind to all interfaces
+http_addr =
+
+# The http port  to use
+http_port = 7070
+
+# The public facing domain name used to access grafana from a browser
+domain = {{grains.host}}
+
+# Redirect to correct domain if host header does not match domain
+# Prevents DNS rebinding attacks
+enforce_domain = false
+
+# The full public facing url you use in browser, used for redirects and emails
+# If you use reverse proxy and sub path specify full url (with sub path)
+root_url = http://{{grains.host}}:3000
+
+# enable gzip
+;enable_gzip = false
+
+# https certs & key file
+;cert_file =
+;cert_key =
+
+#################################### Database ####################################
+[database]
+# You can configure the database connection by specifying type, host, name, user and password
+# as separate properties or as on string using the url properties.
+
+# Either "mysql", "postgres" or "sqlite3", it's your choice
+;type = sqlite3
+;host = 127.0.0.1:3306
+;name = grafana
+;user = root
+# If the password contains # or ; you have to wrap it with triple quotes. Ex """#password;"""
+;password =
+
+# Use either URL or the previous fields to configure the database
+# Example: mysql://user:secret@host:port/database
+;url =
+
+# For "postgres" only, either "disable", "require" or "verify-full"
+;ssl_mode = disable
+
+# For "sqlite3" only, path relative to data_path setting
+;path = grafana.db
+
+# Max idle conn setting default is 2
+;max_idle_conn = 2
+
+# Max conn setting default is 0 (mean not set)
+;max_open_conn =
+
+# Connection Max Lifetime default is 14400 (means 14400 seconds or 4 hours)
+;conn_max_lifetime = 14400
+
+# Set to true to log the sql calls and execution times.
+log_queries =
+
+
+#################################### Analytics ####################################
+[analytics]
+# Server reporting, sends usage counters to stats.grafana.org every 24 hours.
+# No ip addresses are being tracked, only simple counters to track
+# running instances, dashboard and error counts. It is very helpful to us.
+# Change this option to false to disable reporting.
+reporting_enabled = false
+
+# Set to false to disable all checks to https://grafana.net
+# for new vesions (grafana itself and plugins), check is used
+# in some UI views to notify that grafana or plugin update exists
+# This option does not cause any auto updates, nor send any information
+# only a GET request to http://grafana.com to get latest versions
+check_for_updates = false
+
+# Google Analytics universal tracking code, only enabled if you specify an id here
+;google_analytics_ua_id =
+
+#################################### Security ####################################
+[security]
+# default admin user, created on startup
+admin_user = admin
+
+# default admin password, can be changed before first start of grafana,  or in profile settings
+admin_password = adminadmin
+
+# disable gravatar profile images
+disable_gravatar = true
+
+#################################### Users ###############################
+[users]
+# disable user signup / registration
+allow_sign_up = true
+
+# Allow non admin users to create organizations
+;allow_org_create = true
+
+# Set to true to automatically assign new users to the default organization (id 1)
+;auto_assign_org = true
+
+# Default role new users will be automatically assigned (if disabled above is set to true)
+;auto_assign_org_role = Viewer
+
+# Background text for the user field on the login page
+;login_hint = email or username
+
+# Default UI theme ("dark" or "light")
+;default_theme = dark
+
+#################################### Anonymous Auth ##########################
+[auth.anonymous]
+# enable anonymous access
+enabled = true
+
+# specify role for unauthenticated users
+org_role = Viewer
+
+#################################### Basic Auth ##########################
+[auth.basic]
+enabled = true
+
+#################################### Auth LDAP ##########################
+#TODO : enable ldap using the ipa server
+[auth.ldap]
+;enabled = false
+;config_file = /etc/grafana/ldap.toml
+;allow_sign_up = true
+
+#################################### SMTP / Emailing ##########################
+[smtp]
+enabled = false
+
+[emails]
+welcome_email_on_sign_up = false
+
+#################################### Alerting ############################
+[alerting]
+# Disable alerting engine & UI features
+enabled = true
+
+#################################### Explore #############################
+[explore]
+# Enable the Explore section
+enabled = true
+
+#################################### Internal Grafana Metrics ##########################
+# Metrics available at HTTP API Url /metrics
+[metrics]
+# Disable / Enable internal metrics
+enabled           = true
+
+#################################### Grafana.com integration  ##########################
+# Url used to to import dashboards directly from Grafana.com
+[grafana_com]
+url = https://grafana.com

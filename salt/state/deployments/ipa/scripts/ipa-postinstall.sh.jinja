@@ -1,0 +1,240 @@
+#!/bin/bash
+{%- if 'initial-setup' in config %}
+
+{%- set init       = config['initial-setup'] %}
+{%- set accounts   = init.accounts         if 'accounts'      in init     and init.accounts         else {} %}
+{%- set groups     = accounts.groups       if 'groups'        in accounts and accounts.groups       else {} %}
+{%- set users      = accounts.users        if 'users'         in accounts and accounts.users        else {} %}
+{%- set pwpolicy   = init.pwpolicy         if 'pwpolicy'      in init     and init.pwpolicy         else {} %}
+{%- set automount  = init.automount        if 'automount'     in init     and init.automount        else {} %}
+{%- set globalconf = init['global-config'] if 'global-config' in init     and init['global-config'] else {} %}
+
+function quiet()
+{
+    "${@}" > /dev/null 2> /dev/null
+}
+
+function verbose()
+{
+    echo "Run: ${*}" 1>&2
+    "${@}"
+}
+
+function msg()
+{
+    echo "${*}" 1>&2
+}
+
+function err()
+{
+    echo "ERROR: ${*}" 1>&2
+}
+
+function configure_policies()
+{
+    verbose ipa pwpolicy-mod \
+    {%- if 'minlength' in pwpolicy %}
+        --minlength  {{pwpolicy.minlength}} \
+    {%- endif %}
+    {%- if 'minclasses' in pwpolicy %}
+        --minclasses {{pwpolicy.minclasses}} \
+    {%- endif %}
+    {%- if 'history' in pwpolicy %}
+        --history    {{pwpolicy.history}}
+    {%- endif %}
+}
+
+function configure_globals()
+{
+    {%- set valid_opts = [
+        'maxusernamelength',
+        'homesrootdir',
+        'defaultloginshell',
+        'defaultprimarygroup',
+        'defaultemaildomain',
+        'searchtimelimit',
+        'searchrecordslimit',
+        'usersearchfields',
+        'groupsearchfields',
+        'migrationenabled',
+        'certificatesubjectbase',
+        'pwdexpadvnotify',
+        'configstring',
+        'configstring',
+        'selinuxusermaporder',
+        'selinuxusermapdefault',
+        'krbauthzdata',
+        'krbauthzdata'
+    ] %}
+
+    {%- if globalconf %}
+    {%-     set invalid = [] %}
+    {%-     set flags = [] %}
+    {%-     for opt_name,opt_value in globalconf.iteritems() %}
+    {%-         if opt_name in valid_opts %}
+    {%-             do flags.extend(['--setattr', 'ipa' ~ opt_name ~ '=' ~ opt_value]) %} 
+    {%-         else %}
+    {%-             do invalid.append(opt_name) %}
+    {%-         endif %}
+    {%-     endfor %}
+
+    {%-     for opt_name in invalid %}
+    err "Invalid global option '{{opt_name}}'"
+    {%-     endfor %}
+
+    local result=""
+    result=$(verbose ipa config-mod {% for flag in flags %}{{flag}} {%endfor %} 2>&1)
+    if (( $? ))
+    then 
+        if [[ "${result}" =~ no.modifications.to.be.performed ]]
+        then 
+            return 0
+        else 
+            err "${result}"
+            return 1
+        fi
+    else 
+        msg "OK"
+        return 0
+    fi 
+
+    {%- endif %}
+}
+
+function create_groups()
+{
+    msg "Create groups"
+    {%- if groups %}
+    {%-     for group_name, group in groups.iteritems() %}
+        group_name="{{group_name}}"
+        verbose ipa group-find "{{group_name}}" || ipa group-add "{{group_name}}"
+    {%-     endfor %}
+    {%- endif %}
+}
+
+function set_password()
+{
+    local u="${1}"
+    local p2="${2}"
+    local save_it="${3}"
+    local p1=$(mktemp -u XXXXXXXXXXXXXXXXX)
+    [[ -n "${p2}" ]] && p2=$(mktemp -u XXXXXXXXXXXXXXXXX)
+    
+    ipa passwd "${u}" <<< "${p1}"$'\n'"${p1}"$'\n'
+    su -c "passwd" "${u}" <<< "${p1}"$'\n'"${p2}"$'\n'"${p2}"$'\n'
+
+    if [[ "${save_it}" == "save" ]]
+    then
+        mkdir -p /root/.bind-users
+        chmod ug-rwx /root/.bind-users
+        local savefile="/root/.bind-users/${u}.txt"
+        cat > "${savefile}" <<< "${p2}"
+        chmod go-rwx "${savefile}"
+    fi
+}
+
+function create_user()
+{
+    local u="${1}"
+    local email="${2}"
+    local first_name="${3}"
+    local last_name="${4}"
+    local save_it="${5}"
+
+    if ! quiet ipa user-find "${u}"
+    then
+        msg "Creating user ${u}"
+        if verbose ipa user-add "${u}" --email="${email}" --first="${first_name}" --last="${last_name}"
+        then
+            msg "Setting password for user ${u}"
+            set_password "${u}" "" "${save_it}"
+        else
+            err "Failed adding user ${u}"
+        fi
+    else 
+        msg "User ${u} already exists"
+    fi
+}
+
+function setup_user_accounts()
+{
+    msg "Setup users"
+    {%- if users %}
+    {%-     for user_name, user in users.iteritems() %}
+    {%-         if user_name not in ['admin'] %}
+    {%-             set email   = user.email         if 'email'      in user and user.email         else '' %}
+    {%-             set first   = user['first-name'] if 'first-name' in user and user['first-name'] else '' %}
+    {%-             set surname = user.surname       if 'surname'    in user and user.surname       else '' %}
+    create_user "{{user_name}} "" {{first}}" "{{surname}}" "{{ 'save' if 'groups' in user and user.groups and 'bind-users' in user.groups else 'nosave' }}"
+    {%-         endif %}
+    {%-     endfor %}
+    {%- endif %}
+}
+
+function add_group_members()
+{
+    msg "Setup group membership"
+    {%- if users and groups %}
+    {%-     for user_name, user in users.iteritems() %}
+    # User "{{user_name}}"
+    {%-         if 'groups' in user and user.groups %}
+    {%-             for group_name in user.groups %}
+    {%-                 if group_name in groups %}
+    quiet ipa group-show "{{group_name}}" | egrep '[:,] {{user_name}}(,|$)' || verbose ipa group-add-member "{{group_name}}" --user "{{user_name}}"
+    {%-                 endif %}
+    {%-             endfor %}
+    {%-         endif %}
+    {%-     endfor %}
+    {%- endif %}
+}
+
+function configure_automounts()
+{
+    {%- set locations = automount.locations if 'locations' in automount and automount.locations else [] %}
+    {%- set maps      = automount.maps      if 'maps'      in automount and automount.maps      else [] %}
+    
+    {%- for location_name in locations %}
+    quiet ipa automountlocation-find "{{location_name}}" || verbose ipa automountlocation-add "{{location_name}}"
+    {%-     for mapname, keys in maps.iteritems() %}
+    quiet ipa automountmap-find "{{location_name}}" "{{mapname}}" || verbose ipa automountmap-add "{{location_name}}" "{{mapname}}"
+    {%-         if keys %}
+    {%-             for key, value in keys.iteritems() %}
+    quiet ipa automountkey-find "{{location_name}}" "{{mapname}}" "{{key}}" || verbose ipa automountkey-add "{{location_name}}" "{{mapname}}" --key="{{key}}" --info="{{value}}"
+    {%-             endfor %}
+    {%-         endif %}
+    {%-     endfor %}
+    {%- endfor %}
+}
+
+function main()
+{
+    . /root/.ipa-passwords-testenv-master 
+
+    export KRB5CCNAME=/var/cache/salt/master/salt.krb
+    kinit admin <<< "${admin_password}"
+
+    {%- if globalconf %}
+    verbose configure_globals 
+    {%- endif %}
+
+    {%- if pwpolicy %}
+    verbose configure_policies
+    {%- endif %}
+
+    {%- if groups %}
+    verbose create_groups 
+    {%- endif %}
+
+    {%- if users %}
+    verbose setup_user_accounts
+    {%- endif %}
+
+    {%- if users and groups %}
+    verbose add_group_members
+    {%- endif %}
+
+    configure_automounts
+}
+
+main "${@}"
+{%- endif %}

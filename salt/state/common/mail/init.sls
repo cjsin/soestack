@@ -1,0 +1,4 @@
+include:
+    - .clients
+    - .aliases
+    - .delivery

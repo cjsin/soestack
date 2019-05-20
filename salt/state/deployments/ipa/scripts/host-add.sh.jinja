@@ -1,0 +1,172 @@
+#!/bin/bash
+
+fqdn=""
+mac=""
+host_ip=""
+site=""
+
+register=1
+reregister="ask"
+
+. /usr/local/sbin/lib-ipa.sh 
+
+function usage()
+{
+    echo "Usage: ${0##*/} [OPTIONS] [<hostname>] [IP] [MAC]"
+    echo ""
+    echo "Add (register) a host with IPA or add DNS entries."
+    echo ""
+    echo "The host should already be configured in salt."
+    echo "or else you'll need to specify the IP and also the MAC if performing host enrollment."
+    echo ""
+    echo "Options:"
+    echo ""
+    echo "  --dns-only    Perform DNS updates only (no enrollment)."
+    echo "  -m <MAC>      Specify the MAC address."
+    echo "  -i <IP>       Specify the IP address."
+    echo "  -n <name>     Specify the host name."
+    echo "  -d <domain>   Specify the domain name."
+    echo "  -f <fqdn>     Specify the fully qualified domain name (hostname.domain)."
+    echo "  -m <mac>      Specify the mac address"
+    echo "  -s <site>     Specify the automount site"
+    echo ""
+}
+
+function process_argv()
+{
+    local arg i m d f n s
+    local opt 
+
+    while (( $# ))
+    do
+        arg="${1}"
+        shift 
+        
+        case "${arg}" in
+            -h|-help|--help) 
+                usage
+                exit 0
+                ;;
+            -dns-only|--dns-only)
+                register=0
+                ;;
+            --re-register)
+                reregister=1
+                ;;
+            -m|--mac|-mac) 
+                m="${1}"
+                shift
+                ;;
+            -i|--ip|-ip)
+                i="${1}"
+                shift
+                ;;
+            -n|--name|-name)
+                n="${1}"
+                shift
+                ;;
+            -s|--site|-site)
+                s="${1}"
+                shift
+                ;;
+            -f|--fqdn|-fqdn)
+                f="${1}"
+                shift
+                ;;
+            -d|--domain|-domain)
+                d="${1}"
+                shift
+                ;;
+            ??:??:??:??:??:??)
+                m="${arg}"
+                shift
+                ;;
+            [0-9]*)
+                i="${arg}"
+                shift
+                ;; 
+            [a-zA-Z]*.*)
+                f="${arg}"
+                ;;
+            [a-zA-Z]*)
+                n="${arg}"
+                ;;
+            *)
+                usage
+                die "Unrecognised option: '${arg}'"
+                ;;
+        esac
+    done 
+
+    [[ -n "${m}" && ! "${m}" =~ ${mac_regex} ]] && die "Invalid MAC address: '${m}'"
+    [[ -n "${i}" && ! "${i}" =~ ${ip_regex} ]] && die "Invalid IP address: '${i}'" 
+    [[ -n "${f}" && ! "${f}" =~ [.] ]] && die "FQDN does not include a domain: '${f}'"
+    [[ -n "${f}" && ! "${f}" =~ [.][^.] ]] && die "FQDN does include a domain: '${f}'"
+    [[ -n "${f}" && "${f}" =~ ^[.] ]] && die "FQDN cannot start with a dot: '${f}'"
+
+    [[ -n "${d}" && -n "${f}" ]] && die "Mutually exclusive options (domain and fqdn)."
+    [[ "${n}" =~ [.] ]] && die "Name option does not accept fully qualified names. Use the -f option"
+
+    if [[ -z "${f}" ]]
+    then
+        if [[ -n "${n}" && -n "${d}" ]]
+        then
+            f="${n}.${d}."
+        elif [[ -n "${n}" ]]
+        then 
+            d="${default_regular_zone%.}"
+            f="${n}.${d}."
+        else
+            die "At least a node name must be specified!"
+        fi
+    else
+        d="${f#*.}"
+        n="${f%%.*}"
+        f="${f%.}."
+    fi
+
+    [[ ! "${f}" =~ ${fqdn_regex} ]] && die "Invalid host name: '${f}'"
+    [[ -n "${m}" && ! "${m}" =~ ${mac_regex} ]] && die "Invalid MAC address: '${m}'"
+    [[ -n "${i}" && ! "${i}" =~ ${ip_regex} ]] && die "Invalid IP address: '${i}'"
+    
+    fqdn="${f%.}."
+
+    [[ -n "${i}" ]] && host_ip="${i}"
+    [[ -n "${m}" ]] && mac="${m}"
+
+    if [[ -z "${mac}" || -z "${host_ip}" ]]
+    then 
+        local -a lookup_results=( $(lookup_host_info "${fqdn}") )
+        [[ -z "${host_ip}" && "${lookup_results[0]}" != "-" ]] && host_ip="${lookup_results[0]}"
+        [[ -z "${mac}" && "${lookup_results[1]}" != "-" ]] && mac="${lookup_results[1]}"
+    fi
+
+    (( register )) && [[ -z "${mac}" ]] && die "No MAC information specified and not found from salt host lookup"
+    [[ -z "${host_ip}" ]] && die "No MAC information specified and not found from salt host lookup"
+
+    site="${s}"
+
+    # At the end of argument processing, we need to have a valid:
+    #   fqdn (with dot at the end)
+    #   host_ip 
+    # and if the host is to be registered (not dns-only):
+    #   mac
+
+}
+
+main()
+{
+    process_argv "${@}"
+
+    local kind="host"
+
+    if ! (( register ))
+    then
+        msg "Performing DNS additions only (no host enrollment)"
+        kind="dns"
+    fi
+
+    host_add "${kind}" "${reregister}" "${fqdn}" "${host_ip}" "${mac}" "${site}" "{{enroll}}"
+}
+
+main "${@}"

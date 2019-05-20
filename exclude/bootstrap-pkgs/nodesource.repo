@@ -1,0 +1,5 @@
+[bootstrap-nodesource]
+name=bootstrap-nodesource
+baseurl=file:///e/bundled/bootstrap-pkgs/nodesource
+enabled=1
+gpgcheck=1

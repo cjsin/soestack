@@ -1,0 +1,19 @@
+# Soestack bootstrap network configuration 
+# for standalone server (server which does not get it's IP from DHCP)
+TYPE=Ethernet
+PROXY_METHOD=none
+BROWSER_ONLY=no
+BOOTPROTO=none
+DEFROUTE=yes
+IPV4_FAILURE_FATAL=no
+IPV6INIT=no
+NAME=%NETDEV%
+DEVICE=%NETDEV%
+ONBOOT=yes
+IPADDR=%IPADDR%
+PREFIX=%IPPREFIX%
+%IPADDRS%
+GATEWAY=%GATEWAY%
+DNS1=%NAMESERVER%
+PEERDNS=no
+NM_CONTROLLED=no

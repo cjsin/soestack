@@ -1,0 +1,66 @@
+#!/bin/bash
+
+. /usr/local/sbin/lib-ipa.sh
+
+username=""
+send_email=0
+valid_username_regex='^[a-z]([-_a-z0-9]*[a-z0-9])$'
+
+function usage()
+{
+    echo "Usage: ${0##*/} [options] [username]"
+    echo ""    
+    echo "Reset a user password."
+    echo ""
+    echo "Options:"
+    echo ""
+    echo "  -u,--user <username>       Specify the user name."
+    echo "  --no-email                 Don't send the password via email."
+    echo "  --email                    Send the password via email."
+}
+
+function process_argv()
+{
+    local arg i d f n 
+
+    while (( $# ))
+    do
+        arg="${1}"
+        shift 
+        
+        case "${arg}" in
+            -h|-help|--help) 
+                usage
+                exit 0
+                ;;
+            -u|--user|-user)
+                username="${1}"
+                shift 
+                ;;
+            -n|--no-email|-no-email)
+                send_email=0
+                ;;
+            -e|--email|-email)
+                send_email=1
+                ;;
+            [a-z][-_a-z0-9]*)
+                username="${arg}"
+                ;;
+            *)
+                usage
+                die "Unrecognised option: '${arg}'"
+                ;;
+        esac
+    done 
+
+    [[ -n "${username}" ]] || die "No username specified"
+    [[ "${username}" =~ ${valid_username_regex} ]] || die "Invalid username"
+}
+
+function main()
+{
+    process_argv "${@}"
+    reset_user_password "${username}" 
+}
+
+main "${@}"

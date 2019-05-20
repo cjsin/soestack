@@ -1,0 +1,24 @@
+
+nuggets:
+
+    iptables-firewall:
+
+        description: |
+            provides a firewall based on iptables service scripts
+
+        install:
+            nuggets-required:
+                - firewall-implementations
+                
+            uninstalled:
+                package-sets:
+                    - firewalld-firewall
+
+            installed:
+                package-sets:
+                    - iptables-firewall
+
+        activate:
+            service-sets:
+                enabled:
+                    - iptables-firewall

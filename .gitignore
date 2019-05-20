@@ -1,0 +1,7 @@
+.vagrant
+*.raw
+*.tar
+*.qcow2
+*.raw--*
+__pycache__
+*.iso

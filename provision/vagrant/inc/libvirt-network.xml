@@ -1,0 +1,23 @@
+<!--
+WARNING: THIS IS AN AUTO-GENERATED FILE. CHANGES TO IT ARE LIKELY TO BE
+OVERWRITTEN AND LOST. Changes to this xml configuration should be made using:
+  virsh net-edit vagrant-libvirt
+or other application using the libvirt API.
+-->
+
+<network ipv6='yes'>
+  <name>vagrant-libvirt</name>
+  <uuid>3c61af17-4488-4ab8-adba-e9c8240feb4b</uuid>
+  <forward dev='wlan0' mode='route'>
+    <interface dev='wlan0'/>
+  </forward>
+  <bridge name='virbr1' stp='on' delay='0'/>
+  <mac address='52:54:00:4f:3e:1c'/>
+  <ip address='192.168.121.1' netmask='255.255.255.0'>
+    <tftp root='/var/lib/tftpboot'/>
+    <dhcp>
+      <range start='192.168.121.1' end='192.168.121.254'/>
+      <bootp file='pxelinux.0' server='192.168.121.101'/>
+    </dhcp>
+  </ip>
+</network>

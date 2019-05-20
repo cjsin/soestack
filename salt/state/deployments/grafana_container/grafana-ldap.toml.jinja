@@ -1,0 +1,51 @@
+{%- if 'ipa' in pillar and pillar.ipa %}
+{%-     set ipa         = pillar.ipa %}
+{%-     set server_ip   = ipa.server_ip   if 'server_ip' in ipa and ipa.server_ip else '' %}
+{%-     set server_name = ipa.server_name if 'server'    in ipa and ipa.server    else '' %}
+[[servers]]
+host = "{{server_ip if server_ip else server_name if server_name else ''}}"
+port = 389
+use_ssl = false
+start_tls = false
+ssl_skip_verify = true
+root_ca_cert = "/etc/grafana/ca.crt"
+{%- if 'bind_user' in ipa and ipa.bind_user %}
+bind_dn = "uid={{pillar.ipa.bind_user}},cn=users,cn=accounts,{{pillar.ipa.base_dn}}"
+bind_password = '{{salt['cmd.shell']('cat /root/.bind-users/' ~ pillar.ipa.bind_user ~ '.txt') }}'
+{%- endif %}
+search_filter = "(uid=%s)"
+search_base_dns = ["cn=users,cn=accounts,{{pillar.ipa.base_dn}}"]
+group_search_base_dns = ["cn=groups,cn=accounts,{{pillar.ipa.base_dn}}"]
+
+[servers.attributes]
+name = "givenName"
+surname = "sn"
+username = "uid"
+member_of = "memberOf"
+email =  "mail"
+
+# Administrators
+[[servers.group_mappings]]
+group_dn = "cn=grafana-admins,cn=groups,cn=accounts,{{pillar.ipa.base_dn}}"
+org_role = "Admin"
+
+# Editors
+[[servers.group_mappings]]
+group_dn = "cn=grafana-editors,cn=groups,cn=accounts,{{pillar.ipa.base_dn}}"
+org_role = "Editor"
+
+# Read-only for any authenticated user
+[[servers.group_mappings]]
+group_dn = "*"
+org_role = "Viewer"
+
+# Example IPA setup 
+# ipa user-add grafana-bind --email=''
+# pw=$(mktemp -u XXXXXXXXXXXXX)
+# ipa passwd grafana-bind
+# ipa group-add "grafana-admins"
+# ipa group-add "grafana-editors"
+# ipa group-add-member  grafana-editors devuser
+# ipa group-add-member  grafana-editors --user devuser
+# ipa group-add-member  grafana-admins --user admin
+{%- endif %}

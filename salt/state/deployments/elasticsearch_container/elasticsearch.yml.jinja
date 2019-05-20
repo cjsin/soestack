@@ -1,0 +1,17 @@
+{#- this template will receive a config map which may or may not contain the following vars: #}
+{#-    - cluster_name #}
+{#-    - listen_address #}
+{#-    - minimum_master_nodes #}
+#server.port : 8080
+
+cluster.name: "{{config.cluster_name if ('cluster_name' in config and config.cluster_name) else 'docker-cluster'}}"
+network.host: {{config.listen_address if ('listen_address' in config and config.listen_address) else '0.0.0.0'}}
+
+# minimum_master_nodes need to be explicitly set when bound on a public IP
+# set to 1 to allow single node clusters
+# Details: https://github.com/elastic/elasticsearch/pull/17288
+discovery.zen.minimum_master_nodes: {{config.minimum_master_nodes if ('minimum_master_nodes' in config and config.minimum_master_nodes) else 1 }}
+
+xpack.security.enabled: false
+#xpack.reporting.enabled: false
+xpack.monitoring.enabled: false

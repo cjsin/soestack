@@ -1,0 +1,5 @@
+[bootstrap-dockerce]
+name=bootstrap-dockerce
+baseurl=file:///e/bundled/bootstrap-pkgs/dockerce
+enabled=1
+gpgcheck=1

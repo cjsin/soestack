@@ -1,0 +1,30 @@
+# These modules need to be loaded before the fromhost-ip variable becomes available
+
+module(load="imudp") # needs to be done just once
+module(load="imtcp") # needs to be done just once
+module(load="imrelp")
+
+template(name="host-by-day"    type="string" string="/var/log/clients/%fromhost%-%$year%-%$month%-%$day%.log")
+template(name="ip-by-day"    type="string" string="/var/log/clients/%fromhost-ip%-%$year%-%$month%-%$day%.log")
+
+ruleset(name="remote") {
+    if($fromhost-ip == "example-ip") then
+    {
+        action(type="omfile" name="blob-daily" dynafile="blob-by-day")
+    }
+    else
+    {
+        action(type="omfile" name="host-by-day" dynafile="remote-by-day")
+    }
+
+    stop
+}
+
+# for parameters see http://www.rsyslog.com/doc/imudp.html
+input(type="imudp" port="514" ruleset="remote")
+
+# for parameters see http://www.rsyslog.com/doc/imtcp.html
+input(type="imtcp" port="1514" ruleset="remote")
+
+# Note, need to add the port to selinux policy with command: semanage port -a -t syslogd_port_t -p tcp 2514
+input(type="imrelp" port="2514" ruleset="remote")

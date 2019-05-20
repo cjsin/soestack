@@ -1,0 +1,10 @@
+
+if [ -n "${PS1}" ]
+then
+    HISTFILE={{config.histfile}}
+    HISTSIZE={{config.histsize}}
+    HISTFILESIZE={{config.histfilesize}}
+    shopt -s histappend
+    PROMPT_COMMAND="history -a"
+    HISTCONTROL=ignoreboth
+fi

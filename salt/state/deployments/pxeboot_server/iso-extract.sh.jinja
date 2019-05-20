@@ -1,0 +1,39 @@
+#!/bin/bash
+iso="${1}"
+out="${2}"
+
+if ! [[ -f "${iso}" ]]
+then
+    echo "No iso file" 1>&2
+    exit 1
+fi
+
+if [[ -z "${out}" ]]
+then
+    echo "Missing output folder" 1>&2
+    exit 1
+fi
+
+mkdir -p "${out}"
+
+readarray -t dirs <<< "$( isoinfo -R -J -l -i "${iso}" | egrep Directory.listing.of | cut -d' ' -f4- )"
+
+for d in "${dirs[@]}"
+do
+    mkdir -p "${out}/${d}"
+done
+
+readarray -t listing <<< "$(isoinfo -R -J -f -i "${iso}")"
+
+for f in "${listing[@]}"
+do
+    if [[ ! -d "${out}/${f}" ]]
+    then
+        if ! isoinfo -R -J -f -i "${iso}" -x "${f}" > "${out}/${f}"
+        then
+            echo "An error occurred! Bailing!" 1>&2
+        fi
+    fi
+done
+
+echo "Done".
