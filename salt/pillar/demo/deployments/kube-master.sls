@@ -12,7 +12,7 @@ deployments:
             config:
                 single_node:           True
                 version:               v1.11.3
-                master_name:           master.demo
+                master_name:           infra
                 pod_network_cidr:      172.27.0.0/16
                 api_advertise_address: 192.168.121.110
 

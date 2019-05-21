@@ -1,17 +1,4 @@
 
-# Working config:
-# rest_cherrypy:
-#     port:     9009
-#     ssl_crt:  /etc/pki/tls/certs/localhost.crt
-#     ssl_key:  /etc/pki/tls/certs/localhost.key
-#     # start with auth disabled during dev, get salt e-auth working later
-#     webhook_disable_auth : True
-
-# external_auth:
-#     pam:
-#         salt-enrol:
-#             - '@wheel'
-
 function configure_salt_api()
 {
     ensure_installed pyOpenSSL

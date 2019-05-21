@@ -1,24 +1,22 @@
 deployments:
     ipa_master:
         testenv-master:
-            host:   infra
+            host:      infra
             activated: True
             install:
                 nuggets-required:
                     - ipa-server
 
             config:
-                domain: demo
-                realm:  DEMO
-                fqdn:   infra.demo
+                domain: default
+                realm:  DEFAULT
+                fqdn:   infra.default
                 reverse_zone: 121.168.192.in-addr.arpa.
-                site:   demo
+                site:   default
                 install:
                     dns:
                         enabled: True
-                        forwarders:
-                            - 192.168.188.1 # modem / wifi
-                            # - 192.168.121.1 # wired-gateway
+                        forwarders: []
                 bind_ips:
                     httpd: 192.168.121.101
                     named: 192.168.121.101
@@ -47,10 +45,10 @@ deployments:
                                 '/-':     auto.direct
 
                             auto.direct:
-                                '/e':     '-fstype=nfs4,ro  infra.demo:/e'
+                                '/e':     '-fstype=nfs4,ro  infra:/e'
 
                             auto.home:
-                                '*':      '-fstype=nfs4,rw  infra.demo:/e/home/&'
+                                '*':      '-fstype=nfs4,rw  infra:/e/home/&'
 
                     pwpolicy:
                         minlength:  1
@@ -90,10 +88,5 @@ deployments:
                             salt-pillar:
                                 first-name: Salt
                                 surname:    Pillar
-                                groups:
-                                    - bind-users
-                            salt-enrol:
-                                first-name: Salt
-                                surname:    Enrol
                                 groups:
                                     - bind-users

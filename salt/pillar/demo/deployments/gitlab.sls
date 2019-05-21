@@ -40,25 +40,25 @@ deployments:
                     port:         5005
 
                 gitlab:
-                    hostname:     gitlab.demo
+                    hostname:     gitlab
                     port:         80
                     bind_ip:      192.168.121.104
 
                 pages:
                     enabled:      True
-                    hostname:     pages.demo
+                    hostname:     pages
                     port:         80
                     bind_ip:      192.168.121.106
 
                 registry:
                     enabled:      True
-                    hostname:     gitlab-registry.demo
+                    hostname:     gitlab-registry
                     port:         5000
                     bind_ip:      192.168.121.107
 
                 mattermost:
                     enabled:      True
-                    hostname:     mattermost.demo
+                    hostname:     mattermost
                     port:         80
                     bind_ip:      192.168.121.105
                     token:        a29362af4cf0ad81466ead3ae8d82d78b295563b826f77496336c43ac5c3b2cb

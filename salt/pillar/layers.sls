@@ -68,6 +68,7 @@ include:
     {%-            do attempted_loads.append(layer) %}
     - layers.{{layer}}
     {%-         endfor %}
+    - layers.lan-host
 
 {%-         endif %}
 {%-     endif %}

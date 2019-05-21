@@ -13,7 +13,7 @@ cups:
     listen_address: 0.0.0.0:631
 
     management_hosts:
-        - host.demo 
+        - infra
 
     printer_default:   example-printer
     printers:
@@ -22,7 +22,6 @@ cups:
             info:      Example printer
             makemodel: Example printer (recommended)
             ip:        192.168.121.215
-
 
 docker:
     config:
@@ -37,15 +36,16 @@ docker:
                 # unused
                 # Misc (uploaded manually)
                 - nexus:7085
-                - gitlab-registry.demo:5000
+                - gitlab-registry:5000
             dns: 
-                - 192.168.188.1   # modem / gateway in test environment
+                - 192.168.121.1   # host in VM environment
+                # - 192.168.188.1   # modem / gateway in test environment
                 - 192.168.121.101 # infra server
             #dns-opts:
             #    #- 'ndots:0'
             dns-search:
                 - demo
-
+            
             # disable-legacy-registry: True
 
 
@@ -59,73 +59,36 @@ network:
     hostfile-additions:
         127.0.0.1:       localhost.localdomain localhost localhost4.localdomain localhost4
         '::1':           localhost6.localdomain localhost6
-        # For now use the nexus on my host box to avoid re-downloading anything
-        192.168.121.1:   wired-gateway
-        
-        192.168.188.1:   gateway modem 
 
-    system_domain: demo
+    classes:
+        infra-server:
+            sysconfig:
+                IPADDR1: '192.168.121.101'
+                PREFIX1: '24'
 
-dns:
-    # if is_server is set, the server will have a customised dns configuration
-    server:      infra.demo
-    nameservers:
-        dns1:    192.168.121.101
-        dns2:    192.168.188.1
-    search:
-        search1: gateway
-        search2: demo
+                IPADDR2: '192.168.121.102'
+                PREFIX2: '24'
 
-node_lists:
-    prometheus:
-        primary:
-            - infra
-        secondary:
-            - pxe-client
-            - pxe-client2
-            - usbboot
-        workstations: []
+                IPADDR3: '192.168.121.103'
+                PREFIX3: '24'
 
-npm:
-    host_config:
-        registry:     http://nexus:7081/repository/npmjs/
+                IPADDR4: '192.168.121.104'
+                PREFIX4: '24'
 
-pip:
-    host_config: |
-        [global]
-        index        = http://nexus:7081/repository/pypi/pypi
-        index-url    = http://nexus:7081/repository/pypi/simple
-        no-cache-dir = false
-        trusted-host = nexus
-        disable-pip-version-check = True
+                IPADDR5: '192.168.121.105'
+                PREFIX5: '24'
 
-        [list]
-        format = columns
+                IPADDR6: '192.168.121.106'
+                PREFIX6: '24'
 
+                IPADDR7: '192.168.121.107'
+                PREFIX7: '24'
 
-rsyslog:
-    client:
-        send:
-            192.168.121.101:
-                port:     2514
-                protocol: relp
+                IPADDR8: '192.168.121.108'
+                PREFIX8: '24'
 
-service-reg:
-    nexus_http:    nexus:7081
-    nexus_docker:  nexus:7082
-    default_registry: nexus:7082
-    gitlab_http:   gitlab
-    gitlab_docker: gitlab-registry:5005
-    prometheus:    prometheus:9090
-    grafana:       grafana:7070
-    ipa_https:     infra:443
-    nginx_http:    192.168.121.102:80
-    nginx_https:   192.168.121.102:443
+                IPADDR9: '192.168.121.109'
+                PREFIX9: '24'
 
-email:
-    aliases:
-        root: devuser
-
- 
-timezone: UTC
-
+                IPADDR10: '192.168.121.110'
+                PREFIX10: '24'        

@@ -175,6 +175,17 @@ function load_nexus_container()
     fi
 }
 
+function prepare_network_for_docker()
+{
+    cat > /etc/sysctl.d/90-docker-networking.conf <<-EOF
+		net.ipv4.ip_forward = 1
+		net.ipv4.conf.all.forwarding = 1
+		net.bridge.bridge-nf-call-iptables = 1
+		net.bridge.bridge-nf-call-ip6tables = 1
+	EOF
+    sysctl --system
+}
+
 function prepare_nexus_service()
 {
     echo "Preparing nexus user and service"
@@ -249,6 +260,8 @@ function configure_standalone_server()
     import_gpgkeys 
 
     copy_bundled_files
+
+    prepare_network_for_docker
 
     rpm -qa | grep docker-ce || yum -y --enablerepo='*' install docker-ce
 

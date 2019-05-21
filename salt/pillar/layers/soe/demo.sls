@@ -36,6 +36,10 @@ build:
                 - tcl-devel
                 - tk-devel
 
+email:
+    aliases:
+        root: devuser
+
 filesystem:
     dirs:
         common:
@@ -96,13 +100,7 @@ ipa-configuration:
             auto.home: 
                 type: direct
                 keys:
-                    '*': '-fstype=nfs4 infra.demo:/home/&'
-
-    dns:
-        reverse-zones:
-            # the 10.0.2 network for the libvirt/qemu kickstart clients
-            2.0.10.in-addr.arpa: 
-
+                    '*': '-fstype=nfs4 infra:/home/&'
 
 issue: |
     Welcome to the SoeStack example soe
@@ -111,92 +109,102 @@ motd: |
     Welcome to the SoeStack example soe
 
 network:
+    # demo virtual network
+    subnet:  192.168.121/24
+    netmask: 255.255.255.0
+    prefix:  24
+
+    hostfile-additions: {}
     
-    # Just until IPA is configured to add these.
-    #hostfile-additions:
-    #    192.168.121.102: wildcard.demo wildcard prometheus.demo prometheus grafana.demo grafana 
-    #    192.168.121.103: gitlab.demo gitlab pages.demo pages mattermost.demo mattermost
-    devices:
-        # Note, in this configuration, eth0 is used for Vagrant,
-        # so it is not modified.
+    devices: {}
+
+    classes:
+        defaults:
+            sysconfig:
+                # Note the values 'yes', 'no' and 'none' need to be quoted when using yaml
+                PEERDNS: 'no'
+                BOOTPROTO: 'none'
+                PEERROUTES: 'no'
+                DEFROUTE: 'no'
+                PROXY_METHOD: 'none'
+                BROWSER_ONLY: 'no'
+                IPV4_FAILURE_FATAL: 'no'
+                IPV6INIT: 'no'
+                IPV6_AUTOCONF: 'no'
+                IPV6_DEFROUTE: 'no'
+                IPV6_FAILURE_FATAL: 'no'
+                IPV6_ADDR_GEN_MODE: 'stable-privacy'
+                NM_CONTROLLED: 'no'
+
+        peerdns:
+            sysconfig:
+                # Note the values 'yes', 'no' and 'none' need to be quoted when using yaml
+                PEERDNS: 'yes'
+                PEERROUTES: 'yes'
+
+        no-peerdns:
+            sysconfig:
+                # Note the values 'yes', 'no' and 'none' need to be quoted when using yaml
+                PEERDNS: 'no'
+                PEERROUTES: 'no'
+
+        no-ipv6:
+            sysconfig:
+                IPV6INIT: 'no'
+                IPV6_AUTOCONF: 'no'
+                IPV6_DEFROUTE: 'no'
+                IPV6_FAILURE_FATAL: 'no'
+                IPV6_ADDR_GEN_MODE: 'stable-privacy'
         
-        eth0:
-            sysconfig: |
-                TYPE="Ethernet"
-                PROXY_METHOD="none"
-                #BROWSER_ONLY="no"
-                BOOTPROTO="dhcp"
-                DEFROUTE="yes"
-                IPV4_FAILURE_FATAL="no"
-                IPV6INIT="no"
-                IPV6_AUTOCONF="no"
-                IPV6_DEFROUTE="no"
-                IPV6_FAILURE_FATAL="no"
-                IPV6_ADDR_GEN_MODE="stable-privacy"
-                ONBOOT="yes"
-                NM_CONTROLLED="no"
-                PEERDNS="no"
-                PEERROUTES=no
+        nm-controlled:
+            sysconfig:
+                NM_CONTROLLED: 'yes'
 
-nexus-repos:
-    defaults:
-        kubernetes: True 
-        built-rpms: True
-        dockerce:   True
-        # gitlab:   True # add only on the infra server
-        nodesource: True
-        #prometheus: 
-        saltstack: True
-        vscode: True
-    # Redhat and centos are both so crappy and ancient
-    # that they both need these three
-    redhat,centos:
-        rpmfusion:
-            # This is really for fedora, but still useful here. 
-            # can cause some conflicts though so it's disabled unless
-            # explicitly enabled
-            enabled: 0 
-        epel:       True
-        ius:        True
-    centos:
-        centos:     True
-    fedora:
-        fedora:     True
-        rpmfusion:  True
+        no-nm-controlled:
+            sysconfig:
+                NM_CONTROLLED: 'no'
 
+        ignored:
+            ignored: True
 
+        delete:
+            delete: True
 
-service-status:
+        ethernet:
+            sysconfig:
+                TYPE: Ethernet
 
-    service-sets: {} 
-        # Example of enabling a service
-        # Note, these are expected to be the name of a service set
-        # not the service itself (though that may be the same depending on the OS)
+        enabled:
+            sysconfig:
+                ONBOOT: 'yes'
 
-        # enabled:
-        #    - dhcp-server-dnsmasq
-        # disabled:
-        #    - dhcp-server-dhcpd
-        
-        # Or, an example of enabling/disabling different implementations:
-        # enabled:
-        #     - dhcp-server-dhcpd
-        #     - tftp-server-xinetd
-        # disabled:
-        #     - pxeboot-server-dnsmasq
-
-    services:
         disabled:
-            # polkit is left enabled simply for convenience because in the test environment we are using a single all-in-one node ie including workstation functionality
-            # - polkit
-            # Can't disable NetworkManager in my test env as I need the wifi!
-            # - NetworkManager
-            - libvirtd
-            - virtlockd
-            - virtlogd
-            - avahi-daemon
-            - xinetd
-            
+            sysconfig:
+                ONBOOT: 'no'
+
+        defroute:
+            sysconfig:
+                DEFROUTE: 'yes'
+
+        no-defroute:
+            sysconfig:
+                DEFROUTE: 'no'
+
+        dhcp:
+            sysconfig:
+                BOOTPROTO: 'dhcp'
+
+        no-dhcp:
+            sysconfig:
+                BOOTPROTO: 'none'
+
+        wireless:
+            sysconfig:
+                TYPE:     'Wireless'
+                WPA:      'yes'
+                KEY_MGMT: 'WPA-PSK'
+                MODE:     'Managed'
+            wpaconfig: {}
 
 # NOTE - while this key houses nexus configuration,
 # the separate key nexus-repos (above) selects which 
@@ -602,8 +610,31 @@ nexus:
                             description: Visual Studio Code 
                             path:        yumrepos/vscode/
 
-
-
+nexus-repos:
+    defaults:
+        kubernetes: True 
+        built-rpms: True
+        dockerce:   True
+        # gitlab:   True # add only on the infra server
+        nodesource: True
+        #prometheus: 
+        saltstack: True
+        vscode: True
+    # Redhat and centos are both so crappy and ancient
+    # that they both need these three
+    redhat,centos:
+        rpmfusion:
+            # This is really for fedora, but still useful here. 
+            # can cause some conflicts though so it's disabled unless
+            # explicitly enabled
+            enabled: 0 
+        epel:       True
+        ius:        True
+    centos:
+        centos:     True
+    fedora:
+        fedora:     True
+        rpmfusion:  True
 
 #node_exporter:
 #    port:     9100
@@ -614,19 +645,45 @@ nexus:
 #        - --collector.filesystem.ignored-mount-points=^(/sys$|/proc$|/dev$|/var/lib/docker/.*|/run.*|/sys/fs/.*)
 #        - --collector.filesystem.ignored-fs-types=^(sysfs|procfs|autofs|overlay|nsfs|securityfs|pstore)$
 
+node_lists:
+    prometheus:
+        primary:
+            - infra
+        secondary:
+            - pxe-client
+            - pxe-client2
+            - usbboot
+        workstations: []
+
 npm:
     host_config:
         send-metrics:     false
         metrics-registry: 
+        registry:     http://nexus:7081/repository/npmjs/
+
+pip:
+    host_config: |
+        [global]
+        index        = http://nexus:7081/repository/pypi/pypi
+        index-url    = http://nexus:7081/repository/pypi/simple
+        no-cache-dir = false
+        trusted-host = nexus
+        disable-pip-version-check = True
+
+        [list]
+        format = columns
+
 
 rsyslog:
     enabled: True
-
     client:
+        ## Send endpoints will be added in the lan layer
+        ##send: {}
+        send:
+            192.168.121.101:
+                port:     2514
+                protocol: relp
         enabled: True
-
-        # Send endpoints will be added in the lan layer
-        send: {}
 
     # The server will be enabled in a host or role override
     server:
@@ -634,6 +691,50 @@ rsyslog:
 
 rubygems:
     mirror: http://nexus:7081/repository/rubygems/
+
+service-status:
+
+    service-sets: {} 
+        # Example of enabling a service
+        # Note, these are expected to be the name of a service set
+        # not the service itself (though that may be the same depending on the OS)
+
+        # enabled:
+        #    - dhcp-server-dnsmasq
+        # disabled:
+        #    - dhcp-server-dhcpd
+        
+        # Or, an example of enabling/disabling different implementations:
+        # enabled:
+        #     - dhcp-server-dhcpd
+        #     - tftp-server-xinetd
+        # disabled:
+        #     - pxeboot-server-dnsmasq
+
+    services:
+        disabled:
+            # polkit is left enabled simply for convenience because in the test environment we are using a single all-in-one node ie including workstation functionality
+            # - polkit
+            # Can't disable NetworkManager in my test env as I need the wifi!
+            # - NetworkManager
+            - libvirtd
+            - virtlockd
+            - virtlogd
+            - avahi-daemon
+            - xinetd
+            
+
+service-reg:
+    nexus_http:    nexus:7081
+    nexus_docker:  nexus:7082
+    default_registry: nexus:7082
+    gitlab_http:   gitlab
+    gitlab_docker: gitlab-registry:5005
+    prometheus:    prometheus:9090
+    grafana:       grafana:7070
+    ipa_https:     infra:443
+    nginx_http:    192.168.121.102:80
+    nginx_https:   192.168.121.102:443
 
 ssh:
     sshd:
@@ -660,7 +761,6 @@ ssh:
             Subsystem	sftp	/usr/libexec/openssh/sftp-server
 
 sudoers:
-
     files:
 
         # In vagrant dev environment, allow sudo without password
@@ -677,3 +777,4 @@ sudoers:
             Cmnd_Alias NETWORK_START    = /usr/bin/systemctl stop network
             ALL ALL=(root) NOPASSWD: NETWORK_RESTART, NETWORK_STOP, NETWORK_START
 
+timezone: UTC

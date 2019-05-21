@@ -1,9 +1,10 @@
 # Gitlab configuration file
 # This file is generated from a Salt state.
 # Please be aware it may be overwritten
+{%- set domain = '.' ~ pillar.dns.system_domain %}
 {%- set protocol = 'https' if config.gitlab.port == 443 else 'http' %}'
 {%- set port_append = ':' ~ config.gitlab.port if config.gitlab.port not in [443,80] else  '' %}
-external_url '{{protocol}}://{{config.gitlab.hostname}}{{port_append}}'
+external_url '{{protocol}}://{{config.gitlab.hostname}}{{domain}}{{port_append}}'
 {%- if 'bind_ip' in config.gitlab and config.gitlab.bind_ip %}
 nginx['listen_addresses']            = ["{{config.gitlab.bind_ip}}"]
 {%- endif %}
@@ -28,7 +29,7 @@ registry['enable']                 = {{ 'true' if config.registry.enabled else '
 {%- if config.registry.enabled %}
 {%-     set protocol = 'http' if config.registry.port not in [443] else 'https' %}
 {%-     set port_append = ':' ~ config.registry.port if config.registry.port not in [443,80] else '' %}
-registry_external_url              "{{protocol}}://{{config.registry.hostname}}{{port_append}}"
+registry_external_url              "{{protocol}}://{{config.registry.hostname}}{{domain}}{{port_append}}"
 registry['registry_http_addr']     = "localhost:5000"
 registry_nginx['enable']           = true 
 registry_nginx['listen_port']      = {{config.registry.port}}
@@ -46,7 +47,7 @@ gitlab_pages['enable']             = {{ 'true' if config.pages.enabled else 'fal
 {%- if config.pages.enabled %}
 {%-     set protocol = 'http' if config.pages.port not in [443] else 'https' %}
 {%-     set port_append = ':' ~ config.pages.port if config.pages.port not in [443,80] else '' %}
-pages_external_url                 "{{protocol}}://{{config.pages.hostname}}{{port_append}}/"
+pages_external_url                 "{{protocol}}://{{config.pages.hostname}}{{domain}}{{port_append}}/"
 {%-     if 'bind_ip' in config.pages and config.pages.bind_ip %}
 pages_nginx['listen_addresses'] = ["{{config.pages.bind_ip}}"]
 {%-     endif %}
@@ -69,7 +70,7 @@ mattermost['enable']               = {{ 'true' if config.mattermost.enabled else
 {%- if config.mattermost.enabled %}
 {%-     set protocol = 'http' if config.mattermost.port not in [443] else 'https' %}
 {%-     set port_append = ':' ~ config.mattermost.port if config.mattermost.port not in [443,80] else '' %}
-mattermost_external_url            "{{protocol}}://{{config.mattermost.hostname}}{{port_append}}/"
+mattermost_external_url            "{{protocol}}://{{config.mattermost.hostname}}{{domain}}{{port_append}}/"
 {%-     if 'bind_ip' in config.mattermost and config.mattermost.bind_ip %}
 mattermost_nginx['listen_addresses'] = ["{{config.mattermost.bind_ip}}"]
 {%-     endif %}

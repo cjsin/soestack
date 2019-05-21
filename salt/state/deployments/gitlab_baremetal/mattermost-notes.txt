@@ -26,8 +26,8 @@ and
  59989bf8fac66233dc04924eded0a861bbb893fdad67ec06f6234bc335ba7182 
  Secret 
  5671f0cdcf45e59fe8168aaf11be93ac8c43cdc089fb65a94a983d994460a17a 
- http://mattermost.demo/login/gitlab/complete
- http://mattermost.demo/signup/gitlab/complete 
+ http://mattermost/login/gitlab/complete
+ http://mattermost/signup/gitlab/complete 
 
 gitlab has files:
 /var/opt/gitlab/mattermost/env/MM_GITLABSETTINGS_ID

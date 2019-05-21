@@ -1,7 +1,7 @@
 deployments:
     pxeboot_server:
         soestack_demo:
-            host: infra
+            host:      infra
             activated: True
 
             activate:
@@ -100,12 +100,12 @@ deployments:
                                 ss_settings:
                                     BOOTSTRAP_REPOS:   bootstrap-centos.repo
                                     #WAIT:              1
-                                    DOMAIN:            demo
-                                    SALT_MASTER:       infra.demo
+                                    DOMAIN:            default
+                                    SALT_MASTER:       infra.default
                                     SALT_TYPE:         client
                                     NAMESERVER:        gateway
                                     ROLES:             basic-node
-                                    LAYERS:            soe:demo,site:demo,lan:demo
+                                    LAYERS:            soe:demo,site:demo,lan:default
                                     DEVELOPMENT:       1
                                     INTERACTIVE:       1
                                     WAIT:              5
@@ -117,53 +117,9 @@ deployments:
                                 ss_repos:
                                     os:                '$NEXUS/centos/centos/$releasever/os/$basearch'
                                     updates:           '$NEXUS/centos/centos/$releasever/updates/$basearch'
-                                ss_hosts:
-                                    #192.168.121.1:     gateway
-                                    192.168.188.1:      gateway # modem / wifi
-                                    192.168.121.101:   infra.demo infra master salt ipa nexus.demo nexus
+                                ss_hosts: {}
+                                #    192.168.121.1:      gateway.default
+                                #    192.168.121.101:    infra.default infra master salt ipa nexus.default nexus
                                 kickstart: http://%http_server%/os/minimal/provision/kickstart/kickstart.cfg
                                 stage2:    nfs:%nfs_server%:/e/pxe/os/minimal/
-
-                            
-                    demo:
-                        # For whatever reason  (probably routing) 
-                        # since both these network devices ar using the same subnet,
-                        # this needs to be eth0 in my test env, not eth1
-                        iface:                 eth0
-                        subnet:                192.168.121
-                        static:                True
-                        entries:
-                            netinstall: # test resilience with empty entry
-                                ss_settings:
-                                    DOMAIN:            demo
-                                    ROLES:             basic-node
-                                    NAMESERVER:        192.168.121.101
-                                ss_hosts:
-                                    # NOTE the demo lan is associated with the ethernet device, 
-                                    # this gateway is for that and what clients booted on that network will use
-                                    192.168.121.1:     gateway
-                                    192.168.121.101:   infra.demo infra master salt ipa ldap nfs pxe nexus.demo nexus
-                    qemu:
-                        iface:                 eth1
-                        static:                True
-                        subnet:                10.0.2
-                        entries:
-                            custom:
-                                title:    '^Custom Kickstart (Centos7 custom)'
-                                ss_settings:
-                                    DOMAIN:            qemu.demo
-                                    ROLES:             developer-workstation
-                                    LAYERS:            soe:demo,site:demo,lan:qemu
-                                ss_hosts:
-                                    # To nodes booting within the libvirt/qemu/vagrant test network the nexus server and gateway are 10.0.2.2
-                                    10.0.2.2:          nexus.demo gateway nexus
-                                    192.168.121.101:   infra.demo infra master salt ipa ldap nfs pxe
-                                append:    noquiet custom-test
-                                kickstart: http://%http_server%/os/minimal/provision/kickstart/kickstart-custom.cfg
-                                stage2:    nfs:%nfs_server%:/e/pxe/os/custom/
-
-                hosts:
-                    client:
-                        lan:    qemu
-                        append: test-host-override
 

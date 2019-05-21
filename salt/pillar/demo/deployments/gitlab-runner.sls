@@ -1,7 +1,7 @@
 deployments:
     gitlab_runner_baremetal:
         gitlab-runner:
-            host: infra
+            host:      infra
             activated: True
             activate:
                 service:
@@ -10,7 +10,7 @@ deployments:
             config:
                 # Replace this with the correct token after gitlab installation
                 registration_token: unset 
-                gitlab_host:        gitlab.demo
+                gitlab_host:        gitlab
                 registration_flags: 
                     - --env TEST_ENV=test                                      # Custom environment variables injected to build environment [$RUNNER_ENV]
                     - --env REGISTER_LOCKED=false 
@@ -21,7 +21,7 @@ deployments:
                     docker:
                         registration_flags:
                             - --docker-image nexus:7082/library/docker:18.06.3-git
-                            # - --docker-host gitlab.demo
+                            # - --docker-host gitlab
                             - --docker-dns 192.168.121.101
                             - --docker-volumes /var/run/docker.sock:/var/run/docker.sock
                             - --docker-volumes /etc/docker/daemon.json:/etc/docker/daemon.json
@@ -37,5 +37,4 @@ deployments:
                     kubernetes:
                         registration_flags:
                             - --tag-list k8s
-                            - --kubernetes-host infra.demo
-                            
+                            - --kubernetes-host infra

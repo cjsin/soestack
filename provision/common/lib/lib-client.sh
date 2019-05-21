@@ -64,6 +64,7 @@ function salt_minion_autoenrol()
     local mid="${1:-$(hostname -s)}"
     local useracct="${2:-salt-enrol}"
     local success=0
+    # TODO - generate this
     local pw=d62da93aecc94bd6363d0c7d5fbea7248e8e0c9e15dfca0fb92c1e665760de9a
 
     salt_delete_key

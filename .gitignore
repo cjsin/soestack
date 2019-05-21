@@ -5,3 +5,4 @@
 *.raw--*
 __pycache__
 *.iso
+*.private.*

@@ -41,6 +41,20 @@ function indented()
     "${@}" | indent
 }
 
+# Override cp with a function so that functions in this library are called
+# from ain interactive shell, it does not use the 'cp -i' alias.
+function cp()
+{
+    /bin/cp "${@}"
+}
+
+# Override cp with a function so that functions in this library are called
+# from ain interactive shell, it does not use the 'mv -i' alias.
+function mv()
+{
+    /bin/mv "${@}"
+}
+
 function yum_install()
 {
     yum -y install "${@}"

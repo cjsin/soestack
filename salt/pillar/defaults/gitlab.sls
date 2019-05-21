@@ -24,5 +24,4 @@ deployment:
                     http_frontend_port:         8000
                     pages_frontend_port:        8000
 
-                hostname: gitlab.demo
-
+                hostname: gitlab

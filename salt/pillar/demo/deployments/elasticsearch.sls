@@ -2,7 +2,7 @@ deployments:
 
     elasticsearch_container:
         elasticsearch-testdev:
-            host: infra
+            host:      infra
             activated: False
             activate:
                 firewall:

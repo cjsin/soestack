@@ -47,20 +47,19 @@ function update_hostfile()
         fi
     fi 
 
-    # cat "hosts-aliases" | while read line ; do
-    #     read name remainder <<< "${line}"
-    #     echo "Add host aliases for ${name} : ${remainder}"
-    #     sed -i -r -e "/[[:space:]]${name}/ s/\$/ ${remainder}/" /etc/hosts 
-    # done
- 
     add_hosts
-
 
     indented "Hosts" cat /etc/hosts
 }
 
 function setup_vagrant_ssh()
 {
+    if is_development
+    then
+        # Centos vagrant image comes with PasswordAuthentication disabled. Enable it.
+        sed -i '/^PasswordAuthentication no/ s/no/yes/' /etc/ssh/sshd_config
+        systemctl restart sshd
+    fi    
     [[ -f /root/.ssh/authorized_keys ]] || cp -f /home/vagrant/.ssh/authorized_keys /root/.ssh/
 }
 

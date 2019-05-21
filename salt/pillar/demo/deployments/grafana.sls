@@ -49,7 +49,7 @@ deployments:
 
             config:
                 grafana_url: http://nexus:7081/repository/interwebs/grafana.com
-                hostname:    grafana.demo
+                hostname:    grafana
                 port:        8080
                 data_path:   /dl/local/data/grafana
                 

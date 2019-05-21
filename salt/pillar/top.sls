@@ -6,8 +6,6 @@ base:
 
         - layers
 
-        - example_python
-
         # Override with mid level security just during early development
         # - defaults.security.low
 

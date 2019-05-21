@@ -14,5 +14,5 @@ network:
         # Example data
         # 127.0.0.1:       localhost.localdomain localhost localhost4.localdomain localhost4
         # '::1':           localhost6.localdomain localhost6
-        # 192.168.121.101: infra.demo infra ipa salt
-        # 192.168.121.1:   gateway.demo gateway nexus.demo nexus
+        # x.x.x.x:         hostx.exampledomain hostx
+        # y.y.y.y:         hosty.exampledomain hosty

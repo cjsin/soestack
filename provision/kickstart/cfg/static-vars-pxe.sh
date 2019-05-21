@@ -13,9 +13,9 @@ repos=(
 # These vars are defaults which can be overridden
 # by the boot-time kernel commandline.
 SALT_TYPE=client
-SALT_MASTER=infra.soestack
-DOMAIN=soestack
-NAMESERVER=gateway.soestack
+SALT_MASTER=infra
+DOMAIN=demo
+NAMESERVER=gateway
 ROLES=basic-node
 LAYERS=soe:soestack,site:demo,lan:demo
 DEVELOPMENT=1

@@ -36,7 +36,7 @@ deployments:
                 group: 1000
 
             config:
-                server_name:      kibana.demo
+                server_name:      kibana
                 elasticsearch_url: http://192.168.121.109:9200
                 xpack_enabled:     'false'
 
@@ -48,7 +48,7 @@ deployments:
                     kibana-yml: |
                         server.name: {{config.server_name or 'kibana'}}
                         # Even though this looks like a number it has to be a string - hence the quoting.
-                        #server.host: "kibana.demo"
+                        #server.host: "kibana"
                         server.host: "0.0.0.0"
                         elasticsearch.url: {{config.elasticsearch_url or 'http://elasticsearch:9200' }}
                         xpack.monitoring.ui.container.elasticsearch.enabled: {{config.xpack_enabled or 'false'}}

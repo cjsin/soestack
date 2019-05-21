@@ -1,5 +1,5 @@
 salt-users:
-    server:    infra.demo
+    server:    infra
     port:      389
     tls:       false
     binddn:    uid=salt-pillars,cn=users,cn=accounts,dc=demo

@@ -4,9 +4,8 @@ deployments:
             host:        '.*'
             activated:   True
             config:
-                server:  infra.demo
-                realm:   DEMO
-                domain:  demo
-                site:    demo
-                ldap:
-                    base-dn: dc=demo
+                server:  infra.default
+                realm:   DEFAULT
+                domain:  default
+                site:    default
+                ldap:    {}
