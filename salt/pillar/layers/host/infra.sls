@@ -95,7 +95,7 @@ network:
                     ssid=EXAMPLE
                     scan_ssid=1
                     key_mgmt=WPA-PSK
-                    psk=big_long_example_wpa_psk_value
+                    psk=example
                 }
 
         eth0:
