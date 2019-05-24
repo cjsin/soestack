@@ -1,6 +1,10 @@
 include:
     - .managed_hosts
 
+    # nexus container is first deployed by the infra server setup script
+    # but is updated by this deployment
+    - .nexus_container
+
     # Logging server
     - .elasticsearch_container
 
@@ -14,8 +18,6 @@ include:
     - .ipa.master
     - .ipa.client
 
-    # nexus container is instead deployed by the infra server setup script
-    # - .nexus_container
     # - .nginx
 
     # Monitoring server

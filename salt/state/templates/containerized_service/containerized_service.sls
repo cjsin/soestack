@@ -39,6 +39,9 @@
 {#- if there is a colon before a slash, then the image already includes a server host:port prefix #}
 {%- if image_parts_colon[0] and (image_parts_colon[0]|length < image_parts_slash[0]|length) %}
 {%-     set image_prefix = '' %}
+{%- elif 'local_image' in container and container.local_image %}
+{#-     # the image is configured to use a locally loaded container #}
+{%-     set image_prefix = '' %}
 {%- elif 'service-reg' in pillar and pillar['service-reg'] and 'default_registry' in pillar['service-reg'] and pillar['service-reg'].default_registry %}
 {%-     set image_prefix = pillar['service-reg'].default_registry ~ '/' %}
 {%- else %}

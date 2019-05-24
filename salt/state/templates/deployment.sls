@@ -65,7 +65,7 @@
 #             <deployment-specific-key>:
 #}
 
-{%- set diagnostics      = True %}
+{%- set diagnostics      = False %}
 {%- set deployment_type  = args.deployment_type %}
 {%- set deployment_name  = args.deployment_name %}
 {%- set deployment       = args.deployment %}
@@ -98,7 +98,6 @@
 
 {{noop.pprint('actions-' ~ item.deployment_name, actions) }}
 
-
 {%- endif %}
 
 
@@ -109,23 +108,21 @@
 {#-         # Install the base nugget class - that has a name matching the deployment type #}
 {%-         set base_nugget_type = deployment_type.replace('_','-') %}
 
+{%-         if diagnostics %}
 {{sls}}.{{deployment_name}}.{{action}}.base-nugget-type.{{base_nugget_type}}:
     noop.notice
+{%-         endif %}
 
 {%-         if 'nuggets' in pillar and pillar.nuggets and base_nugget_type in pillar.nuggets %}
 
-
-{%- if diagnostics %}
+{%-             if diagnostics %}
 {{noop.notice(' '.join(['deployment', deployment_type, deployment_name, action, action~'-base-nugget', base_nugget_type])) }}
-{%- endif %}
+{%-             endif %}
 
 {%-             with args = { 'nugget_name': base_nugget_type} %}
 {%                  include('templates/nugget/'~action~'.sls') with context %}
 {%-             endwith %}
-
-
 {%-         endif %}
-
 
 {#-         # Install this deployment as a nugget itself #}
 {%-         with args = { 'nugget': deployment, 
@@ -134,15 +131,12 @@
                           'action': action 
                         } %}
 
-{%- if diagnostics %}
+{%-             if diagnostics %}
 {{noop.notice(' '.join(['deployment', deployment_type, deployment_name,action,'install-instance-as-nugget'])) }}
-{%- endif %}
+{%-             endif %}
 
 {%              include('templates/nugget/'~action~'.sls') with context %}
-
 {%-         endwith %}
-
-
 
 {#-         # Call custom deployment handler #}
 {%-         with args = { 'deployment_name': deployment_name, 
@@ -158,9 +152,7 @@
 {%              include('templates/deployment/'~deployment_type~'/'~deployment_type~'.sls') with context %}
 
 {%-         endwith %}
-
 {%-     endif %}
-
 {#- end for each action #}
 {%- endfor %}
 
