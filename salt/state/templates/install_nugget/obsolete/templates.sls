@@ -1,4 +1,4 @@
-#
+{#
 #  Create templates on the filesystem which can then be used
 #  to generate files
 #
@@ -6,6 +6,8 @@
 #     - nugget_name
 #     - nugget
 #     - suffix
+#
+#}
 
 {%- if 'templates' in nugget %}
 {%-    for name, contents in nugget.templates.iteritems() %}

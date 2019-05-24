@@ -3,7 +3,7 @@
 {%- set deployment_type = args.deployment_type %}
 {%- set deployment      = args.deployment %}
 
-install-phpldapadmin-{{suffix}}:
+{{sls}}.install-phpldapadmin-{{suffix}}:
     pkg.installed:
         - name:
             - phpldapadmin

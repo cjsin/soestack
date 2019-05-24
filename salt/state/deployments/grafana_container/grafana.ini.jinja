@@ -5,12 +5,19 @@ filters = ldap:debug
 data = {{config.data_path}}
 
 [server]
-protocol = http
+protocol = {{'https' if 'cert' in config and config.cert else 'http'}}
+# The grafana instance in the container fails to bind to the specific IP but can bind to 0.0.0.0
+# and then docker only maps the port for the specific IP
 http_addr = 0.0.0.0
+#http_addr = {{config.ip}}
 http_port = {{config.port}}
-domain = {{grains.host}}
+domain = {{config.domain}}
 enforce_domain = false
-root_url = http://{{config.hostname}}:{{config.port}}
+root_url = http://{{config.hostname}}{{'~' ~ config.domain if 'domain' in config and config.domain else ''}}:{{config.port}}
+cert = {{config.cert if config.cert else ''}}
+
+[provisioning]
+provisioning = /etc/grafana/provisioning
 
 [database]
 log_queries = false

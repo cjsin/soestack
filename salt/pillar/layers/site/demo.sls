@@ -1,7 +1,7 @@
 # Overrides for the demo test soe site
 
 _loaded:
-  {{sls}}:
+    {{sls}}:
 
 include:
     - demo.deployments.ipa-master
@@ -22,6 +22,65 @@ cups:
             info:      Example printer
             makemodel: Example printer (recommended)
             ip:        192.168.121.215
+
+deployments:
+    elasticsearch_container:
+        elasticsearch-testdev:
+            host:        infra
+            activated:   True
+            activated_where: {{sls}}
+    gitlab_runner_baremetal:
+        gitlab-runner:
+            host:        infra
+            activated:   True
+            activated_where: {{sls}}
+    gitlab_baremetal:
+        gitlab:
+            host:        infra
+            activated:   True
+            activated_where: {{sls}}
+            config:
+                hostname: gitlab.qemu
+    grafana_container:
+        grafana-cont:
+            host:        infra
+            activated:   True
+            activated_where: {{sls}}
+            config:
+                ip:      192.168.121.108
+                domain:  qemu
+    ipa_master:
+        testenv-master:
+            config:
+                passwords:
+                    master: master123
+                    admin:  admin123
+                    ds:     random
+    kibana_container:
+        kibana-frontend:
+            host:        infra
+            activated:   True
+            activated_where: {{sls}}
+    logstash_baremetal:
+        logstash-sys:
+            host:        infra
+            activated:   True
+            activated_where: {{sls}}
+    nexus_container:
+        nexus-mirror:
+            host:        infra
+            activated:   True
+            activated_where: {{sls}}
+    phpldapadmin_baremetal:
+        phpldapadmin:
+            host:        infra
+            activated:   True
+            activated_where: {{sls}}
+    prometheus_container:
+        prometheus-server:
+            host:        infra
+            activated:   True
+            activated_where: {{sls}}
 
 docker:
     config:
@@ -63,32 +122,42 @@ network:
     classes:
         infra-server:
             sysconfig:
+                # Main IP, infastructure services etc
                 IPADDR1: '192.168.121.101'
                 PREFIX1: '24'
 
+                # Nginx frontend / proxy
                 IPADDR2: '192.168.121.102'
                 PREFIX2: '24'
 
+                # Nexus
                 IPADDR3: '192.168.121.103'
                 PREFIX3: '24'
 
+                # Gitlab
                 IPADDR4: '192.168.121.104'
                 PREFIX4: '24'
 
+                # Gitlab mattermost
                 IPADDR5: '192.168.121.105'
                 PREFIX5: '24'
 
+                # Gitlab pages
                 IPADDR6: '192.168.121.106'
                 PREFIX6: '24'
 
+                # Gitlab docker registry
                 IPADDR7: '192.168.121.107'
                 PREFIX7: '24'
 
+                # Grafana and Prometheus
                 IPADDR8: '192.168.121.108'
                 PREFIX8: '24'
 
+                # Elasticsearch and Kibana
                 IPADDR9: '192.168.121.109'
                 PREFIX9: '24'
 
+                # Kubernetes master
                 IPADDR10: '192.168.121.110'
                 PREFIX10: '24'        

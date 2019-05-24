@@ -1,3 +1,6 @@
+_loaded_layers:
+    {{sls}}: {{grains.layers.lan|json}}
+
 {%- if 'layers' in grains and grains.layers is mapping and 'lan' in grains.layers and grains.layers.lan %}
 {#-    # wtf, it seems slspath is not set at all while processing pillar data #}
 {#-    # so it is hard coded here for now, but should raise a bug or feature request with saltstack #}

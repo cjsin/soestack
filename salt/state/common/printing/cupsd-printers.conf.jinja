@@ -21,8 +21,10 @@ ErrorPolicy stop-printer
 </Printer>
 
 {%- if 'printers' in cups and cups.printers %}
-{%-     for printer_name, printer in cups.printers.iteritems() %}
-{%-     set tag_prefix = 'Default' if 'printer_default' in cups and cups.printer_default == printer_name else '' %}
+{%-     set sorted_keys = cups.printers.keys()|sort %}
+{%-     for printer_name in sorted_keys %}
+{%-         set printer = cups.printers[printer_name] %}
+{%-         set tag_prefix = 'Default' if 'printer_default' in cups and cups.printer_default == printer_name else '' %}
 
 <{{tag_prefix}}Printer {{printer_name}}>
 UUID urn:uuid:{{printer.uuid}}

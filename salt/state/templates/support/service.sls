@@ -4,7 +4,7 @@
 
 {%- if service_name and action %}
 
-{{prefix}}service-{{service_name}}-{{action}}{{suffix}}:
+{{sls}}.{{prefix}}service-{{service_name}}-{{action}}{{suffix}}:
     service.{{'running' if action == 'enabled' else ('dead' if action == 'disabled' else action) }}:
         - name:   {{service_name}}
         {%- if action == 'enabled' %}

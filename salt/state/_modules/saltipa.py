@@ -93,47 +93,47 @@ def rawparser(lines):
         key = key.strip()
         val = val.strip()
         results.append([key, val])
-    print("rawparser returning results {}".format(results))
+    #print("rawparser returning results {}".format(results))
     return results 
 
 def search_raw_results(pairs, search_type=None, search_value=None):
     results = [] 
     for x in pairs:
         key, val = x
-        print("{} = {}".format(key, val))
+        #print("{} = {}".format(key, val))
         if search_type and key != search_type:
-            print("{} != {}.".format(key, search_type))
+            #print("{} != {}.".format(key, search_type))
             continue
         if search_value and val != search_value:
-            print("{} != {}.".format(val, search_value))
+            #print("{} != {}.".format(val, search_value))
             continue 
-        print("some kind of result:{}={}".format(key, val))
+        #print("some kind of result:{}={}".format(key, val))
         if search_type and search_value:
-            print("Searching for and found {}={}".format(key, val))
+            #print("Searching for and found {}={}".format(key, val))
             results.append([ key, val ])
         elif search_type:
-            print("Searching for type {} - returning found value {}".format(search_type, val))
+            #print("Searching for type {} - returning found value {}".format(search_type, val))
             results.append(val) 
         elif search_value:
-            print("Searching for value {} - returning found type {}".format(search_value, key))
+            #print("Searching for value {} - returning found type {}".format(search_value, key))
             results.append(key)
         else:
-            print("No search criteria - returning full pair {}={}".format(key, val))
+            #print("No search criteria - returning full pair {}={}".format(key, val))
             results.append([ key, val ])
-    print("search_raw_results returning {}".format(results))
+    #print("search_raw_results returning {}".format(results))
     return results 
 
 def object_config(objtype, path, search_type=None, search_value=None):
     cmd = [ 'ipa' ] + [objtype + '-show' ] + [ '--raw' ]
 
-    print("find cmd={}".format(cmd))
+    #print("find cmd={}".format(cmd))
 
     out = __salt__['cmd.run_all'](cmd,
                                   output_loglevel='trace',
                                   ignore_retcode=True,
                                   python_shell=False)
 
-    print("stderr:{}".format(out['stderr']))
+    #print("stderr:{}".format(out['stderr']))
     raw_results = rawparser(out['stdout'].splitlines())
     return search_raw_results(raw_results, search_type=search_type, search_value=search_value)
 
@@ -146,7 +146,7 @@ def _update_object(objtype, path, **kwargs):
         cmd.append("--setattr={}={}".format(key,val))
     cmd.append('--raw')
 
-    print("find cmd={}".format(cmd))
+    #print("find cmd={}".format(cmd))
 
     out = __salt__['cmd.run_all'](cmd,
                                   output_loglevel='trace',
@@ -189,20 +189,20 @@ def modify_global_config(testing=False, **kwargs):
 def find_record(category, path, search_type=None,search_value=None):
     cmd = [ 'ipa', category + '-show' ] + path + [ '--raw' ]
 
-    print("find_record cmd={}".format(cmd))
+    #print("find_record cmd={}".format(cmd))
 
     out = __salt__['cmd.run_all'](cmd,
                                   output_loglevel='trace',
                                   ignore_retcode=True,
                                   python_shell=False)
 
-    print("stderr:{}".format(out['stderr']))
+    #print("stderr:{}".format(out['stderr']))
     raw_results = rawparser(out['stdout'].splitlines())
     ok = out['retcode'] == 0
     return ok, search_raw_results(raw_results, search_type=search_type, search_value=search_value)
 
 def add_record(category, path, record_type, value):
-    print("add_record {},{},{},{}".format(category, path, record_type, value))
+    #print("add_record {},{},{},{}".format(category, path, record_type, value))
 
     cmd = [ 'ipa', category + '-add' ] + path
 
@@ -211,35 +211,35 @@ def add_record(category, path, record_type, value):
 
     cmd.append('--raw')
 
-    print("add cmd={}".format(cmd))
+    #print("add cmd={}".format(cmd))
 
     out = __salt__['cmd.run_all'](cmd,
                                   output_loglevel='trace',
                                   ignore_retcode=True,
                                   python_shell=False)
 
-    print("stderr:{}".format(out['stderr']))
+    #print("stderr:{}".format(out['stderr']))
 
     raw_results = rawparser(out['stdout'].splitlines())
     ok = out['retcode'] == 0
     return ok, search_raw_results(raw_results, search_type=record_type, search_value=value)
 
 def del_record(category, path, record_type, value):
-    print("del_record {},{},{},{}".format(category, path, record_type, value))
+    #print("del_record {},{},{},{}".format(category, path, record_type, value))
     cmd = [ 'ipa', category + '-del' ] + path
 
     flag = record_to_cmdline_flags[record_type] if record_type in record_to_cmdline_flags else record_type 
     cmd.append("--{}={}".format(flag, value))
 
-    print("del cmd={}".format(cmd))
+    #print("del cmd={}".format(cmd))
 
     out = __salt__['cmd.run_all'](cmd,
                                   output_loglevel='trace',
                                   ignore_retcode=True,
                                   python_shell=False)
 
-    print("stderr:{}".format(out['stderr']))
-    print("stdout:{}".format(out['stdout']))
+    #print("stderr:{}".format(out['stderr']))
+    #print("stdout:{}".format(out['stdout']))
 
     ok = out['retcode'] == 0
 
@@ -258,7 +258,7 @@ def generic_update(category, path, record_type, value, update_existing=True, tes
       - added record or none
       - deleted record or none
     """
-    print("Generic_update {}, {}, rectype={},value={}".format(category, path, record_type, value))
+    #print("Generic_update {}, {}, rectype={},value={}".format(category, path, record_type, value))
     deletions = [] 
     additions = [ value ]
     if update_existing:

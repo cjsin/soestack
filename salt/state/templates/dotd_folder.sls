@@ -1,4 +1,4 @@
-#
+{#
 #  This template expects the variable 'args' containing the following keys:
 #    - dotd_path      <the directory in which to create files>
 #    - pillar_key     <the pillar key in which to look for items>
@@ -40,6 +40,7 @@
 #              a: 1
 #              b: 2
 #
+#}
 
 {%- set arg_defaults = {
     'user':      'root',
@@ -58,7 +59,7 @@
 
 {%- for name, item in pillar_data.iteritems() %}
 
-.dotd-file-{{params.dotd_path}}-{{name}}:
+{{sls}}.dotd-file-{{params.dotd_path}}-{{name}}:
     file.{{'managed' if item.enabled else 'absent'}}:
         - name:     '{{params.dotd_path}}/{{name}}{{dot_ext}}'
         - mode:     '{{params.mode}}'

@@ -1,16 +1,15 @@
+{#
 #
 # This template expects the following context variables:
 #   - args: a dict with the following key/value pairs:
 #       - service_name  - the name of the service
 #       - container     - an object describing the image,mounts,user,group,ports,entrypoint options
 #
-#
-#
-#
+#}
+
 {%- set suffix          = args.suffix if 'suffix' in args else salt['cmd.exec_code']('python','import uuid; print(str(uuid.uuid4())); ')[:8] %}
 {%- set deployment_name = args.deployment_name %}
 {%- set deployment_type = args.deployment_type %}
-
 
 {%- set container_defaults = {
     'mounts': {},
@@ -52,18 +51,13 @@
 
 {{docker.image_present(container.image,image_prefix=image_prefix) }}
 
-# This line is required to fix a salt bug which appends stray 'f' characters to macros
+{# This line is required to fix a salt bug which appends stray 'f' characters to macros #}
 
 {%- endif %}
 
-# line2
-
 {%- if action in [ 'all', 'configure' ] %}
 
-
-# line3
-
-{{prefix}}-systemd-unit:
+{{sls}}.containerized_service.{{service_name}}.systemd-unit:
     file.managed:
         - name:     /etc/systemd/system/{{service_name}}.service
         - user:     root
@@ -77,7 +71,7 @@
             # NOTE the image prefix must be quoted because otherwise an empty value is turned into a None
             image_prefix: '{{image_prefix}}'
 
-{{prefix}}-sysconfig:
+{{sls}}.containerized_service.{{service_name}}.sysconfig:
     file.managed:
         - name:     /etc/sysconfig/{{service_name}}
         - user:     root
@@ -91,50 +85,47 @@
             # NOTE the image prefix must be quoted because otherwise an empty value is turned into a None
             image_prefix: '{{image_prefix}}'
 
-
-{%- set container_fs_spec = {} %}
-{%- if False %}
-{#-     # When saltstack 2108.3.3 comes out the traverse filter will be available #}
-{%-     set fs_defaults = deployment | traverse('filesystem:defaults', {}) %}
-{%- else %}
-{%-     set fs = deployment.filesystem if 'filesystem' in deployment and deployment.filesystem else {} %}
-{%-     set fs_defaults = fs.defaults if 'defaults' in fs and fs.defaults else {} %}
-{%- endif %}
-
-{%- do  container_fs_spec.update(fs_defaults) %}
-{%- for key in [ 'user', 'group', 'mode', 'dir_mode', 'file_mode' ] %}
-{%-     if key in container %}
-{%-         do container_fs_spec.update({key: container[key]})%}
-{%-     elif key in deployment %}
-{%-         do container_fs_spec.update({key: deployment[key]})%}
+{%-     set container_fs_spec = {} %}
+{%-     if False %}
+{#-          # When saltstack 2108.3.3 comes out the traverse filter will be available #}
+{%-         set fs_defaults = deployment | traverse('filesystem:defaults', {}) %}
+{%-     else %}
+{%-         set fs = deployment.filesystem if 'filesystem' in deployment and deployment.filesystem else {} %}
+{%-         set fs_defaults = fs.defaults if 'defaults' in fs and fs.defaults else {} %}
 {%-     endif %}
-{%- endfor %}
 
-{%- if 'storage' in container and container.storage %}
-{%-     for item_path in container.storage %}
-{%-         set spec = { 'makedirs': True, 'selinux': 'container_file_t' } %}
-{%-         do spec.update(container_fs_spec) %}
-{%-         with args = { 'prefix': prefix ~ '-storage', 'path': item_path, 'item_type': 'dir', 'spec': spec } %}
-{%              include('templates/support/fsitem.sls') with context %}
-{%-         endwith %}
+{%-     do container_fs_spec.update(fs_defaults) %}
+{%-     for key in [ 'user', 'group', 'mode', 'dir_mode', 'file_mode' ] %}
+{%-         if key in container %}
+{%-             do container_fs_spec.update({key: container[key]})%}
+{%-         elif key in deployment %}
+{%-             do container_fs_spec.update({key: deployment[key]})%}
+{%-         endif %}
 {%-     endfor %}
-{%- endif %}
 
-
-{%- if 'mounts' in container and container.mounts %}
-{%-     for iteration in [ 'dir', 'file' ] %}
-{%-         for item_path, item_type in container.mounts.iteritems() %}
-{%-             if iteration == item_type %}
-{%-                 set spec = { 'makedirs': True, 'selinux': 'container_file_t' } %}
-{%-                 do spec.update(container_fs_spec) %}
-{%-                 with args = { 'prefix': prefix ~ '-mount-'~item_type, 'path': item_path, 'item_type': item_type, 'spec': spec } %}
-{%                      include('templates/support/fsitem.sls') with context %}
-{%-                 endwith %}
-{%-             endif %}
+{%-     if 'storage' in container and container.storage %}
+{%-         for item_path in container.storage %}
+{%-             set spec = { 'makedirs': True, 'selinux': 'container_file_t' } %}
+{%-             do spec.update(container_fs_spec) %}
+{%-             with args = { 'prefix': prefix ~ '-storage', 'path': item_path, 'item_type': 'dir', 'spec': spec } %}
+{%                  include('templates/support/fsitem.sls') with context %}
+{%-             endwith %}
 {%-         endfor %}
-{%-     endfor %}
-{%- endif %}
+{%-     endif %}
 
+{%-     if 'mounts' in container and container.mounts %}
+{%-         for iteration in [ 'dir', 'file' ] %}
+{%-             for item_path, item_type in container.mounts.iteritems() %}
+{%-                 if iteration == item_type %}
+{%-                     set spec = { 'makedirs': True, 'selinux': 'container_file_t' } %}
+{%-                     do spec.update(container_fs_spec) %}
+{%-                     with args = { 'prefix': prefix ~ '-mount-'~item_type, 'path': item_path, 'item_type': item_type, 'spec': spec } %}
+{%                          include('templates/support/fsitem.sls') with context %}
+{%-                     endwith %}
+{%-                 endif %}
+{%-             endfor %}
+{%-         endfor %}
+{%-     endif %}
 
 {%- endif %}
 
@@ -142,7 +133,7 @@
 
 {%-     set activated = 'activated' in deployment and deployment.activated %}
 
-{{prefix}}-service:
+{{sls}}.containerized_service.{{service_name}}.service:
     service.{{'running' if activated else 'dead'}}:
         - name: {{ deployment_name}}
         - enable: {{activated}} 

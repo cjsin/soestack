@@ -1,3 +1,5 @@
+#!stateconf yaml . jinja 
+
 {#  first install packages based on the configured roles #}
 
 {%- set diagnostics = False %}

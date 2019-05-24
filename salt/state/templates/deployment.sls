@@ -1,3 +1,4 @@
+{#
 # Processes deployments with the following structure
 #
 #         <deployment-name>:
@@ -62,8 +63,9 @@
 #             # for example with a container based service 
 #             # this will be container:
 #             <deployment-specific-key>:
+#}
 
-{%- set diagnostics      = False %}
+{%- set diagnostics      = True %}
 {%- set deployment_type  = args.deployment_type %}
 {%- set deployment_name  = args.deployment_name %}
 {%- set deployment       = args.deployment %}
@@ -107,11 +109,14 @@
 {#-         # Install the base nugget class - that has a name matching the deployment type #}
 {%-         set base_nugget_type = deployment_type.replace('_','-') %}
 
+{{sls}}.{{deployment_name}}.{{action}}.base-nugget-type.{{base_nugget_type}}:
+    noop.notice
+
 {%-         if 'nuggets' in pillar and pillar.nuggets and base_nugget_type in pillar.nuggets %}
 
 
 {%- if diagnostics %}
-{{noop.notice(' '.join(['deployment', deployment_type, deployment_name,action,action~'-base-nugget',base_nugget_type])) }}
+{{noop.notice(' '.join(['deployment', deployment_type, deployment_name, action, action~'-base-nugget', base_nugget_type])) }}
 {%- endif %}
 
 {%-             with args = { 'nugget_name': base_nugget_type} %}

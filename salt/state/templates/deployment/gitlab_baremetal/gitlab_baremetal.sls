@@ -6,20 +6,20 @@
 
 {%- if action in ['all','install'] %}
 
-gitlab-baremetal-package-installed:
+{{sls}}.gitlab-baremetal-package-installed:
     pkg.installed:
         - name:      gitlab-ce
         - fromrepo:  gitlab-ce
         - version:   {{pillar.svd.cots.gitlab.version}}
         - allow_updates: True
 
-gitlab-baremetal-copy-original-config:
+{{sls}}.gitlab-baremetal-copy-original-config:
     cmd.run:
         - name:      cp /etc/gitlab/gitlab.rb /etc/gitlab/gitlab.rb.orig
         - unless:    test -f /etc/gitlab/gitlab.rb.orig
         - creates:   /etc/gitlab/gitlab.rb.orig
         - require:
-            - pkg:   gitlab-baremetal-package-installed
+            - pkg:   {{sls}}.gitlab-baremetal-package-installed
 
 {%- endif %}
 
@@ -27,11 +27,11 @@ gitlab-baremetal-copy-original-config:
 
 
 # This file deliberately does not specify user,group,perms. The gitlab package install will configure it.
-gitlab-baremetal-config-dir:
+{{sls}}.gitlab-baremetal-config-dir:
     file.directory:
         - name:  /etc/gitlab
 
-gitlab-baremetal-config-file:
+{{sls}}.gitlab-baremetal-config-file:
     file.managed:
         - name:         /etc/gitlab/gitlab.rb
         - user:         root
@@ -44,36 +44,36 @@ gitlab-baremetal-config-file:
             deployment:      {{deployment|json()}}
             config:          {{config|json()}}
 
-gitlab-baremetal-configured:
+{{sls}}.gitlab-baremetal-configured:
     cmd.run:
         - name:     gitlab-ctl reconfigure
         - onlyif:   test -f /usr/bin/gitlab-ctl
         - onchanges:
-            - file: gitlab-baremetal-config-file
+            - file: {{sls}}.gitlab-baremetal-config-file
 
 {%     if 'mattermost' in config and 'app_id' in config.mattermost and 'token' in config.mattermost %}
 
-gitlab-mattermost-integration-appid:
+{{sls}}.gitlab-mattermost-integration-appid:
     file.managed:
         - name: /var/opt/gitlab/mattermost/env/MM_GITLABSETTINGS_ID
         - contents: |
             {{config.mattermost.app_id}} 
 
-gitlab-mattermost-integration-token:
+{{sls}}.gitlab-mattermost-integration-token:
     file.managed:
         - name: /var/opt/gitlab/mattermost/env/MM_GITLABSETTINGS_SECRET
         - contents: |
             {{config.mattermost.token}}
 
-gitlab-mattermost-restarted:
+{{sls}}.gitlab-mattermost-restarted:
     cmd.run:
         - name: |
             gitlab-ctl stop mattermost
             sleep 10
             gitlab-ctl start mattermost
         - onchanges:
-            - file: gitlab-mattermost-integration-token
-            - file: gitlab-mattermost-integration-appid
+            - file: {{sls}}.gitlab-mattermost-integration-token
+            - file: {{sls}}.gitlab-mattermost-integration-appid
             
 {%     endif %}
 {% endif %}
@@ -82,7 +82,7 @@ gitlab-mattermost-restarted:
 
 {%-     set activated = 'activated' in deployment and deployment.activated %}
 
-gitlab-service:
+{{sls}}.gitlab-service:
     service.{{'running' if activated else 'dead'}}:
         - name: gitlab-runsvdir 
         - enable: {{activated}} 

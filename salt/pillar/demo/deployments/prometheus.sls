@@ -1,10 +1,13 @@
+_loaded:
+    {{sls}}:
+
 deployments:
 
     prometheus_container:
         prometheus-server:
-            host:        infra
             port:        9090
-            activated:   True
+            activated:   False
+            activated_where: {{sls}}
 
             install:
                 nuggets-required:

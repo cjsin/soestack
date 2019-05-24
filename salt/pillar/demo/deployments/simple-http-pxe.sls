@@ -1,9 +1,13 @@
+_loaded:
+    {{sls}}:
+
 deployments:
 
     simple_http:
         pxe:
             host: infra
             activated: True
+            activated_where: {{sls}}
 
             activate:
                 services:

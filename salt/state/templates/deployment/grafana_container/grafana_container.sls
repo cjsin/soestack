@@ -1,9 +1,11 @@
+{#
 #
 # This template expects the following vars:
 #  args: a dict with the following keys:
 #     - deployment_name   - the name of the deployment
 #     - deployment        - the deployment object (should contain a container object)
 #
+#}
 
 {%- set deployment_name = args.deployment_name %}
 {%- set deployment_type = args.deployment_type %}

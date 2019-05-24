@@ -1,8 +1,12 @@
+_loaded:
+    {{sls}}:
+
 deployments:
     pxeboot_server:
         soestack_demo:
             host:      infra
             activated: True
+            activated_where: {{sls}}
 
             activate:
 
@@ -31,7 +35,7 @@ deployments:
                 isos:
                     #netinstall: CentOS-7-x86_64-NetInstall-1810.iso
                     #minimal:     CentOS-7-x86_64-Minimal-1810.iso
-                    everything:  CentOS-7-x86_64-Everything-1810.iso
+                    #everything:  CentOS-7-x86_64-Everything-1810.iso
                     dvd:         CentOS-7-x86_64-DVD-1810.iso
 
                 paths:                

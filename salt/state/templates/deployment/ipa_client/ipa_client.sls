@@ -10,7 +10,7 @@
 {%      include('templates/package/sets.sls') with context %}
 {%- endwith %}
 
-{{prefix}}otp-grain-{{deployment_name}}{{suffix}}:
+{{sls}}.{{prefix}}otp-grain-{{deployment_name}}{{suffix}}:
     grains.present:
         - name:         'ipa'
         - force:        True
@@ -21,7 +21,7 @@
             site:       "{{config.site}}"
             config:     demo
 
-{{prefix}}ipa-client-install-script-{{deployment_name}}{{suffix}}:
+{{sls}}.{{prefix}}ipa-client-install-script-{{deployment_name}}{{suffix}}:
     file.managed:
         - name:         /usr/local/sbin/ipa-client-deploy-{{deployment_name}}
         - source:       salt://{{slspath}}/scripts/deploy-ipa-client.sh.jinja
@@ -33,9 +33,9 @@
             name:       {{deployment_name}}
             deployment: {{config|json}}
             DEBUG:      ''
-            enroll:     demo
+            enrol:      demo
         
-{{prefix}}ipa-client-deploy-{{deployment_name}}{{suffix}}:
+{{sls}}.{{prefix}}ipa-client-deploy-{{deployment_name}}{{suffix}}:
     cmd.run:
         - name:         /usr/local/sbin/ipa-client-deploy-{{deployment_name}}
         - unless:       test -f /var/log/ipaclient-install.log

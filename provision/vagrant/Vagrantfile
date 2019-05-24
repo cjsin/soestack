@@ -12,7 +12,8 @@ Vagrant.configure("2") do |config|
 
     config.vm.provider "libvirt" do |libvirt, override|
         libvirt.driver = "kvm"
-        libvirt.memory = 4096
+        #libvirt.memory = 4096
+        libvirt.memory = 8192
         libvirt.cpus = 2
         libvirt.storage_pool_name = 'linux'
     end
@@ -20,9 +21,9 @@ Vagrant.configure("2") do |config|
     config.vm.define "infra" do |infra|
         config.vm.network "private_network", ip: "192.168.121.101", auto_config: false
         
-        config.vm.synced_folder ".", "/vagrant", type: "rsync", rsync__exclude: [".git"]
-        config.vm.synced_folder "../../", "/soestack/", type: "rsync", rsync__exclude: [".git", "*.raw", "*.qcow2","*.iso","usb","exclude"] 
-        config.vm.synced_folder "../../exclude", "/e/bundled/", type: "rsync", rsync__exclude: ["*prior*"] 
+        config.vm.synced_folder ".", "/vagrant", type: "rsync", rsync__exclude: [ ".git" ]
+        config.vm.synced_folder "../../", "/soestack/", type: "rsync", rsync__exclude: [".git", "*.raw", "*.qcow2", "*.iso", "usb", "bundled" ] 
+        config.vm.synced_folder "../../bundled", "/e/bundled/", type: "rsync", rsync__exclude: [ "*prior*","*.rpm", "repodata","*.tar","*.iso" ] 
 
         infra.vm.hostname = "infra.qemu"
 

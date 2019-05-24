@@ -230,13 +230,92 @@ function configure_soestack_provision()
     echo "Done."
 }
 
+function yum_setting()
+{
+    local varname="${1}"
+    local varval="${2}"
+    local regex1="^${varname}="
+    local line="${varname}=${varval}"
+    local f=/etc/yum.conf
+    if ! ( egrep "${regex}" "${f}" | grep -qF "${line}" )
+    then
+        echo "Delete yum setting " "$(egrep "${regex}" "${f}" | tr '\n' ' ')"
+        sed -i '/${regex1}/ d' "${f}"
+        echo "Add yum setting ${line}"
+        echo "${line}" >> "${f}"
+    fi
+}
+
+
+# Determine a new value for the yum $releasevar variable.
+# This is used so that we access RPM packages in a repo by (for example)
+# the 7.6 directory instead of just 7
+# (or in the case of centos, 7.6.1810 instead of just 7).
+function modify_specific_yum_releasever()
+{
+    local pkg=$(egrep -i distroverpkg /etc/yum.conf | cut -d= -f2)
+    local ver=$(rpm -q --queryformat='%{version}' "${pkg}")
+    local release=$(rpm -q --queryformat='%{release}' "${pkg}")
+    local -a v=( ${ver//./ } ${release//./ })
+    
+    local releasever="${ver}"
+    local releaseshort="${ver}"
+    local releaselong="${ver}"
+
+    case "${OS_NAME}" in
+        centos)
+            releaselong="${v[0]}.${v[1]}.${v[2]}"
+            ;;
+        redhat)
+            releaselong="${v[0]}.${v[1]}"
+            ;;
+    esac
+
+    echo "${releaselong}" > /etc/yum/vars/releaselong
+    echo "${releaseshort}" > /etc/yum/vars/releaseshort
+
+}
+
+function configure_yum_bundled_var()
+{
+    local var_file="/etc/yum/vars/bundled"
+
+    if [[ ! -f "${var_file}" ]]
+    then
+        local bundled_url=""
+
+        case "${BUNDLED_SRC}" in
+            http:*)
+                bundled_url="${BUNDLED_SRC}"
+                ;;
+            /*)
+                bundled_url="file://${BUNDLED_SRC}"
+                ;;
+            "")
+                bundled_url="file:///e/bundled"
+                ;;
+            *)
+                echo "Unrecognised or unsupported BUNDLED_SRC value." 1>&2
+                return 1
+                ;;
+        esac
+
+        echo "${bundled_url}" > "${var_file}"
+    fi
+}
+
 function configure_yum()
 {
-    # Modify yum behaviour
-    sed -i -r '/^(minrate|timeout|deltarpm)/ d' /etc/yum.conf 
-    echo "minrate=1" >> /etc/yum.conf
-    echo "timeout=$((60*100))" >> /etc/yum.conf
-    echo "deltarpm=0" >> /etc/yum.conf
+    yum_setting minrate 1
+    yum_setting timeout $((60*100))
+    yum_setting keepcache 1
+    yum_setting fastestmirror 0
+    yum_setting ip_resolve 4
+    yum_setting deltarpm 0
+    
+    configure_yum_bundled_var
+    modify_specific_yum_releasever
+
     sed -i '/enabled=/ s/=1/=0/' /etc/yum/pluginconf.d/fastestmirror.conf
 }
 

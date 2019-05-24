@@ -21,7 +21,7 @@
 
 {%- if not hosts %}
 
-{{prefix}}no-hosts-found:
+{{sls}}.{{prefix}}no-hosts-found:
     cmd.run:
         - name: echo "No hosts found in {{hosts_key}} for this deployment." 
 
@@ -83,7 +83,7 @@
 {%-         endif %}
 {%-     endfor %}
 
-{{prefix}}ss-hosts-file:
+{{sls}}.{{prefix}}ss-hosts-file:
     file.managed:
         - name:     /etc/ss-hosts-{{deployment_name}}
         - user:     root
@@ -97,7 +97,7 @@
 {%- if use_ipa %}
 {%-     for ip, props in hostdata.iteritems() %}
 
-{{prefix}}ipa-dns-records-{{ip}}-{{props.fqdn}}:
+{{sls}}.{{prefix}}ipa-dns-records-{{ip}}-{{props.fqdn}}:
     saltipa.arecord:
         - fqdn:            {{props.fqdn}}
         - ip:              {{ip}} 
@@ -105,7 +105,7 @@
         - update_existing: False
     
 {%- if 'aliases' in props and props.aliases %} 
-{{prefix}}ipa-dns-records-fqdn-aliases-{{ip}}-{{props.aliases}}:
+{{sls}}.{{prefix}}ipa-dns-records-fqdn-aliases-{{ip}}-{{props.aliases}}:
     saltipa.cnames:
         - name:            {{props.fqdn}}
         - aliases:         {{props.aliases}}
@@ -118,7 +118,7 @@
 {%-         if props.update_hostfile %}
 {%-             set host_line = ip ~ ' ' ~ props.fqdn ~ ' ' ~ props.aliases %}
 
-{{prefix}}etc-hosts-{{ip}}:
+{{sls}}.{{prefix}}etc-hosts-{{ip}}:
     cmd.run:
         - name:   sed -r -i -e '/^[[:space:]]*{{ip}}([[:space:]]|$)/ d' -e '$ a{{host_line}}' /etc/hosts
         - unless: grep "{{host_line}}" /etc/hosts
@@ -131,7 +131,7 @@
 
 {%- if diagnostics %}
 
-{{prefix}}-debug}}:
+{{sls}}.{{prefix}}-debug:
     cmd.run:
         - name: |
             echo 'debug strings'

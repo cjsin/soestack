@@ -8,19 +8,19 @@
 # ie that the parent folders exist and are readable
 .create-user-homedir-path-with-parents:
     file.directory:
-        - name:     '{{pillar.build.rpm.defaults.tmp_builddir}}'
-        - unless:   test -d '{{pillar.build.rpm.defaults.tmp_builddir}}'
-        - makedirs: True
-        - user:     root
-        - group:    root
-        - mode:     '0755'
+        - name:       '{{pillar.build.rpm.defaults.tmp_builddir}}'
+        - unless:     test -d '{{pillar.build.rpm.defaults.tmp_builddir}}'
+        - makedirs:   True
+        - user:       root
+        - group:      root
+        - mode:       '0755'
 
 .create-user-homedir-path:
     file.directory:
-        - name:     '{{pillar.build.rpm.defaults.tmp_builddir}}'
-        - user:     '{{build_user}}'
-        - group:    '{{build_user}}'
-        - mode:     '0755'
+        - name:       '{{pillar.build.rpm.defaults.tmp_builddir}}'
+        - user:       '{{build_user}}'
+        - group:      '{{build_user}}'
+        - mode:       '0755'
 
 {%-         if build_user != 'nobody' %}
 

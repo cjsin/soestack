@@ -27,7 +27,7 @@
 {%-     endif %}
 {%-     do name.append(action) %}
 
-iptables-rule-{{'-'.join(name) }}:
+{{sls}}.iptables-rule-{{'-'.join(name) }}:
     iptables.insert: 
         # NOTE that the iptables.insert parameters below are order-dependent, and if
         # placed in the wrong order, saltstack will put an invalid '#' in the commandline.

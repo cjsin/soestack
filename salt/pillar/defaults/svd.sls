@@ -11,7 +11,11 @@ svd:
             version: 11.2.3
 
         grafana:
+            # Grafana dashboard provisioning is USELESS since v 5.1 due to a senseless change
+            # that makes all provisioned dashboards readonly - so you cannot edit them
+            # So we need to hold the version back to 5.0.4
             version: 5.2.2-1
+            #version: 5.0.4
 
         kibana:
             version: 6.4.0

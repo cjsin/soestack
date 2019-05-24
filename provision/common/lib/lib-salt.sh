@@ -158,6 +158,12 @@ function salt_state_provision()
 {
     local preconfigured_roles="${1}"
 
+    # Setting host grain to match short hostname
+    # The 'host' grain is otherwise dynamically calculated and is affected by the installed hosts file,
+    # especially when there are multiple interfaces on the machine, it can get the name from
+    # the IP associated from the wrong network interface
+    salt-call grains.set host "$(hostname -s)"
+
     if [[ "${preconfigured_roles}" =~ ^role-set ]]
     then 
         salt-call grains.set role-set "${preconfigured_roles#role-set:}" force=True

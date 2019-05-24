@@ -1,10 +1,11 @@
-# This file is obsolete - the template support/filesystem is used instead
+{# This file is obsolete - the template support/filesystem is used instead
 #
 # Requires variables:
 #    - nugget
 #    - nugget_name
 #    - suffix
-#
+#}
+
 {%- if 'files' in nugget %}
 {%-    set nugget_location = 'nuggets:'~nugget_name %}
 {%-    for name, spec in nugget.files.iteritems() %}

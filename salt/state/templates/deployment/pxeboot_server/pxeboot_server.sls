@@ -52,7 +52,7 @@
 
 {%- if action in [ 'all', 'install' ] %}
 
-.{{prefix}}-tools-installed:
+{{sls}}.pxeboot_server.{{prefix}}tools-installed:
     pkg.installed:
         - pkgs: 
             - genisoimage
@@ -63,7 +63,7 @@
 
 {%- if isos and isodir %}
 
-.{{prefix}}-iso-extract:
+{{sls}}.pxeboot_server.{{prefix}}iso-extract:
     file.managed:
         - name:   /usr/local/sbin/iso-extract
         - user:   root
@@ -73,11 +73,11 @@
 
 {%- else %}
 
-.{{prefix}}-no-isos-or-isodir-configured:
-    cmd.run:
-        - name: |
-            echo "Either the ISOs path (key paths.isos), or a list of ISO files (key isos) "
-            echo "have not been configured within the deployments.pxeboot_server.{{deployment_name}}.config"
+{{sls}}.pxeboot_server.{{prefix}}.no-isos-or-isodir-configured:
+    noop.notice:
+        - text: |
+            Either the ISOs path (key paths.isos), or a list of ISO files (key isos) 
+            have not been configured within the deployments.pxeboot_server.{{deployment_name}}.config
 
 {%- endif %}
 
@@ -85,14 +85,31 @@
 {%-     set isopath = isodir ~ '/' ~ isofile %}
 {%-     set extractpath = nfsdir ~ '/' ~ osdir ~ '/' ~ iso_shortname %}
 
-.{{prefix}}-iso-extracted-{{iso_shortname}}:
+{%- if salt['file.file_exists'](isopath) %}
+
+{{sls}}.pxeboot_server.{{prefix}}.iso-extraction-dir.{{iso_shortname}}:
+    file.directory:
+        - name:  '{{extractpath}}'
+        - user:  root
+        - group: root
+        - mode:  '0755'
+        # The following test prevents salt trying to change the permissions on a mounted iso directory
+        - unless: test -d '{{extractpath}}/repodata'
+
+{{sls}}.pxeboot_server.{{prefix}}.iso-extracted.{{iso_shortname}}:
     cmd.run:
-        - name:   /usr/local/sbin/iso-extract "{{isopath}}" "{{extractpath}}"
+        - name:   /usr/local/sbin/iso-extract --allow-loop-mount --mount "{{isopath}}" "{{extractpath}}"
         - unless: test -f "{{extractpath}}/images/pxeboot/initrd.img"
+{%- else %}
+
+{{sls}}.pxeboot_server.{{prefix}}.iso-missing.{{iso_shortname}}:
+    noop.warning
+
+{%- endif %}
 
 {%- endfor %}
 
-.{{prefix}}-setup-pxe-boot-files:
+{{sls}}.pxeboot_server.{{prefix}}setup-pxe-boot-files:
     cmd.script:
         - source: salt://{{slspath}}/pxedir-prepare.sh.jinja
         - template: jinja
@@ -121,7 +138,7 @@
 {%-     endfor %}
 {%- endif %}
 
-.{{prefix}}-dnsmasq-conf:
+{{sls}}.pxeboot_server.dnsmasq-conf:
     file.managed:
         - name: /etc/dnsmasq.d/99-pxeboot-{{deployment_name}}.conf
         - user:  root
@@ -138,6 +155,7 @@
             pxe_server:    {{pxe_server}}
 
 
+{#
 #.{{prefix}}-boot-menu-defaults:
 #    file.managed:
 #        - name:     '{{tftpdir}}/{{pxedir}}/{{cfgdir}}/default.base'
@@ -148,6 +166,7 @@
 #        - template: jinja
 #        - context: 
 #            entries: {}
+#}
 
 {%- for lan_name,lan in lans.iteritems() %}
 {%-     set debug = ["lan " ~ lan_name] %}
@@ -280,12 +299,12 @@
 
 
 {%-     if incompatible %}
-.{{prefix}}-WARNINGS-{{lan_name}}:
-    cmd.run:
-        - name: |
-            echo "WARNING:"
+{{sls}}.pxeboot_server.WARNINGS-{{lan_name}}:
+    noop.warning:
+        - text: |
+            WARNING
             {%- for m in incompatible %}
-            echo '{{m}}'
+            {{m}}
             {%- endfor %}
 {%-     endif %}
 
@@ -294,11 +313,11 @@
 
 {%-         if 'scripts' in provisioning and provisioning.scripts %}
 
-.{{prefix}}-require-rsync-{{lan_name}}:
+{{sls}}.pxeboot_server.{{prefix}}require-rsync-{{lan_name}}:
     pkg.installed:
         - name: rsync
 
-.{{prefix}}-outofdate-helper-{{lan_name}}:
+{{sls}}.pxeboot_server.{{prefix}}outofdate-helper-{{lan_name}}:
     file.managed:
         - name:   /usr/local/sbin/rsync-uptodate
         - user:   root
@@ -306,7 +325,7 @@
         - mode:   '0755'
         - source: salt://{{slspath}}/rsync-uptodate.sh
 
-.{{prefix}}-update-ss-provisioning-{{lan_name}}:
+{{sls}}.pxeboot_server.{{prefix}}update-ss-provisioning-{{lan_name}}:
     cmd.run:
         - name:   |
             echo "Check:"
@@ -317,7 +336,7 @@
 
 {%-             if 'pw' in provisioning and provisioning.pw %}
 
-provisioning-pw-{{lan_name}}:
+{{sls}}.pxeboot_server.{{prefix}}provisioning-pw-{{lan_name}}:
     file.managed:
         - name:     '{{tftpdir}}/{{lan.ss_provisioning}}/common/inc/provisioning-passwords.sh'
         - user:     root 
@@ -333,7 +352,7 @@ provisioning-pw-{{lan_name}}:
 {%-         endif %}
 {%-     endif %}
 
-.{{prefix}}-boot-menu-{{lan_name}}:
+{{sls}}.pxeboot_server.{{prefix}}boot-menu-{{lan_name}}:
     file.managed:
         - name:     {{bootfile}}
         - user:     root
@@ -364,7 +383,7 @@ provisioning-pw-{{lan_name}}:
 {%-         endfor %}
 {%-         set hexstr = ''.join(nibbles) %}
 
-.{{prefix}}-symlink-boot-menu-{{lan_name}}-{{hexstr}}:
+{{sls}}.pxeboot_server.{{prefix}}symlink-boot-menu-{{lan_name}}-{{hexstr}}:
     file.symlink:
         - name:    {{tftpdir}}/{{pxedir}}/{{cfgdir}}/{{hexstr}}
         - target: 'defaults-{{lan_name}}'
@@ -380,13 +399,13 @@ provisioning-pw-{{lan_name}}:
 
 {%- if action in [ 'all', 'activate' ] %}
 
-# Nothing to do here - the required services should have been activated as dependencies
+{# Nothing to do here - the required services should have been activated as dependencies #}
 
 {%-     set activated = 'activated' in deployment and deployment.activated %}
 
 {%-     for svc in [ 'dnsmasq', 'simple-http-pxe' ] %}
 
-{{prefix}}-service-{{svc}}:
+{{sls}}.pxeboot_server.{{prefix}}services.{{svc}}:
     service.{{'running' if activated else 'dead'}}:
         - name:   {{svc}}
         - enable: {{activated}} 
@@ -395,7 +414,7 @@ provisioning-pw-{{lan_name}}:
 
 {%-     for svc in [ 'nfs-server' ] %}
 {%-         if activated %}
-{{prefix}}-service-{{svc}}:
+{{sls}}.pxeboot_server.{{prefix}}services.{{svc}}:
     service.running:
         - name:   {{svc}}
         - enable: True 

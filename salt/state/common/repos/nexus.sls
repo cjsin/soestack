@@ -1,5 +1,7 @@
 #!stateconf yaml . jinja 
 
+# Why am I manually setting up this repo for docker-ce?
+# It should be configured with the rest of the nexus repos
 .repo:
     file.managed:
         - name: /etc/yum.repos.d/docker-ce.repo

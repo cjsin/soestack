@@ -63,7 +63,7 @@
 {%-     set state_func = 'managed' if item_type == 'file' else ('directory' if item_type == 'dir' else 'symlink' if item_type == 'symlink'  else 'unknown') %}
 
 {%- if diagnostics %}
-NOTICE-debug-{{prefix}}fs-{{item_type}}-{{path}}{{suffix}}-info:
+{{sls}}.NOTICE-debug-{{prefix}}fs-{{item_type}}-{{path}}{{suffix}}-info:
     noop.notice:
         - name: |
             spec:
@@ -93,7 +93,7 @@ NOTICE-debug-{{prefix}}fs-{{item_type}}-{{path}}{{suffix}}-info:
 {%-     if state_func %}
 
 {%- if diagnostics %}
-NOTICE-debug-{{prefix}}fs-{{item_type}}-{{path}}{{suffix}}:
+{{sls}}.NOTICE-debug-{{prefix}}fs-{{item_type}}-{{path}}{{suffix}}:
     noop.notice:
         - text: |
             file.{{state_func}}:
@@ -121,6 +121,8 @@ NOTICE-debug-{{prefix}}fs-{{item_type}}-{{path}}{{suffix}}:
                 - source:   /var/lib/soestack/templates/{{spec.template}}.jinja
                 - context: 
                     config: {{config|json}}
+                {%-     elif 'source' in spec %}
+                - source:  {{spec.source}}
                 {%-     elif contents is defined %}
                 - contents: |
                     {{contents|indent(12)}}
@@ -135,7 +137,7 @@ NOTICE-debug-{{prefix}}fs-{{item_type}}-{{path}}{{suffix}}:
 {%- endif %} 
 
 
-{{prefix}}fs-{{item_type}}-{{path}}{{suffix}}:
+{{sls}}.{{prefix}}fs-{{item_type}}-{{path}}{{suffix}}:
     file.{{state_func}}:
         - name:     {{path}}
         {%- if item_type == 'symlink' and target %}
@@ -161,6 +163,8 @@ NOTICE-debug-{{prefix}}fs-{{item_type}}-{{path}}{{suffix}}:
         - source:   /var/lib/soestack/templates/{{spec.template}}.jinja
         - context: 
             config: {{config|json}}
+        {%-     elif 'source' in spec %}
+        - source:  {{spec.source}}
         {%-     elif contents is defined %}
         - contents: |
             {{contents|indent(12)}}
@@ -177,7 +181,7 @@ NOTICE-debug-{{prefix}}fs-{{item_type}}-{{path}}{{suffix}}:
 
 {%-     if gid %}
 
-{{prefix}}fs-file-{{path}}-gid{{suffix}}:
+{{sls}}.{{prefix}}fs-file-{{path}}-gid{{suffix}}:
     cmd.run:
         - name:   chgrp {{gid}} '{{path}}'
         - unless: stat -c %g '{{path}}' | egrep '^{{gid}}$'
@@ -186,7 +190,7 @@ NOTICE-debug-{{prefix}}fs-{{item_type}}-{{path}}{{suffix}}:
 
 {%-     if uid %}
 
-{{prefix}}fs-{{item_type}}-{{path}}-uid{{suffix}}:
+{{sls}}.{{prefix}}fs-{{item_type}}-{{path}}-uid{{suffix}}:
     cmd.run:
         - name:   chown {{uid}} '{{path}}'
         - unless: stat -c %u '{{path}}' | egrep '^{{uid}}$'
@@ -195,7 +199,7 @@ NOTICE-debug-{{prefix}}fs-{{item_type}}-{{path}}{{suffix}}:
 
 {%-     if selinux %}
 
-{{prefix}}fs-{{item_type}}-{{path}}-selinux{{suffix}}:
+{{sls}}.{{prefix}}fs-{{item_type}}-{{path}}-selinux{{suffix}}:
     cmd.run:
         - name:   chcon -t '{{selinux}}' '{{path}}'
         - unless: stat -c %C '{{path}}' | grep ':{{selinux}}:'

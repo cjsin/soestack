@@ -5,23 +5,6 @@ nexus-repos:
     defaults:
         gitlab:   True # add only on the infra server
 
-include:
-    - demo.deployments.elasticsearch
-    - demo.deployments.gitlab-runner
-    - demo.deployments.gitlab
-    - demo.deployments.grafana
-    - demo.deployments.ipa-master
-    - demo.deployments.kibana
-    - demo.deployments.kube-master
-    - demo.deployments.logstash-sys
-    - demo.deployments.logstash-user
-    - demo.deployments.nexus-mirror
-    - demo.deployments.nginx-reverse-proxy
-    - demo.deployments.phpldapadmin
-    - demo.deployments.prometheus
-    - demo.deployments.pxeboot
-    - demo.deployments.simple-http-pxe
-    
 dhcp:
 
     dnsmasq:

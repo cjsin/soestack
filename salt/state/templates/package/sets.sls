@@ -1,4 +1,4 @@
-
+{#
 #
 # Expected context variables:
 # 
@@ -38,6 +38,7 @@
 #   set args = { 'package_set': 'net-tools' }
 #   include('templates/package/sets.sls') with context
 #
+#}
 
 {%- if 'package_sets' in args 
         or 'package_set' in args

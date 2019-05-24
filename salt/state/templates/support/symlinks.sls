@@ -1,8 +1,9 @@
-#
+{#
 # Requires variables:
 #    - suffix
 #    - symlinks   OR pillar_location
-#
+#}
+
 {%- set suffix          = args.suffix if 'suffix' in args else salt['cmd.exec_code']('python','import uuid; print(str(uuid.uuid4())); ')[:8] %}
 {%- set pillar_location = args.pillar_location if 'pillar_location' and args.pillar_location else '' %}
 {%- set pillar_data     = salt['pillar.get'](pillar_location,{}) if pillar_location else {} %}
@@ -12,7 +13,7 @@
 {%-    for name, spec in symlinks.iteritems() %}
 {%-        if spec %}
 
-statesupport-symlink-{{name}}-{{suffix}}:
+{{sls}}.statesupport-symlink-{{name}}-{{suffix}}:
     file.symlink:
         - name:     {{name}}
         - target:   {{spec}}

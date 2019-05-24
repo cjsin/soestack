@@ -1,7 +1,7 @@
-#
+{#
 # This template requires already defined:
 #    - args, containing 'parent'
-#
+#}
 {%- set parent = args.parent %}
 {%- if parent %}
 {%-     for action in ['uninstalled','installed'] %}

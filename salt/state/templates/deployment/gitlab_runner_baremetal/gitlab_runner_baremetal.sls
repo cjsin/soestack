@@ -9,7 +9,7 @@
 
 {%- if action in [ 'all', 'install' ] %}
  
-{{prefix}}gitlab-runner-installed{{suffix}}:
+{{sls}}.{{prefix}}gitlab-runner-installed{{suffix}}:
     pkg.installed:
         - pkgs: 
             - gitlab-runner
@@ -18,9 +18,10 @@
 
 {%- if action in [ 'all', 'configure' ] %}
 
-{%-     for executor_name, executor in config.executors.iteritems() %}
+{%-     if 'registration_token' in config and config.registration_token and config.registration_token != 'unset' %}
+{%-         for executor_name, executor in config.executors.iteritems() %}
 
-{{prefix}}gitlab-executor-{{executor_name}}{{suffix}}-{{deployment_name}}-{{deployment_type}}:
+{{sls}}.{{prefix}}gitlab-executor-{{executor_name}}{{suffix}}-{{deployment_name}}-{{deployment_type}}:
     cmd.run:
         - name: |
             options=(
@@ -36,13 +37,18 @@
 
         - unless: grep {{grains.host}}-{{executor_name}} /etc/gitlab-runner/config.toml
     
-{%-     endfor %}
+{%-         endfor %}
+{%-     else %}
+{{sls}}.gitlab-runner-baremetal.{{deployment_name}}.registration-token-not-set:
+    noop.warning:
+        - text: The gitlab runner for {{deployment_name}} has no registration token set. Run the state again after updating the configured token value.
+{%-     endif %}
 {%- endif %}
 
 {%- if action in [ 'all', 'activate' ] %}
 {%-     set activated = 'activated' in deployment and deployment.activated %}
 
-{{prefix}}{{service_name}}-service{{suffix}}:
+{{sls}}.{{prefix}}{{service_name}}-service{{suffix}}:
     service.{{'running' if activated else 'dead'}}:
         - name:   {{service_name}} 
         - enable: {{activated}} 

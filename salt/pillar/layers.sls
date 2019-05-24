@@ -1,3 +1,6 @@
+_loaded:
+    {{sls}}:
+
 {#- # Allow layers to be specified as a list or a comma separated string #}
 
 #
@@ -39,8 +42,8 @@ grain_layers: {{grains.layers|json}}
 {%-             endif %}
 {%-         elif grains.layers is mapping %}
 {#-             # If the layer grain is a mapping, it is expected to be a dict specifying #}
-{#-             #   names for the following keys: soe,site,lan which will be processed in that order #}
-{%-             do selected_layers.extend(['soe', 'site', 'lan', 'role', 'host']) %}
+{#-             #   names for the following keys: soe,role,role,site,lan,host which will be processed in that order #}
+{%-             do selected_layers.extend(['soe', 'role', 'site', 'lan', 'host']) %}
 {%-         endif %}
 {%-     endif %}
 
@@ -64,6 +67,13 @@ selected_layers: {{selected_layers|json}}
 {#-             # Hopefully using yaml include will work better #}
 
 include:
+    {%-         for layer in selected_layers %}
+    {%-            do attempted_loads.append(layer) %}
+    - layers.{{layer}}
+    {%-         endfor %}
+    - layers.lan-host
+
+layer-include:
     {%-         for layer in selected_layers %}
     {%-            do attempted_loads.append(layer) %}
     - layers.{{layer}}

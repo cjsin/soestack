@@ -1,5 +1,6 @@
-#
-# This template expects the build 'params' to have already been constructed
+{#
+ # This template expects the build 'params' to have already been constructed
+ #}
 
 include:
     - build.prep
@@ -18,30 +19,30 @@ include:
 {%- set build_user = pillar.build.rpm.defaults.build_user or 'nobody' %}
 
 
-building-package-{{pkgname}}:
-    cmd.run:
-        - name: |
-            echo '{{params|json}}' | jq .
+{{sls}}.build.rpm_package.{{pkgname}}:
+    noop.notice:
+        - text: |
+            {{params|json}}
 
 {%- if 'required_packages' in params and params.required_packages %}
 
-build-{{pkgname}}-requirements:
+{{sls}}.build.rpm_package.{{pkgname}}.requirements:
     pkg.installed:
         - pkgs: {{params.required_packages|json}}
 
 {%- endif %}
 
-build-{{pkgname}}-savedir:
+{{sls}}.build.rpm_package.{{pkgname}}.savedir:
     file.directory:
         - name:        '{{savedir}}'
         - makedirs:    True
 
-build-{{pkgname}}-topdir:
+{{sls}}.build.rpm_package.{{pkgname}}.topdir:
     file.directory:
         - name:        '{{tmpdir}}'
         - makedirs:    True
 
-build-{{pkgname}}-topdir-ownership:
+{{sls}}.build.rpm_package.{{pkgname}}.topdir-ownership:
     file.directory:
         - name:        '{{tmpdir}}'
         - user:        '{{build_user}}'
@@ -49,20 +50,20 @@ build-{{pkgname}}-topdir-ownership:
         - makedirs:    False
 
 
-build-{{pkgname}}-distdir:
+{{sls}}.build.rpm_package.{{pkgname}}.distdir:
     file.directory:
         - name:        '{{tmpdir}}/dist'
         - user:        '{{build_user}}'
         - group:       '{{build_user}}'
         - makedirs:    False
 
-build-{{pkgname}}-rpmdir:
+{{sls}}.build.rpm_package.{{pkgname}}.rpmdir:
     file.directory:
         - name:        '{{tmpdir}}/rpm'
         - user:        '{{build_user}}'
         - group:       '{{build_user}}'
 
-build-{{pkgname}}-archive-extracted:
+{{sls}}.build.rpm_package.{{pkgname}}.archive-extracted:
     archive.extracted:
         - source:      '{{source_url}}'
         - source_hash: '{{params.hash}}'
@@ -71,7 +72,7 @@ build-{{pkgname}}-archive-extracted:
         - group:       '{{build_user}}'
 
 # This is really, really slow - TODO - replace with a chmod command
-#build-{{pkgname}}-prepare-for-build:
+#{{sls}}.build.rpm_package.{{pkgname}}.prepare-for-build:
 #    file.directory:
 #        - name:      "{{tmpdir}}"
 #        - onlyif:    test -d "{{tmpdir}}/extract"
@@ -84,7 +85,7 @@ build-{{pkgname}}-archive-extracted:
 #            - group
 #            - mode
 
-build-{{pkgname}}-prepare-for-build-chmod:
+{{sls}}.build.rpm_package.{{pkgname}}.prepare-for-build-chmod:
     cmd.run:
         - name: |
             chown -R "{{build_user}}.{{build_user}}" "{{tmpdir}}/extract" "{{tmpdir}}/dist" "{{tmpdir}}/rpm"
@@ -92,7 +93,7 @@ build-{{pkgname}}-prepare-for-build-chmod:
 
 # Make sure the top dir is owned by root so that the build-user user cannot modify the script.
 # The script will make sure there are no setuid executables in the dist
-build-{{pkgname}}-prepare-toplevel:
+{{sls}}.build.rpm_package.{{pkgname}}.prepare-toplevel:
     file.directory:
         - name:       '{{tmpdir}}'
         - user:       root
@@ -107,7 +108,7 @@ build-{{pkgname}}-prepare-toplevel:
 {%- set final_filename = ''.join([savedir, '/',    filename_base,suffix]) %}
 {%- set output_file    = ''.join([tmpdir,  '/rpm/',filename_base,'.',rand_tag,suffix]) %}
 
-build-{{pkgname}}-create-build-script:
+{{sls}}.build.rpm_package.{{pkgname}}.create-build-script:
     file.managed:
         - name:           '{{tmpdir}}/build-rpm-package.sh'
         - source:         salt://scripts/build-rpm-package.sh.jinja
@@ -124,7 +125,7 @@ build-{{pkgname}}-create-build-script:
             params:       {{params|json}}
 
 
-build-{{pkgname}}-run-build-script:
+{{sls}}.build.rpm_package.{{pkgname}}.run-build-script:
     cmd.run:
         - name:     '{{tmpdir}}/build-rpm-package.sh'
         - runas:    '{{build_user}}'
@@ -132,7 +133,7 @@ build-{{pkgname}}-run-build-script:
         # - watch:
         #    - archive: build-{{pkgname}}-archive-extracted
 
-copy-result:
+{{sls}}.build.rpm_package.{{pkgname}}.copy-result:
     cmd.run:
         - name:     cp '{{output_file}}' '{{final_filename}}'
         - onlyif:   test -f '{{output_file}}'

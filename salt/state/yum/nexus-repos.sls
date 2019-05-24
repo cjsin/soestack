@@ -51,9 +51,9 @@
 
 {%- if diagnostics %}
 .selected-nexus-repos-for-os-{{grains.os}}:
-    cmd.run:
-        - name: |
-            echo '{{selected|json}}'
+    noop.notice:
+        - text: |
+            {{selected|json}}
 {%- endif %}
 
 {#-     # we now have a consolidated list of what should be enabled or disabled #}
@@ -139,11 +139,11 @@
 
 {%- if diagnostics %}
 .abc-{{nexus_reponame}}-{{subkey_name}}:
-   cmd.run:
-       - name: |
-           echo 'either test failed for subkey_data is mapping for nexus reponame {{nexus_reponame}} and subkey_name {{subkey_name}}'
-           echo 'or else yum is not inside subkey_data or else the yum subkey is empty'
-           echo 'the subkey data is {{subkey_name}} = {{subkey_data|json}}'
+   noop.notice:
+       - text: |
+           either test failed for subkey_data is mapping for nexus reponame {{nexus_reponame}} and subkey_name {{subkey_name}}
+           or else yum is not inside subkey_data or else the yum subkey is empty
+           the subkey data is {{subkey_name}} = {{subkey_data|json}}
 {%- endif %}
 
 {#-                 # end if subkey data is a mapping with a yum subkey and the subkey matches the OS name #}
@@ -154,9 +154,10 @@
 
 {%- if diagnostics %}
 .repo-type-for-{{nexus_reponame}}-is-not-yum:
-    cmd.run:
-        - name: |
-            echo '{{nexus_repodata|json()}}'
+    noop.notice:
+        - text: |
+            {{nexus_repodata|json()}}
+
 {%- endif %}
 
 {#-         # end if the nexus repo format is yum #}

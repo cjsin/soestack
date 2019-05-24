@@ -27,7 +27,7 @@ nugget_data:
 nuggets:
     ipa-server:
         description: |
-            provides support for rolling out an IPA server (initial server, not a replica)
+            provides support for rolling out an IPA server (either original master or replica)
 
         install:
             nuggets-required:
@@ -40,6 +40,33 @@ nuggets:
                     - ipa-server
 
         activate:
+            nuggets:
+                - nfs-server
             firewall:
                 firewall-rule-sets:
                     - ipa-server
+
+    ipa-master:
+        description: |
+            provides support for rolling out an IPA server (initial server, not a replica)
+
+        install:
+            nuggets-required:
+                - ipa-server 
+
+        activate:
+            nuggets-required:
+                - ipa-server 
+
+    ipa-replica:
+        description: |
+            provides support for rolling out an IPA server replica (non-initial install)
+
+        install:
+            nuggets-required:
+                - ipa-server
+
+        activate:
+            nuggets-required:
+                - ipa-server 
+

@@ -6,11 +6,12 @@
 
 {%- set install   = config.install %}
 {%- set passwords = {'ds': 'ds', 'master': 'master', 'admin': 'admin'} %}
-{%- set ip        = grains.fqdn_ip4[0] %}
+{%- set ip        = config.ip if 'ip' in config else grains.fqdn_ip4[0] %}
 {%- set fqdn      = grains.fqdn if 'fqdn' not in config or config.fqdn == 'auto' else config.fqdn %}
 {%- set realm     = config.realm if 'realm' in config else 'IPA' %}
 {%- set domain    = config.domain if 'domain' in config else hostname_domain %}
-{%- set DEBUG     = 'echo' if 'debug' in install and install.debug else '' %}
+
+DEBUG="{'echo' if 'debug' in install and install.debug else ''}}"
 
 function die()
 {
@@ -73,9 +74,9 @@ install_server()
     # and the firewall rules flushed, because it has troubles otherwise.
     # The rules it requires can be configured after
     setenforce 0
-    ipables -F
+    iptables -F
     iptables -nvL
-    {{DEBUG}} ipa-server-install -U "${options[@]}"
+    ${DEBUG} ipa-server-install -U "${options[@]}"
     setenforce 1
     systemctl restart iptables
     
@@ -89,5 +90,5 @@ then
     export KRB5CCNAME=/var/cache/salt/master/salt.krb
     kinit admin <<< "${admin_password}"
 
-    /usr/local/sbin/ipa-postinstall
+    /usr/local/sbin/ipa-postinstall-{{deployment_name}}
 fi

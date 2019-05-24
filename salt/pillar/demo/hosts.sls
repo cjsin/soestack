@@ -1,3 +1,6 @@
+_loaded:
+    {{sls}}:
+
 # Example data
 ##############
 

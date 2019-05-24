@@ -1,7 +1,7 @@
 # Gitlab configuration file
 # This file is generated from a Salt state.
 # Please be aware it may be overwritten
-{%- set domain = '.' ~ pillar.dns.system_domain %}
+{%- set domain = '.' ~ pillar.network.system_domain if 'network' in pillar and 'system_domain' in pillar.network else '' %}
 {%- set protocol = 'https' if config.gitlab.port == 443 else 'http' %}'
 {%- set port_append = ':' ~ config.gitlab.port if config.gitlab.port not in [443,80] else  '' %}
 external_url '{{protocol}}://{{config.gitlab.hostname}}{{domain}}{{port_append}}'

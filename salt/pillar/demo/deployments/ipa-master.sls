@@ -1,8 +1,12 @@
+_loaded:
+    {{sls}}:
+
 deployments:
     ipa_master:
         testenv-master:
             host:      infra
             activated: True
+            activated_where: {{sls}}
             install:
                 nuggets-required:
                     - ipa-server
@@ -17,6 +21,10 @@ deployments:
                     dns:
                         enabled: True
                         forwarders: []
+                passwords:
+                    master: random
+                    admin:  random
+                    ds:     random
                 bind_ips:
                     httpd: 192.168.121.101
                     named: 192.168.121.101

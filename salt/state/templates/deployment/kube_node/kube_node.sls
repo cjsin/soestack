@@ -17,14 +17,14 @@
 
 {%- if action in [ 'all', 'configure'] %}
 
-.disable-swap:
+{{sls}}.disable-swap:
     cmd.run:
         - name: |
             swapoff -a
             sed -i '/^[^#].*[[:space:]]swap[[:space:]]/ s/^/#/' /etc/fstab 
         - onlyif: egrep -i '^[^#].*[[:space:]]swap[[:space:]]' /etc/fstab 
 
-.cluster-join-script:
+{{sls}}.cluster-join-script:
     file.managed:
         - name: /usr/local/sbin/kube-cluster-join-{{deployment_name}}
         - user: root
@@ -46,14 +46,14 @@
 
 {%-     if activated %}
 
-kube-cluster-init:
+{{sls}}.kube-cluster-init:
     cmd.run:
         - unless: test -d /etc/kubernetes/pki
         - name:   /usr/local/sbin/kube-cluster-join-{{deployment_name}}
 
 {%-     endif %}
 
-kubelet-service:
+{{sls}}.kubelet-service:
     service.{{'running' if activated else 'dead'}}:
         - name:   kubelet
         - enable: {{activated}} 

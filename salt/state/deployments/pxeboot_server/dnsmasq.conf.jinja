@@ -55,11 +55,17 @@ dhcp-ignore=tag:!known
 
 {%- set nameservers = [] %}
 {%- for key in pillar.dns.nameservers.keys()|sort %}
-{%-     do nameservers.append(pillar.dns.nameservers[key]) %}
+{%-     set val = pillar.dns.nameservers[key] %}
+{%-     if val is defined and val != '' %}
+{%-         do nameservers.append(val) %}
+{%-     endif %}
 {%- endfor %}
 {%- set search = [] %}
 {%- for key in pillar.dns.search.keys()|sort %}
-{%-     do search.append(pillar.dns.search[key]) %}
+{%-     set val = pillar.dns.search[key] %}
+{%-     if val is defined and val != '' %}
+{%-         do search.append(val) %}
+{%-     endif %}
 {%- endfor %}
 
 dhcp-option-force=option:domain-search,{{','.join(search)}}

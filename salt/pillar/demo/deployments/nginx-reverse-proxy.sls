@@ -1,9 +1,13 @@
+_loaded:
+    {{sls}}:
+
 # NOTE: this configuration is incomplete
 deployments:
     nginx_container:
         nginx-reverse-proxy:
-            host: infra
+            host:      infra
             activated: False
+            activated_where: {{sls}}
             activate:
                 firewall:
                     basic:

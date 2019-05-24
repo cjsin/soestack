@@ -265,6 +265,8 @@ package-sets:
         purpose: |
             provide a newer version of git
         centos,redhat:
+            os:
+                - perl-Error
             ius:
                 - git2u
         fedora:

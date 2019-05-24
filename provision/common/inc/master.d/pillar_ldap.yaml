@@ -2,7 +2,7 @@ salt-users:
     server:    infra
     port:      389
     tls:       false
-    binddn:    uid=salt-pillars,cn=users,cn=accounts,dc=demo
+    binddn:    uid=salt-pillar,cn=users,cn=accounts,dc=demo
     bindpw:    HRORuxUCcDZIOfQK9
     referrals: false
     anonymous: false

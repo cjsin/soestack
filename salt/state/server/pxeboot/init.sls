@@ -1,3 +1,2 @@
 include:
-    - .base
-    
+    - server.pxeboot.base

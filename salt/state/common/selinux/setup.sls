@@ -21,17 +21,19 @@
             or (permissive and (cfgfile_status != 'permissive' or getenforce_status != 'permissive')) %}
 
 {%-     if diagnostics or any_mismatch %}
+
 .status-selinux:
-    cmd.run:
-        - name: |
-            echo "mode = {{mode}}"
-            echo "completely disable = {{completely_disable}}"
-            echo "should be enabled = {{enabled }}"
-            echo "should be permissive = {{permissive}}"
-            echo "should be enforcing {{enforcing}}"
-            echo "cfgfile status= {{cfgfile_status}}"
-            echo "getenforce status = {{getenforce_status}}"
-            echo "mismatch = {{any_mismatch}}"
+    noop.notice:
+        - text: |
+            mode = {{mode}}"
+            completely disable = {{completely_disable}}
+            should be enabled = {{enabled }}
+            should be permissive = {{permissive}}
+            should be enforcing {{enforcing}}
+            cfgfile status= {{cfgfile_status}}
+            getenforce status = {{getenforce_status}}
+            mismatch = {{any_mismatch}}
+
 {%-     endif %}
 
 {%-     if any_mismatch %}

@@ -1,9 +1,12 @@
+{#
 # 
 # Accepts either 'service_sets', or 'service_set' in a dict called 'args', as well as an 'action'
 #   This one processes service_sets and service_set as *names* not objects.
 #
 #   - looks in both pillar 'nugget-data' and pillar 'service-sets' to
 #      find the specified names
+#
+#}
 
 {%- if ('service_set_names' in args or 'service_set_name' in args)  %}
 

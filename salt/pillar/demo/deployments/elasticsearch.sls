@@ -1,9 +1,13 @@
+_loaded:
+    {{sls}}:
+
 deployments:
 
     elasticsearch_container:
         elasticsearch-testdev:
             host:      infra
             activated: False
+            activated_where: {{sls}}
             activate:
                 firewall:
                     basic:

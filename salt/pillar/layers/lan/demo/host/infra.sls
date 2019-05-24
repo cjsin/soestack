@@ -1,3 +1,6 @@
+_loaded:
+    {{sls}}:
+
 deployment:
     gitlab_baremetal:
         gitlab:

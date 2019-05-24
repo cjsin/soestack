@@ -1,7 +1,10 @@
 #!stateconf yaml . jinja 
 
 {%- if 'svd' in pillar and 'cots' in pillar.svd and 'elasticsearch' in pillar.svd.cots %}
-{%-     set version = pillar.svd.cots.elasticsearch.version %}
+{%-     set svd = pillar.svd.cots.elasticsearch %}
+{%-     set version = svd.version %}
+{%-     set hash    = svd.hash if 'hash' in svd else '' %}
+{%-     set baseurl = 'http://nexus:7081/repository/elasticsearch/downloads' %}
 
 .requirements:
     pkg.installed:
@@ -11,19 +14,19 @@
 .elasticsearch-direct-download:
     pkg.installed:
         - sources: 
-            - elasticsearch: http://nexus:7081/repository/elasticsearch/downloads/elasticsearch/elasticsearch-6.4.0.rpm
-        - hash:   {{pillar.svd.cots.elasticsearch.hash}}
+            - elasticsearch: {{baseurl}}/elasticsearch/elasticsearch-{{version}}.rpm
+        - hash:   {{hash}}
 
 .logstash-direct-download:
     pkg.installed:
         - sources: 
-            - elasticsearch: http://nexus:7081/repository/elasticsearch/downloads/logstash/logstash-6.4.0.rpm
-        - hash:   {{pillar.svd.cots.logstash.hash}}
+            - elasticsearch: {{baseurl}}/logstash/logstash-{{version}}.rpm
+        - hash:   {{hash}}
 
 .kibana-direct-download:
     pkg.installed:
         - sources: 
-            - elasticsearch: http://nexus:7081/repository/elasticsearch/downloads/kibana/kibana-6.4.0-x86_64.rpm
-        - hash:   {{pillar.svd.cots.kibana.hash}}
+            - elasticsearch: {{baseurl}}/kibana/kibana-{{version}}-x86_64.rpm
+        - hash:   {{hash}}
 
 {%- endif %}

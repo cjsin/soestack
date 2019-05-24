@@ -5,7 +5,7 @@
 {%- set username = 'node_exporter' %}
 {%- set user = pillar.accounts.users[username] %}
 
-# Create groups manually until I can get the jinja template include to find the right path 
+{# # Create groups manually until I can get the jinja template include to find the right path  #}
 
 .group-{{groupname}}:
     group.present:

@@ -1,4 +1,4 @@
-#
+{#
 # Requires variables:
 #    - suffix (optional) - a unique tag for keeping state names from conflicting
 #    - nugget
@@ -8,6 +8,8 @@
 #        - this will be used when a file specifies a ':' prefixed pillar location when specifying a config key
 #        - it will also be used to look up 'files' if no files were specified
 #    - files_location
+#}
+
 {%- set prefix, suffix = salt.uuid.ids(args) %}
 {%- set pillar_location = args.pillar_location if 'pillar_location' and args.pillar_location else '' %}
 {%- set pillar_data     = salt['pillar.get'](pillar_location,{}) if pillar_location else {} %}

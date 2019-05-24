@@ -1,9 +1,13 @@
+_loaded:
+    {{sls}}:
+
 deployments:
     logstash_baremetal:
         logstash-sys:
             host: infra
 
             activated: False
+            activated_where: {{sls}}
 
             activate:
                 services:

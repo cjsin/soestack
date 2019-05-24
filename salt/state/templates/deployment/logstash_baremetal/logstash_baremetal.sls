@@ -20,12 +20,12 @@
 
 {%-     if action in [ 'all', 'install' ] %}
 
-{{prefix}}{{state_tag}}-requirements{{suffix}}:
+{{sls}}.{{prefix}}{{state_tag}}-requirements{{suffix}}:
     pkg.installed:
         - pkgs:
             - java-1.8.0-openjdk
 
-{{prefix}}{{state_tag}}-direct-download{{suffix}}:
+{{sls}}.{{prefix}}{{state_tag}}-direct-download{{suffix}}:
     pkg.installed:
         - sources: 
             - logstash: http://nexus:7081/repository/elasticsearch/downloads/logstash/logstash-{{version}}.rpm
@@ -39,7 +39,7 @@
 {%-         if 'extra_groups' in account_info and account_info.extra_groups %}
 {%-             for extra_group in account_info.extra_groups %}
 
-{{prefix}}{{state_tag}}-user-{{user}}-group-{{extra_group}}{{suffix}}:
+{{sls}}.{{prefix}}{{state_tag}}-user-{{user}}-group-{{extra_group}}{{suffix}}:
     cmd.run:
         - name:   usermod -a -G '{{extra_group}}' '{{user}}'
         - unless: groups '{{user}}' | egrep '(^|[[:space:]]){{extra_group}}([[:space:]]|$)' 
@@ -50,7 +50,7 @@
 {%-         set args = { 'parent': filesystem, 'pillar_location' : pillar_location } %}
 {%          include('templates/support/filesystem.sls') with context %}
 
-{{prefix}}{{state_tag}}-service-unit{{suffix}}:
+{{sls}}.{{prefix}}{{state_tag}}-service-unit{{suffix}}:
     file.managed:
         - name:     /etc/systemd/system/{{deployment_name}}.service
         - user:     root
@@ -59,10 +59,10 @@
         - source:   salt://templates/deployment/logstash_baremetal/service.jinja
         - template: jinja
         - context:
-            service_suffix: {{service_suffix}}
+            service_suffix:  {{service_suffix}}
             deployment_name: {{deployment_name}}
-            user: {{user}}
-            group: {{group}}
+            user:            {{user}}
+            group:           {{group}}
 
 {%-     endif %}
 
@@ -70,7 +70,7 @@
 
 {%-         set activated = 'activated' in deployment and deployment.activated %}
 
-{{prefix}}{{state_tag}}-service{{suffix}}:
+{{sls}}.{{prefix}}{{state_tag}}-service{{suffix}}:
     service.{{'running' if activated else 'dead'}}:
         - name:   logstash-{{service_suffix}}
         - enable: {{activated}} 

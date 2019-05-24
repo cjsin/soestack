@@ -1,5 +1,5 @@
 {%- set prefix, suffix  = salt.uuid.ids(args) %}
-{{prefix}}firewall-rule-{{args.name}}{{suffix}}:
+{{sls}}.{{prefix}}firewall-rule-{{args.name}}{{suffix}}:
     iptables.insert:
         - position:  1
         {#- # TODO - add all valid keys #}

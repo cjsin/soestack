@@ -1,9 +1,13 @@
+_loaded:
+    {{sls}}:
+
 deployments:
 
     kibana_container:
         kibana-frontend:
             host: infra
             activated: False
+            activated_where: {{sls}}
             activate:
                 firewall:
                     basic:

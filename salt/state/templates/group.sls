@@ -3,15 +3,16 @@
 
 {%-     set group = pillar.groups[groupname] %}
 
-.group-{{groupname}}:
+{{sls}}.{{groupname}}.group:
     group.present:
         - name:     {{groupname}}
         - gid:      {{group.gid}}
 
 {%- else %}
 
-.group-not-defined:
-    cmd.run:
-        - name: echo "ERROR: Salt template 'group' called without parameter 'groupname' defined." 1>&2 ; /bin/false 
+{{sls}}.group-not-defined:
+    noop.error:
+        - text: |
+            Salt template 'group' called without parameter 'groupname' defined.
 
 {%- endif %}

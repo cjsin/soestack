@@ -1,8 +1,11 @@
+_loaded:
+    {{sls}}:
+
 deployments:
     gitlab_runner_baremetal:
         gitlab-runner:
-            host:      infra
-            activated: True
+            activated: False
+            activated_where: {{sls}}
             activate:
                 service:
                     enabled:

@@ -1,3 +1,6 @@
+_loaded:
+    {{sls}}:
+
 # Overrides and data for the demo test soe lan
 
 cups:
@@ -45,10 +48,26 @@ deployments:
                         lan:    qemu
                         append: test-host-override
 
+    grafana_containr:
+        grafana-cont:
+            config:
+                ip: 192.168.121.108
+                domain: qemu
+                datasources:
+                    - access: 'proxy'                       # make grafana perform the requests
+                      editable: true                        # whether it should be editable
+                      isDefault: true                       # whether this should be the default DS
+                      name: 'prometheus'                    # name of the datasource
+                      orgId: 1                              # id of the organization to tie this datasource to
+                      type: 'prometheus'                    # type of the data source
+                      url: 'http://prometheus.qemu:9090'    # url of the prom instance
+                      version: 1                            # well, versioning
+
     ipa_client:
         testenv-client:
             host:        '.*'
             activated:   True
+            activated_where: {{sls}}
             config:
                 server:  infra.qemu
                 realm:   QEMU
@@ -64,6 +83,7 @@ deployments:
                 realm:  QEMU
                 fqdn:   infra.qemu
                 site:   qemu
+                ip:     192.168.121.101
                 install:
                     dns:
                         forwarders:

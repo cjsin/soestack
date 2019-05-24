@@ -3,7 +3,7 @@
 
 {%-     set user = pillar.users[username] %}
 
-.user-account-{{username}}:
+{{sls}}.{{username}}.user-account:
     user.present:
         - name:     {{username}}
         - fullname: {{user.fullname}}
@@ -17,8 +17,9 @@
 
 {%- else %}
 
-.user-account-not-defined:
-    cmd.run:
-        - name: echo "ERROR: Salt template 'user' called without parameter 'username' defined." 1>&2 ; /bin/false 
+{{sls}}.{{username}}.user-account-not-defined:
+    noop.error:
+        - text: |
+            Salt template 'user' called without parameter 'username' defined.
 
 {%- endif %}

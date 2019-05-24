@@ -11,6 +11,6 @@
         - name:   docker pull '{{image_prefix}}{{image}}'
         - unless: docker images --format '{%raw%}{{.Repository}}:{{.Tag}}{%endraw%}' | grep '{{image_prefix}}{{image}}'
 
-# This line is required to fix a salt bug which appends stray 'f' characters to macros
+{# This line is required to fix a salt bug which appends stray 'f' characters to macros #}
 
 {%- endmacro %}

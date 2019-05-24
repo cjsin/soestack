@@ -9,7 +9,7 @@
 
 {%-     if action in [ 'all', 'install' ] %}
 
-.install:
+{{sls}}.node_exporter_baremetal.install:
     archive.extracted:
         - name:             /opt
         - source:           {{pillar.nexus.urls.github}}/prometheus/node_exporter/releases/download/v{{version}}/node_exporter-{{version}}.linux-amd64.tar.gz
@@ -20,12 +20,12 @@
         - enforce_toplevel: True
         - source_hash:      {{hash}}
 
-.symlink-dir:
+{{sls}}.node_exporter_baremetal.symlink-dir:
     file.symlink:
         - name:     /opt/node_exporter
         - target:   /opt/node_exporter-{{version}}.linux-amd64
 
-.symlink-executable:
+{{sls}}.node_exporter_baremetal.symlink-executable:
     file.symlink:
         - name:     /usr/local/bin/node_exporter
         - target:   /opt/node_exporter/node_exporter
@@ -37,7 +37,7 @@
 include:
     - accounts.node_exporter
 
-# A salt bug requires this comment here (without a comment, it appends an 'f' to the line above)
+{# A salt bug requires this comment here (without a comment, it appends an 'f' to the line above) #}
 
 {%-     endif %}
 
@@ -45,7 +45,7 @@ include:
  
 {%-         set activated = 'activated' in deployment and deployment.activated %}
 
-node-exporter-service:
+{{sls}}.node_exporter_baremetal.node-exporter-service:
     service.{{'running' if activated else 'dead'}}:
         - name: node_exporter
         - enable: {{activated}} 

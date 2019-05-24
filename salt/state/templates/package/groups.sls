@@ -1,4 +1,4 @@
-
+{#
 #
 # Expected context variables:
 # 
@@ -27,6 +27,8 @@
 #   set args = { 'package_groups': 'net-tools,console-tools' }
 #   include('templates/package/sets.sls') with context
 #
+#}
+
 {%- set suffix = salt['cmd.exec_code']('python','import uuid; print(str(uuid.uuid4())); ')[:8] %}
 {%- set diagnostics = False %}
 
@@ -65,11 +67,9 @@
 
 {%-     if diagnostics and not gathered_names and not gathered_objects %}
 
-missing-parameters-for-install_package_groups-{{suffix}}:
-    cmd.run:
-        - name: |
-            echo "Neither arg 'package_group_name(s)' or 'package_group(s)' was specified."
-            exit 1
+{{sls}}.groups.missing-parameters-for-install_package_groups-{{suffix}}:
+    noop.error:
+        - text: "Neither arg 'package_group_name(s)' or 'package_group(s)' was specified."
 
 {%-     endif %}
 
@@ -83,11 +83,9 @@ missing-parameters-for-install_package_groups-{{suffix}}:
 
 {%-         if diagnostics and package_group_name not in ppg %}
 
-unrecognised-package-group-name-{{package_group_name}}-{{suffix}}:
-    cmd.run:
-        - name: |
-            echo "Specified package group name was not defined in pillar."
-            exit 1
+{{sls}}.groups.unrecognised-package-group-name-{{package_group_name}}-{{suffix}}:
+    noop.error:
+        - text: Specified package group name was not defined in pillar.
 
 {%-         endif %}
 

@@ -1,6 +1,6 @@
 [Unit]
 Description=Nexus mirror
-After=syslog.target network.target NetworkManager-wait-online.service
+After=syslog.target network.target NetworkManager-wait-online.service docker.service
 
 [Service]
 Type=simple

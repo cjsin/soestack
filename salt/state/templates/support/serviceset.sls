@@ -1,3 +1,4 @@
+{#
 #
 # This template requires:
 #    - args, containing:
@@ -7,6 +8,8 @@
 #          - dead and running will use salt 'dead' and 'running' but will not set the 'enable' flag either on or off
 #          - disabled and enabled equate to dead and running but will also set the 'enable' flag.
 #
+#}
+
 {%- set service_set_name = args.service_set_name %}
 {%- set service_set = args.service_set %}
 {%- set action      = args.action if 'action' in args else '' %}

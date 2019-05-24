@@ -17,11 +17,12 @@
         - mode:  '0755'
         - contents: |
             {%- if mirror %}
-            gem sources | grep "{{mirror}}" || gem sources --add "{{mirror}}"
-            gem sources | grep rubygems.org && gem sources --remove https://rubygems.org/
+            gem sources | grep -s "{{mirror}}" || gem sources --add "{{mirror}}"
+            gem sources | grep -s rubygems.org && gem sources --remove https://rubygems.org/
             {%- endif %}
 
-            gem list | grep -s bundle || gem install bundle
+            # Bundler released version 2.0 and decided to break compatibility entirely
+            gem list | egrep -s '^bundle[[:space:]]' || gem install bundle #"~>1.0"
 
             {%- if mirror %}
             if ! bundle config | grep "{{mirror}}"

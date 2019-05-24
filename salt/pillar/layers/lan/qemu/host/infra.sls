@@ -1,8 +1,5 @@
-deployment:
-    gitlab_baremetal:
-        gitlab:
-            config:
-                hostname: gitlab.qemu
+_loaded:
+    {{sls}}:
 
 # Override DNS on the infra server
 
@@ -89,3 +86,5 @@ network:
                 - defroute
                 - infra-server
                 - infra-dns
+
+layer-host-loaded: {{sls}}

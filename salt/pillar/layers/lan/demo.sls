@@ -1,3 +1,6 @@
+_loaded:
+    {{sls}}:
+
 # Overrides and data for the demo test soe lan
 
 cups:
@@ -74,6 +77,7 @@ deployments:
         testenv-client:
             host:        '.*'
             activated:   True
+            activated_where: {{sls}}
             config:
                 server:  infra.demo
                 realm:   DEMO

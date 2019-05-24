@@ -4,8 +4,11 @@
 {%- set config          = deployment.config %}
 {%- set action = args.action if 'action' in args else 'all' %}
 
+{#
+# TODO
 # need net.bridge.bridge* sysctls
 # need to disable swap first too
+#}
 
 {%- if action in [ 'all', 'install'] %}
 
@@ -19,14 +22,14 @@
 
 {%- if action in [ 'all', 'configure'] %}
 
-.disable-swap:
+{{sls}}.{{deployment_name}}.disable-swap:
     cmd.run:
         - name: |
             swapoff -a
             sed -i '/^[^#].*[[:space:]]swap[[:space:]]/ s/^/#/' /etc/fstab 
         - onlyif: egrep -i '^[^#].*[[:space:]]swap[[:space:]]' /etc/fstab 
 
-.cluster-init-script:
+{{sls}}.{{deployment_name}}.cluster-init-script:
     file.managed:
         - name: /usr/local/sbin/kube-cluster-init-{{deployment_name}}
         - user: root
@@ -45,14 +48,14 @@
 
 {%-     if activated %}
 
-kube-cluster-init:
+{{sls}}.{{deployment_name}}.kube-cluster-init:
     cmd.run:
         - unless: test -f /etc/kubernetes/admin.conf
         - name:   /usr/local/sbin/kube-cluster-init-{{deployment_name}}
 
 {%-     endif %}
 
-kubelet-service:
+{{sls}}.{{deployment_name}}.kubelet-service:
     service.{{'running' if activated else 'dead'}}:
         - name:   kubelet
         - enable: {{activated}} 

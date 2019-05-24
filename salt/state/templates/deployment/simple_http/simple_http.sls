@@ -8,7 +8,7 @@
 
 {%- if action in [ 'all', 'install' ] %}
 
-simple-http-requirements:
+{{sls}}.{{deployment_name}}.simple-http-requirements:
     pkg.installed:
         - pkgs:
             - python37
@@ -18,7 +18,7 @@ simple-http-requirements:
 
 {%- if action in [ 'all', 'configure' ] %}
 
-simple-http-script-{{deployment_name}}:
+{{sls}}.{{deployment_name}}.simple-http-script:
     file.managed:
         - name:  /usr/local/sbin/simple-http-{{deployment_name}}
         - user:  root
@@ -34,7 +34,7 @@ simple-http-script-{{deployment_name}}:
                 exec python3 -m http.server "${port}"
             fi
 
-simple-http-service-{{deployment_name}}:
+{{sls}}.{{deployment_name}}.simple-http-service:
     file.managed:
         - name: /etc/systemd/system/simple-http-{{deployment_name}}.service
         - user: root
@@ -57,10 +57,9 @@ simple-http-service-{{deployment_name}}:
 
 {%- endif %}
 
-
 {%- if action in [ 'all', 'activate' ] %}
 
-simple-http-service-enabled-{{deployment_name}}:
+{{sls}}.{{deployment_name}}.simple-http-service-enabled:
     service.running:
         - name:   simple-http-{{deployment_name}}
         - enable: True

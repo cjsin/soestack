@@ -25,7 +25,7 @@
 #        - contents: |
 #            TODO - this data is obtained from the master
 
-ipa-replica-install-script-{{deployment_name}}:
+{{sls}}.ipa-replica-install-script-{{deployment_name}}:
     file.managed:
         - name:         /usr/local/sbin/ipa-replica-deploy-{{deployment_name}}
         - source:       salt://{{slspath}}/deploy-ipa-replica.sh.jinja
@@ -38,7 +38,7 @@ ipa-replica-install-script-{{deployment_name}}:
             replica_key_file: {{replica_key_file}}
             config:           {{config|json}}
         
-ipa-replica-join-{{deployment_name}}:
+{{sls}}.ipa-replica-join-{{deployment_name}}:
     cmd.run:
         - name:    /usr/local/sbin/ipa-replica-deploy-{{deployment_name}}
         # TODO - check the log file names

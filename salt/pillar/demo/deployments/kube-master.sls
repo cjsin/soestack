@@ -1,9 +1,13 @@
+_loaded:
+    {{sls}}:
+
 deployments:
 
     kube_master:
         kube-dev:
             host: infra 
             activated: False
+            activated_where: {{sls}}
             activate:
                 services:
                     enabled:

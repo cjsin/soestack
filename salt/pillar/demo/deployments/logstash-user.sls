@@ -1,10 +1,14 @@
+_loaded:
+    {{sls}}:
+
 deployments:
 
     logstash_container:
         logstash-user:
             hosts:
                 - '.*'
-            activated: False
+            activated: True
+            activated_where: {{sls}}
             activate:
                 firewall:
                     basic:

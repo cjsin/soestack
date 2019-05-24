@@ -3,6 +3,7 @@ deployments:
         node_exporter:
 
             activated: True
+            activated_where: {{sls}}
 
             activate:
                 firewall:

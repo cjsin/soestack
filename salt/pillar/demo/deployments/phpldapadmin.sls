@@ -1,8 +1,12 @@
+_loaded:
+    {{sls}}:
+
 deployments:
     phpldapadmin_baremetal:
         phpldapadmin:
-            host: infra
-            activated: True
+            host:      infra
+            activated: False
+            activated_where: {{sls}}
             activate:
                 firewall:
                     basic:

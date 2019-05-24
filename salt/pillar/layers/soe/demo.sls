@@ -1,5 +1,8 @@
 # Overrides for the demo test soe
 
+_loaded:
+    {{sls}}:
+
 soe:
     name:         soestack-demo
     description:  Example soe implementation using vagrant
@@ -276,27 +279,27 @@ nexus:
             remote_url:     http://mirror.centos.org/
             yum:
                 centos:
-                    gpgkey_url:  http://mirror.centos.org/centos/RPM-GPG-KEY-CentOS-7
+                    gpgkey_url:  http://mirror.centos.org/centos/RPM-GPG-KEY-CentOS-$releasever
                     enabled:     1
                     gpgcheck:    1
                     gpgkey:      RPM-GPG-KEY-CentOS-7
                     repos:
                         os:
-                            description: Centos $releasever - $basearch
-                            path:        centos/$releasever/os/$basearch
+                            description: Centos $releaselong - $basearch
+                            path:        centos/$releaselong/os/$basearch
 
                         updates:
-                            description: Centos $releasever - $basearch - Updates
-                            path:        centos/$releasever/updates/$basearch
+                            description: Centos $releaselong - $basearch - Updates
+                            path:        centos/$releaselong/updates/$basearch
                         
                         # extras repo is needed for container-selinux
                         centos-extras:
-                            description: Centos $releasever - $basearch - Extras
-                            path:        centos/$releasever/extras/$basearch
+                            description: Centos $releaselong - $basearch - Extras
+                            path:        centos/$releaselong/extras/$basearch
 
                         centos-plus:
-                            description: Centos $releasever - $basearch - Plus
-                            path:        centos/$releasever/centosplus/$basearch
+                            description: Centos $releaselong - $basearch - Plus
+                            path:        centos/$releaselong/centosplus/$basearch
                             enabled:     0
 
         dockerhub:
@@ -394,9 +397,9 @@ nexus:
             remote_url:     https://dl.fedoraproject.org/
             yum:
                 centos:
-                    gpgkey_url:  https://dl.fedoraproject.org/pub/epel/RPM-GPG-KEY-EPEL-7
                     enabled:     1
                     gpgcheck:    1
+                    gpgkey_url:  https://dl.fedoraproject.org/pub/epel/RPM-GPG-KEY-EPEL-$releasever
                     gpgkey:      RPM-GPG-KEY-EPEL-7
                     repos:
                         epel:
@@ -423,10 +426,10 @@ nexus:
                     repos:
                         gitlab-ce:
                             description: "Gitlab Community Edition"
-                            path:        gitlab/gitlab-ce/el/7/$basearch
+                            path:        gitlab/gitlab-ce/el/$releasever/$basearch
                         gitlab-runner:
                             description: "Gitlab Community Edition - runner"
-                            path:        runner/gitlab-runner/el/7/$basearch
+                            path:        runner/gitlab-runner/el/$releasever/$basearch
                 # fedora:
                 #     repos:
                 #         gitlab-ce:
@@ -477,7 +480,7 @@ nexus:
                     repos:
                         kubernetes:
                             description: Kubernetes packages for RedHat family of operating systems
-                            path:        yum/repos/kubernetes-el7-x86_64
+                            path:        yum/repos/kubernetes-el$releasever-$basearch
 
         nodesource:
             type:           proxy
@@ -533,22 +536,22 @@ nexus:
                             description: RPM Fusion for Fedora $releasever - Free
                             path:        free/fedora/releases/$releasever/Everything/$basearch/os
                             gpgkey:      RPM-GPG-KEY-rpmfusion-free-fedora-28
-                            gpgkey_url:  https://rpmfusion.org/keys?action=AttachFile&do=get&target=RPM-GPG-KEY-rpmfusion-free-fedora-28
+                            gpgkey_url:  https://rpmfusion.org/keys?action=AttachFile&do=get&target=RPM-GPG-KEY-rpmfusion-free-fedora-$releasever
                         rpmfusion-free-updates:
                             description: RPM Fusion for Fedora $releasever - Free - Updates
                             path:        free/fedora/updates/$releasever/$basearch
                             gpgkey:      RPM-GPG-KEY-rpmfusion-free-fedora-28
-                            gpgkey_url:  https://rpmfusion.org/keys?action=AttachFile&do=get&target=RPM-GPG-KEY-rpmfusion-free-fedora-28
+                            gpgkey_url:  https://rpmfusion.org/keys?action=AttachFile&do=get&target=RPM-GPG-KEY-rpmfusion-free-fedora-$releasever
                         rpmfusion-nonfree:
                             description: RPM Fusion for Fedora $releasever - Nonfree
                             path:        nonfree/fedora/releases/$releasever/Everything/$basearch
                             gpgkey:      RPM-GPG-KEY-rpmfusion-nonfree-fedora-28
-                            gpgkey_url:  https://rpmfusion.org/keys?action=AttachFile&do=get&target=RPM-GPG-KEY-rpmfusion-nonfree-fedora-28
+                            gpgkey_url:  https://rpmfusion.org/keys?action=AttachFile&do=get&target=RPM-GPG-KEY-rpmfusion-nonfree-fedora-$releasever
                         rpmfusion-nonfree-updates:
                             description: RPM Fusion for Fedora $releasever - Nonfree - Updates
                             path:        nonfree/fedora/updates/$releasever/$basearch
                             gpgkey:      RPM-GPG-KEY-rpmfusion-nonfree-fedora-28
-                            gpgkey_url:  https://rpmfusion.org/keys?action=AttachFile&do=get&target=RPM-GPG-KEY-rpmfusion-nonfree-fedora-28
+                            gpgkey_url:  https://rpmfusion.org/keys?action=AttachFile&do=get&target=RPM-GPG-KEY-rpmfusion-nonfree-fedora-$releasever
                 centos:
                     repos:
                         # NOTE: The base (non-updates) repo does not seem to exist for EL?
@@ -556,12 +559,12 @@ nexus:
                             description: RPM Fusion for EL $releasever - Free - Updates
                             path:        free/el/updates/$releasever/$basearch
                             gpgkey:      RPM-GPG-KEY-rpmfusion-free-el-7
-                            gpgkey_url:  https://rpmfusion.org/keys?action=AttachFile&do=get&target=RPM-GPG-KEY-rpmfusion-free-el-7
+                            gpgkey_url:  https://rpmfusion.org/keys?action=AttachFile&do=get&target=RPM-GPG-KEY-rpmfusion-free-el-$releasever
                         rpmfusion-nonfree-updates:
                             description: RPM Fusion for EL $releasever - Nonfree - Updates
                             path:        nonfree/el/updates/$releasever/$basearch
                             gpgkey:      RPM-GPG-KEY-rpmfusion-nonfree-el-7
-                            gpgkey_url:  https://rpmfusion.org/keys?action=AttachFile&do=get&target=RPM-GPG-KEY-rpmfusion-nonfree-el-7
+                            gpgkey_url:  https://rpmfusion.org/keys?action=AttachFile&do=get&target=RPM-GPG-KEY-rpmfusion-nonfree-el-$releasever
 
 
         rubygems:
@@ -650,9 +653,9 @@ node_lists:
         primary:
             - infra
         secondary:
-            - pxe-client
-            - pxe-client2
-            - usbboot
+            #- pxe-client
+            #- pxe-client2
+            - infra
         workstations: []
 
 npm:
@@ -722,6 +725,14 @@ service-status:
             - virtlogd
             - avahi-daemon
             - xinetd
+            - abrt-ccpp
+            - abrt-oops
+            - abrt-xorg
+            - abrtd
+            - pulseaudio
+            - tuned
+            - lsmd
+            - kdump
             
 
 service-reg:

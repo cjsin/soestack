@@ -1,4 +1,4 @@
-#
+{#
 # Requires an 'args' with keys :
 #    - suffix (optional)- a unique suffix for generating unique state names
 #
@@ -6,6 +6,8 @@
 #    OR
 #    - dirs 
 #
+#}
+
 {%- set prefix, suffix = salt.uuid.ids(args) %}
 {%- set defaults        = args.defaults if 'defaults' in args else {} %}
 
@@ -16,7 +18,10 @@
 {%- endif %}
 
 {%- if dirs %}
-{%-     for name, data in dirs.iteritems() %}
+{#-     # need to operate on a sorted list of keys so that parents are created before children #}
+{%-     set keys = dirs.keys()|sort %}
+{%-     for name in keys %}
+{%-         set data = dirs[name] %}
 {%-         set spec = {} %}
 {%-         do spec.update(data if data else {}) %}
 {%-         with args = { 'item_type': 'dir', 'path': name, 'spec': spec, 'defaults': defaults, 'prefix': prefix, 'suffix': suffix } %}

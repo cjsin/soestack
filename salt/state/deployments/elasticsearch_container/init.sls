@@ -1,3 +1,8 @@
+{%- with args = { 'deployment_type': 'elasticsearch_container', 'actions': ['auto'] } %}
+{%      include('templates/deployments.sls') with context %}
+{%- endwith %}
+{# 
+# elasticsearch config files are as follows:
 # /usr/share/elasticsearch/config/
 # /usr/share/elasticsearch/config/elasticsearch.yml
 # /usr/share/elasticsearch/config/ingest-geoip
@@ -11,6 +16,4 @@
 # /usr/share/elasticsearch/config/users
 # /usr/share/elasticsearch/config/users_roles
 # /usr/share/elasticsearch/config/elasticsearch.keystore
-{%- with args = { 'deployment_type': 'elasticsearch_container', 'actions': ['auto'] } %}
-{%      include('templates/deployments.sls') with context %}
-{%- endwith %}
+#}

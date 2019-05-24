@@ -1,3 +1,6 @@
+_loaded:
+    {{sls}}:
+
 include:
     # Load nuggets first
     - defaults.nuggets 

@@ -8,8 +8,8 @@
 {%-         set svd_entry = pillar.svd.cots[pkgname] %}
 {%-         if 'version' not in svd_entry %}
 
-echo building-package-{{pkgname}}-no-version-in-svd-entry:
-    cmd.run
+{{sls}}.build.build_package.{{pkgname}}::no-version-in-svd-entry:
+    noop.notice
 
 {%-         endif %}
 {%-         if 'version' in svd_entry %}
@@ -21,8 +21,8 @@ echo building-package-{{pkgname}}-no-version-in-svd-entry:
 
 {%-             if not package_build_params %}
 
-echo No build parameters defined for package {{pkgname}}:
-    cmd.run
+{{sls}}.build.build_package.{{pkgname}}::No build parameters defined for package:
+    noop.notice
 
 {%-             endif %}
 
@@ -42,19 +42,18 @@ echo No build parameters defined for package {{pkgname}}:
 {%                  include('templates/build/build_rpm_package.sls') with context %}
 {%-             else %}
 
-.build-package-{{pkgname}}:
-    cmd.run:
-        - name: |
-            echo "No source url was defined!" 1>&2
-            echo "{{params|json}}"
-            exit 1
+{{sls}}.build.build_package.{{pkgname}}:
+    noop.error:
+        - text: |
+            No source url was defined!
+            {{params|json}}
 
 {%-             endif %}
 {%-         endif %}
 {%-     else %}
 
-echo building-package-{{pkgname}}-no-svd-entry:
-    cmd.run
+{{sls}}.build.build_package.{{pkgname}}::no-svd-entry:
+    noop.notice
 
 {%-     endif %}
 {%- endif %}

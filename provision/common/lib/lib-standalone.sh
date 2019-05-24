@@ -92,6 +92,9 @@ function copy_bundled_files()
 {
     echo "Copy bootstrap packages"
  
+    # NOTE these still use /e/bundled, for accessing the bundled repo files and soe copy.
+    # However BUNDLED_SRC should be set to specify the downloading large bundled files,
+    # and can also be set to /e/bundled if all the files were included.
     if [[ -d "/e/bundled/bootstrap-pkgs" ]]
     then
         /bin/cp -f /e/bundled/bootstrap-pkgs/*repo /etc/yum.repos.d/
@@ -114,36 +117,159 @@ function copy_bundled_files()
     fi
 }
 
-function restore_nexus_data()
+function select_iso()
 {
-    local datadir=/d/local/data/nexus/
+    local src="${1}"
+    local -a preferred_sequence=( DVD Everything Minimal )
+    local available=()
 
-    if [[ ! -d "${datadir}/restore-from-backup" ]]
-    then 
-        mkdir -p "${datadir}"/restore-from-backup
-    else
-        echo "Nexus DB backup files appear to have been unpacked already. Will overwrite anyway."
-        rm -f "${datadir}/restore-from-backup"/*bak
+    if [[ "${src}" =~ ^http:// ]]
+    then
+        local listing=$(curl -s "${BUNDLED_SRC}/iso/" | sed -r -n -e '/href=.*[.]iso"/ { s/.*href="(.*[.]iso)".*/\1/; p}')
+        mapfile -t available <<< "${listing}"
+    elif [[ "${src}" =~ ^/ ]]
+    then
+        listing=$(cd "${src}" && ls | egrep '[.]iso$')
+        mapfile -t available <<< "${listing}"
     fi
 
-    if ! [[ -f /e/bundled/nexus/blobs.tar && -f /e/bundled/nexus/db-backup.tar ]]
-    then 
-        echo "No Nexus backup database is available. Nexus will be configured as a new instance."
-    else
-        echo "Install Nexus DB backup"
-        tar x -C "${datadir}"/restore-from-backup -f /e/bundled/nexus/db-backup.tar
+    if ! (( ${#available[@]} ))
+    then
+        echo "WARNING: No isos found within ${src}"
+        return 1
+    fi
 
-        if [[ ! -d "${datadir}/blobs" ]]
-        then
-            echo "Install Nexus Blobs backup. This may take a while."
-            tar x -C /d/local/data/nexus --checkpoint=20000 -f /e/bundled/nexus/blobs.tar
-        else 
-            echo "Nexus Blobs appear to have been unpacked already"
+    local selected_iso=""
+    local iso_file=""
+    local name=""
+    local copy_all=0
+
+    for name in "${preferred_sequence[@]}"
+    do
+        for iso_file in "${available[@]}"
+        do
+            [[ "${iso_file}" =~ -${name}- ]] && selected_iso="${iso_file}"
+        done
+        [[ -n "${selected_iso}" ]] && break 
+    done
+    if [[ -n "${selected_iso}" ]]
+    then
+        echo "${src}/${selected_iso}"
+    else
+        echo "WARNING: No recognised iso filename was found in ${src}" 1>&2
+    fi
+}
+
+function obtain_isos()
+(
+    local dst_dir="/e/iso"
+
+    mkdir -p "${dst_dir}"
+
+    if ! cd "${dst_dir}" 
+    then
+        echo "Could not enter ${dst_dir}." 1>&2
+        return 1
+    fi
+
+    local selected=""
+
+    if ls | egrep "[.]iso\$"
+    then
+        local selected=$(select_iso "${dst_dir}")
+        if [[ -n "${selected}" ]]
+        then 
+            echo "Iso ${selected} is suitable." 1>&2
+            return 0
         fi
     fi
 
+    selected=$(select_iso "${BUNDLED_SRC}/iso")
+
+    if [[ -n "${selected}" ]]
+    then
+        local filename="${selected##*/}"
+        local extension="${filename##*.}"
+        if [[ "${extension,,}" == "iso" ]]
+        then
+            if [[ "${selected}" =~ ^http:// ]]
+            then 
+                echo "Downloading ${selected}" 1>&2
+                if curl -o "./${filename}" "${selected}" 
+                then
+                    echo "Successfully downloaded ${selected}" 1>&2
+                else
+                    echo "Failed downloading ${selected}" 1>&2
+                    rm -f "./${filename}"
+                fi
+            elif [[ "${selected:0:1}" == "/" ]]
+            then
+                ln -s "${selected}"
+            else
+                echo "I do not know how to obtain iso '${selected}'" 1>&2
+            fi
+        else 
+            echo "Iso filename '${selected}' extension '${extension}' did not end in 'iso' as expected." 1>&2
+        fi
+    else
+        echo "No source isos available at ${BUNDLED_SRC}" 1>&2
+    fi
+)
+
+function unpack_tar()
+{
+    local src="${1}"
+    local path="${2}"
+    local dst="${3}"
+    mkdir -p "${dst}"
+    if [[ "${src}" =~ ^http ]]
+    then
+        curl "${src}${path}" | tar x -C "${dst}" -
+    elif [[ -f "${src}" ]]
+    then
+        tar x -C "${dst}" -f "${src}${path}"
+    else
+        echo "No tar archive available for ${src}${path}" 1>&2
+    fi
+}
+
+function restore_nexus_data()
+{
+    local datadir=/d/local/data/nexus/
+    local db_dest="${datadir}/restore-from-backup"
+    local problems=0
+
+    echo "Restoring nexus data from bundled source" 1>&2
+
+    if [[ ! -d "${db_dest}" ]]
+    then 
+        mkdir -p "${db_dest}"
+    else
+        echo "Nexus DB backup files appear to have been unpacked already. Will overwrite anyway."
+        rm -f "${db_dest}"/*bak
+    fi
+
+    unpack_tar "${BUNDLED_SRC}" "/nexus/db-backup.tar" "${datadir}/restore-from-backup"
+    ((problems+=$?))
+
+    if [[ ! -d "${datadir}/blobs" ]]
+    then
+        echo "Install Nexus Blobs backup. This may take a while."
+        unpack_tar "${BUNDLED_SRC}" "/nexus/blobs.tar" "${datadir}"
+        ((problems+=$?))
+    else
+        echo "Nexus Blobs appear to have been unpacked already"
+    fi
+
+    if (( problems ))
+    then 
+        echo "No Nexus backup database is available. Nexus will probably be configured as a new instance."
+    else
+        echo "Nexus backup data copied"
+    fi
+
     echo "Fix nexus file contexts"
-    chcon -R -t container_file_t /d/local/data/nexus
+    chcon -R -t container_file_t "${datadir}"
 
     return 0
 }
@@ -161,18 +287,24 @@ function start_docker()
     sleep 10
 }
 
-function load_nexus_container()
+function load_container_file()
 {
     echo "Checking docker status"
-    if systemctl status docker
+    if ! systemctl status docker
     then 
-        echo "Load nexus container"
-        docker load -i /e/bundled/docker/sonatype*nexus*tar
-        return $?
-    else 
         echo "Docker failed to start"
         return 1
     fi
+
+    local image_file="${BUNDLED_SRC}/docker/${name}"
+    echo "Load nexus container ${image_file}" 1>&2
+    docker load -i "${image_file}"
+}
+
+function load_nexus_container()
+{
+    sonatype_version="3.13.0"
+    load_container_file "sonatype_nexus3__${sonatype_version}.tar"
 }
 
 function prepare_network_for_docker()

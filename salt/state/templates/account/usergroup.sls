@@ -18,11 +18,11 @@
 {%-     do all_groups.append(groupname) %}
 {%- endif %}
 
-# Create groups manually until I can get the jinja template include to find the right path 
+{# Create groups manually until I can get the jinja template include to find the right path  #}
 
 {%- if groupname %}
 
-{{prefix}}group-{{groupname}}{{suffix}}:
+{{sls}}.account.usergroup.{{prefix}}group-{{groupname}}{{suffix}}:
     group.present:
         - name:     {{groupname}}
         {%- if system %}
@@ -34,7 +34,7 @@
 
 {%- endif %}
 
-{{prefix}}user-account-{{username}}{{suffix}}:
+{{sls}}.account.usergroup.{{prefix}}user-account-{{username}}{{suffix}}:
     user.present:
         - name:     {{username}}
         {%- if fullname %}

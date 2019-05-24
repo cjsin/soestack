@@ -1,2 +1,2 @@
 include:
-    - .pxeboot
+    - server.pxeboot

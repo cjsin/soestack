@@ -3,42 +3,42 @@ name=Fedora-$releasever
 baseurl=http://nexus:7081/repository/fedora/pub/fedora/linux/releases/$releasever/Everything/$basearch/os
 enabled=1
 gpgcheck=1
-gpgkey=file:///etc/pki/rpm-gpg//RPM-GPG-KEY-fedora-28-x86_64
+gpgkey=file:///etc/pki/rpm-gpg//RPM-GPG-KEY-fedora-$releasever-$basearch
 
 [updates]
 name=Fedora-$releasever - Updates
 baseurl=http://nexus:7081/repository/fedora/pub/fedora/linux/updates/$releasever/Everything/$basearch
 enabled=1
 gpgcheck=1
-gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-fedora-28-x86_64
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-fedora-$releasever-$basearch
 
 [rpmfusion-free]
 name=RPMFusion free
 baseurl=http://nexus:7081/repository/rpmfusion/free/fedora/releases/$releasever/Everything/$basearch/os
 enabled=1
 gpgcheck=1
-gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-rpmfusion-free-fedora-28
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-rpmfusion-free-fedora-$releasever
 
 [rpmfusion-free-updates]
 name=RPMFusion free updates
 baseurl=http://nexus:7081/repository/rpmfusion/free/fedora/updates/$releasever/$basearch
 enabled=1
 gpgcheck=1
-gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-rpmfusion-free-fedora-28
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-rpmfusion-free-fedora-$releasever
 
 [rpmfusion-nonfree]
 name=RPMFusion nonfree
 baseurl=http://nexus:7081/repository/rpmfusion/nonfree/fedora/releases/$releasever/Everything/$basearch
 enabled=1
 gpgcheck=1
-gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-rpmfusion-nonfree-fedora-28
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-rpmfusion-nonfree-fedora-$releasever
 
 [rpmfusion-nonfree-updates]
 name=RPMFusion nonfree updates
 baseurl=http://nexus:7081/repository/rpmfusion/nonfree/fedora/updates/$releasever/$basearch
 enabled=1
 gpgcheck=1
-gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-rpmfusion-nonfree-fedora-28
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-rpmfusion-nonfree-fedora-$releasever
 
 [docker-ce]
 name=Docker Community Edition

@@ -1,27 +1,27 @@
 [os]
 name=Centos-$releasever
-baseurl=http://nexus:7081/repository/centos/centos/$releasever/os/$basearch
+baseurl=http://nexus:7081/repository/centos/centos/$releaselong/os/$basearch
 enabled=1
 gpgcheck=1
 gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-$releasever
 
 [updates]
 name=Centos-$releasever - Updates
-baseurl=http://nexus:7081/repository/centos/centos/$releasever/updates/$basearch
+baseurl=http://nexus:7081/repository/centos/centos/$releaselong/updates/$basearch
 enabled=1
 gpgcheck=1
 gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-$releasever
 
 [centos-extras]
 name=Centos-$releasever - Extras
-baseurl=http://nexus:7081/repository/centos/centos/$releasever/extras/$basearch
+baseurl=http://nexus:7081/repository/centos/centos/$releaselong/extras/$basearch
 enabled=1
 gpgcheck=1
 gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-$releasever
 
 [centos-plus]
 name=Centos-$releasever - Plus
-baseurl=http://nexus:7081/repository/centos/centos/$releasever/centosplus/$basearch
+baseurl=http://nexus:7081/repository/centos/centos/$releaselong/centosplus/$basearch
 enabled=0
 gpgcheck=1
 gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-$releasever
@@ -57,10 +57,10 @@ gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-rpmfusion-nonfree-el-$releasever
 
 [kubernetes]
 name=Kubernetes
-baseurl=http://nexus:7081/repository/kubernetes/yum/repos/kubernetes-el7-$basearch
+baseurl=http://nexus:7081/repository/kubernetes/yum/repos/kubernetes-el$releasever-$basearch
 enabled=1
 gpgcheck=1
-gpgkey=file:///etc/pki/rpm-gpg/
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-GOOGLE-CLOUD-PACKAGES
 
 [dockerce]
 name=Docker Community Edition
@@ -71,7 +71,7 @@ gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-DOCKERCE-centos
 
 [gitlab]
 name=Gitlab Community Edition 
-baseurl=http://nexus:7081/repository/gitlab/gitlab/gitlab-ce/el/7/$basearch
+baseurl=http://nexus:7081/repository/gitlab/gitlab/gitlab-ce/el/$releasever/$basearch
 enabled=1
 gpgcheck=1
 gpgkey=file:///etc/pki/rpm-gpg/gitlab-gitlab-ce-3D645A26AB9FBD22.pub.gpg
@@ -84,18 +84,11 @@ gpgcheck=1
 gpgkey=file:///etc/pki/rpm-gpg/NODESOURCE-GPG-SIGNING-KEY-EL
 
 [saltstack]
-name=Saltstack for EL$releasever
+name=Saltstack for el$releasever
 baseurl=http://nexus:7081/repository/saltstack/yum/redhat/$releasever/$basearch/latest
 enabled=1
 gpgcheck=1
 gpgkey=file:///etc/pki/rpm-gpg/saltstack-signing-key
-
-[kubernetes]
-name=Kubernetes
-baseurl=http://nexus:7081/repository/kubernetes/yum/repos/kubernetes-el7-$basearch
-enabled=1
-gpgcheck=1
-gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-GOOGLE-CLOUD-PACKAGES
 
 [vscode]
 name=Microsoft Visual Studio Code

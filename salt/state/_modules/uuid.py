@@ -37,12 +37,12 @@ def ids(args=None):
     suffix = (args['suffix']) if 'suffix' in args and args['suffix'] else ''
 
     if not prefix and not suffix:
-        suffix = '-' + short()
+        suffix = '.' + short()
 
-    if suffix and suffix[0] != '-':
-        suffix = '-' + suffix 
+    if suffix and suffix[0] != '.':
+        suffix = '.' + suffix 
 
-    if prefix and prefix[-1] != '-':
-        prefix = prefix +'-' 
+    if prefix and prefix[-1] != '.':
+        prefix = prefix +'.' 
         
     return prefix, suffix 

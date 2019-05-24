@@ -1,9 +1,12 @@
+{#
 #
 #  The following variables are expected:
 #     - nugget_name
 #     - nugget
 #     - required - the list of other required nuggets
 #     - action - one of 'install' or 'activate'
+#}
+
 {%  import 'lib/noop.sls' as noop %}
 
 {%- set diagnostics = False %}

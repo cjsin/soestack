@@ -1,5 +1,6 @@
 #!stateconf yaml . jinja
 
+{#
 # 
 # How this works:
 # 
@@ -13,6 +14,7 @@
 # For example, the role-set might be set to 'developer-workstation-node' which
 # then causes 'roles' to have appended the values 'workstation-node' and 'software-development-node'
 #
+#}
 
 
 {%- if 'role-sets' in pillar and pillar['role-sets'] %}
@@ -71,7 +73,7 @@
 
 .invalid-or-empty-role-set:
     noop.notice:
-        - name: echo "The role-set '{{roleset_name}}' does not declare a list of combined roles"
+        - name: The role-set '{{roleset_name}}' does not declare a list of combined roles
 
 {#-             end if the role set correctly defines which roles it combines #}
 {%-             endif %}
@@ -88,7 +90,7 @@
 
 .no-roleset-grain:
     noop.notice:
-        - name: echo "There is no role-set grain assigned to this node"
+        - name: There is no role-set grain assigned to this node
 
 {#-     end if a role-set grain is assigned to this node #}
 {%-     endif %}
@@ -97,7 +99,7 @@
 
 .no-pillar-support:
     noop.notice:
-        - name: echo "There is no pillar support for role-sets, or a pillar include failed."
+        - name: There is no pillar support for role-sets, or a pillar include failed.
 
 {#- end if pillar has support for role-sets #}
 {%- endif %}

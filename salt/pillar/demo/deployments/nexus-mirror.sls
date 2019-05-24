@@ -1,8 +1,11 @@
+_loaded:
+    {{sls}}:
+
 deployments:
     nexus_container:
         nexus-mirror:
-            host: infra
             activated: False
+            activated_where: {{sls}}
             activate:
                 services:
                     enabled:

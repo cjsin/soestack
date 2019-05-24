@@ -71,9 +71,9 @@
 {%                      include('templates/support/firewall.sls') with context %}
 {%-                 endwith %}
 {%-             else %}
-{%- if diagnostics %}
+{%-                 if diagnostics %}
 {{noop.notice('no firewall data within activate') }}
-{%- endif %}
+{%-                 endif %}
 {%-             endif %}
 {%-         endif %}
 {%-     endif %}

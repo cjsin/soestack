@@ -4,6 +4,7 @@ import logging
 import salt.exceptions
 from pprint import pformat
 import salt.utils.json 
+import yaml
 
 LOG = logging.getLogger(__name__)
 
@@ -94,17 +95,32 @@ def error(name,text=None):
     LOG.info(name)
     return _noop(name,prefix='error',text=text,changed=True,result=False)
 
-def pprint(name,data,text=None):
+def json(name,data,text=None):
     '''
     Pprint an object to the log but do not report a change
     '''
     pf = salt.utils.json.dumps(data) 
-    # pf = pformat(data,width=-1)
+    
     pretty = "{} data {}".format(name, pf)
     LOG.info(pretty)
 
     changes = { 
             name : { 'old': {}, 'new': data }
             }
-    return _noop(name, prefix='pprint', text=text, changed=False, changes=changes, result=True, comment=pretty)
+    return _noop(name, prefix='json', text=text, changed=False, changes=changes, result=True, comment=pretty)
 
+def pprint(name,data,text=None):
+    '''
+    Pprint an object to the log but do not report a change
+    '''
+    pf = yaml.dump(data, default_flow_style=False, encoding=None)
+    # pf = pformat(data,width=-1)
+    text = text+'\n' if text else ''
+    pretty = text + '\n' + "{} data follows".format(name)
+    pretty = pretty + "\n" + pf
+    LOG.info(pretty)
+
+    changes = { 
+            name : { 'old': {}, 'new': data }
+            }
+    return _noop(name, prefix='pprint', text=pretty, changed=False, changes=changes, result=True, comment=pretty)
