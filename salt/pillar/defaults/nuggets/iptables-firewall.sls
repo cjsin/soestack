@@ -10,7 +10,7 @@ nuggets:
             nuggets-required:
                 - firewall-implementations
                 
-            uninstalled:
+            absent:
                 package-sets:
                     - firewalld-firewall
 

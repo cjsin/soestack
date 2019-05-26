@@ -7,14 +7,14 @@
 {%-         set state_name='-'.join(['update-aliases', user_name, deliver_to]) %}
 {%-         do reqs.append(state_name) %}
 
-{{state_name}}:
+.{{state_name}}:
     cmd.run:
         - name: "sed -i -e '/^{{user_name}}[[:space:]]*:/ d' -e '$ a{{user_name}}: {{deliver_to}}' /etc/aliases"
         - unless: egrep '^{{user_name}}[[:space:]]*:[[:space:]]*{{deliver_to}}[[:space:]]*$' /etc/aliases 
 
 {%-    endfor %}
 
-run-newaliases:
+.run-newaliases:
     cmd.run:
         - name: newaliases
         - onchanges:

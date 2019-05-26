@@ -1,7 +1,8 @@
 #!stateconf yaml . jinja
 
-/etc/Muttrc.local:
+.rcfile:
     file.managed:
+        - name: /etc/Muttrc.local
         - user: root
         - group: root
         - mode: '0644'

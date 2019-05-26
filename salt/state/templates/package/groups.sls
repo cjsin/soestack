@@ -29,7 +29,7 @@
 #
 #}
 
-{%- set suffix = salt['cmd.exec_code']('python','import uuid; print(str(uuid.uuid4())); ')[:8] %}
+{%- set suffix = salt['uuid.short']() %}
 {%- set diagnostics = False %}
 
 {%- if 'package-groups' in pillar 

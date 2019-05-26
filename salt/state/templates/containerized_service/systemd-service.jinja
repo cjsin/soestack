@@ -23,7 +23,7 @@ Environment=RM=--rm
 EnvironmentFile=-/etc/sysconfig/%p
 ExecStartPre=-/usr/bin/docker stop %p
 ExecStartPre=-/usr/bin/docker rm %p
-ExecStart=/usr/bin/docker run $(RM) --name %p {{privilege_flag}} $DOCKER_OPTIONS $PORTS $VOLUMES -v /etc/localtime:/etc/localtime $ENTRYPOINT $IMAGE $OPTIONS
+ExecStart=/usr/bin/docker run $(RM) --name %p {{privilege_flag}} $TZ $DOCKER_OPTIONS $PORTS $VOLUMES -v /etc/localtime:/etc/localtime $ENTRYPOINT $IMAGE $OPTIONS
 ExecStop=/usr/bin/docker stop %p
 Type=simple
 User=root

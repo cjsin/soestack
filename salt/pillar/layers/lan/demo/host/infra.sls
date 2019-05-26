@@ -1,7 +1,7 @@
 _loaded:
     {{sls}}:
 
-deployment:
+deployments:
     gitlab_baremetal:
         gitlab:
             config:
@@ -27,15 +27,15 @@ managed-hosts:
             lan:     demo
             aliases: ipa ipa.demo
             type:    dns
-        pxe-client:
-            ip:       192.168.121.250
+        pxe-client1:
+            ip:       192.168.121.241
             mac:      '52:54:00:96:72:f9'
             lan:      demo
             type:     client
             hostfile:
-                - pxe-client
+                - pxe-client1
         pxe-client2:
-            ip:       192.168.121.251
+            ip:       192.168.121.242
             mac:      '52:54:00:b9:62:3b'
             lan:      demo
             type:     client
@@ -98,6 +98,7 @@ network:
                 - home-test-environment
                 - infra-dns
 
-    classes:
-        home-test-environment:
-{% include 'layers/lan/demo/host/infra.private.sls' ignore missing %}
+include:
+    - layers.private.gitlab
+    - layers.private.wpa
+    - layers.private.timezone

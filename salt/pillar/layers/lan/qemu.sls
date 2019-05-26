@@ -48,10 +48,10 @@ deployments:
                         lan:    qemu
                         append: test-host-override
 
-    grafana_containr:
+    grafana_container:
         grafana-cont:
             config:
-                ip: 192.168.121.108
+                ip:     192.168.121.108
                 domain: qemu
                 datasources:
                     - access: 'proxy'                       # make grafana perform the requests

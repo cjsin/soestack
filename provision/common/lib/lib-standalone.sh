@@ -17,6 +17,21 @@ function import_gpgkeys()
     fi
 }
 
+function create_installmedia_repo()
+{
+    local pkg_dst="/e/yum-repos/installmedia"
+    local repos_dir="${ANA_INSTALL_PATH}/etc/yum.repos.d"
+    {
+        echo "[installmedia]"
+        echo "name=installmedia"
+        echo "baseurl=file://${pkg_dst}"
+        echo "enabled=1"
+        echo "gpgcheck=1"
+    } > "${repos_dir}/installmedia.repo"
+
+    yum --disablerepo='*' --enablerepo=installmedia makecache
+}
+
 function configure_standalone_network()
 {
     echo "Configure network for standalone server"
@@ -115,6 +130,28 @@ function copy_bundled_files()
             echo "No SOE copy is availble for pre-configuration"
         fi
     fi
+
+    local pkg_dir="/e/yum-repos/installmedia"
+    local result selected_iso
+    selected_iso=$(obtain_isos)
+    result=$?
+    if [[ -n "${selected_iso}" ]]
+    then
+        local fstab_line="${selected_iso} ${pkg_dir} auto defaults,ro,loop,auto,nofail 0 0 "
+        if ! grep -F -q "${fstab_line}" /etc/fstab 
+        then
+            echo "${fstab_line}" >> "/etc/fstab"
+        fi
+        mkdir -p "${pkg_dir}"
+        if ! grep -q "${pkg_dir}" /proc/mounts 
+        then
+            mount "${pkg_dir}"
+            create_installmedia_repo
+        fi
+    else
+        echo "Could not mount ${pkg_dir} (no iso available)" 1>&2
+        return 1
+    fi
 }
 
 function select_iso()
@@ -174,12 +211,13 @@ function obtain_isos()
 
     local selected=""
 
-    if ls | egrep "[.]iso\$"
+    if ls | egrep -q "[.]iso\$"
     then
         local selected=$(select_iso "${dst_dir}")
         if [[ -n "${selected}" ]]
         then 
             echo "Iso ${selected} is suitable." 1>&2
+            echo "${selected}"
             return 0
         fi
     fi
@@ -198,6 +236,7 @@ function obtain_isos()
                 if curl -o "./${filename}" "${selected}" 
                 then
                     echo "Successfully downloaded ${selected}" 1>&2
+                    echo "${dst_dir}/${filename}"
                 else
                     echo "Failed downloading ${selected}" 1>&2
                     rm -f "./${filename}"
@@ -205,6 +244,7 @@ function obtain_isos()
             elif [[ "${selected:0:1}" == "/" ]]
             then
                 ln -s "${selected}"
+                echo "${selected}"
             else
                 echo "I do not know how to obtain iso '${selected}'" 1>&2
             fi
@@ -212,7 +252,7 @@ function obtain_isos()
             echo "Iso filename '${selected}' extension '${extension}' did not end in 'iso' as expected." 1>&2
         fi
     else
-        echo "No source isos available at ${BUNDLED_SRC}" 1>&2
+        echo "No source isos available at ${BUNDLED_SRC}/" 1>&2
     fi
 )
 
@@ -224,7 +264,7 @@ function unpack_tar()
     mkdir -p "${dst}"
     if [[ "${src}" =~ ^http ]]
     then
-        curl "${src}${path}" | tar x -C "${dst}" -
+        curl "${src}${path}" | tar x -C "${dst}"
     elif [[ -f "${src}" ]]
     then
         tar x -C "${dst}" -f "${src}${path}"
@@ -276,6 +316,8 @@ function restore_nexus_data()
 
 function start_docker()
 {
+    yum -y install git
+
     echo "Enable docker"
     systemctl enable docker
     # Docker is restarted not just started, because
@@ -287,16 +329,96 @@ function start_docker()
     sleep 10
 }
 
-function load_container_file()
+function obtain_bundled_file()
 {
-    echo "Checking docker status"
-    if ! systemctl status docker
-    then 
-        echo "Docker failed to start"
+    local path="${1}"
+    local dst_dir="${2:-/e/bundled}"
+    local src="${BUNDLED_SRC}/${path}"
+    local dst="${dst_dir}/${path}"
+    mkdir -p "${dst_dir}"
+
+    if [[ -z "${dst}" || "${dst}" == "/" || ! "${dst}" =~ .... ]]
+    then
+        echo "Refusing to download to '${dst}' - sanity check failed." 1>&2
+        echo "A required variable may be empty" 1>&2
         return 1
     fi
 
-    local image_file="${BUNDLED_SRC}/docker/${name}"
+    if [[ -f "${dst}" ]]
+    then
+        echo "${dst} was already obtained" 1>&2
+        echo "${dst}"
+    elif [[ "${src}" =~ ^http:// ]]
+    then
+        
+        echo "Downloading ${src} to ${dst}" 1>&2
+        if curl -o "${dst}" "${src}" 
+        then
+            #local sz=$(stat -c %s "${dst}")
+            #if [[ ${sz} -lt ]]
+            local file_type=$(file "${dst}")
+            if [[ "${file_type}" =~ HTML.document ]]
+            then
+                if head -n 100 "${dst}" | egrep -i 'error.*404|http.*not.*found' 
+                then 
+                    echo "ERROR: The file appears to have been missing" 1>&2
+                    head -n100 "${dst}" 1>&2 | sed 's/^/    /'
+                    rm -f "${dst}"
+                    return 1
+                else
+                    echo "WARNING: The file downloaded was HTML - could be a file-not-found error" 1>&2
+                    echo "${dst}"
+                    return 0
+                fi
+            else
+                echo "Successfully downloaded ${src}" 1>&2
+                echo "${dst}"
+            fi
+        else
+            echo "Failed downloading ${src}" 1>&2
+            rm -f "${dst}"
+        fi
+    elif [[ "${src:0:1}" == "/" && "${src}" != "${dst}" ]]
+    then
+        ln -s "${selected}" "${dst}"
+        echo "${dst}"
+    else
+        echo "I do not know how to obtain '${src}'" 1>&2
+    fi
+}
+
+function command_is_available()
+{
+    command -v "${1}" > /dev/null 2> /dev/null
+}
+
+function require_docker()
+{
+    if ! command_is_available
+    then
+        echo "Docker is not available - perhaps it is not installed"
+        return 1
+    fi
+}
+
+function load_container_file()
+{
+    local name="${1}"
+
+    require_docker || return 1
+
+    echo "Checking docker status" 1>&2
+    if ! systemctl status docker
+    then 
+        echo "Docker failed to start" 1>&2
+        return 1
+    fi
+
+    local image_file=$(obtain_bundled_file "docker/${name}" "/e/bundled")
+    if [[ -z "${image_file}" ]]
+    then 
+        return 1
+    fi
     echo "Load nexus container ${image_file}" 1>&2
     docker load -i "${image_file}"
 }
@@ -357,6 +479,12 @@ function patch_hostfile_for_nexus()
 
 function start_nexus()
 {
+    if docker ps | egrep nexus-mirror && docker logs nexus-mirror | egrep -i 'Started Sonatype Nexus' 
+    then
+        echo "Nexus appears to already be running" 1>&2
+        return 0
+    fi
+
     echo "Starting nexus service"
     if systemctl start nexus-mirror.service
     then
@@ -376,15 +504,34 @@ function start_nexus()
                     return 1
                 fi
                 echo "Waiting a max of ${max_wait} seconds longer"
-            done 
+            done
+            echo "Nexus appears to have completed startup" 1>&2
         else 
-            echo "Nexus appears to have failed to start"
+            echo "Nexus appears to have failed to start" 1>&2
             return 1
         fi
     else 
         echo "Starting nexus failed"
-        reutrn 1
+        return 1
     fi 
+}
+
+function prepare_docker_for_nexus()
+{
+    local infra_ip=$(egrep "[[:space:]]infra.${DOMAIN}" /etc/hosts | head -n1 | awk '{print $1}')
+    local substitute_localhost="s/^127.0.0.1\$/${infra_ip}/"
+    local nameservers=( $(grep nameserver /etc/resolv.conf | awk '{print $2}' | sed -r -e "${substitute_localhost}") )
+    local searchdomains=( $(grep search /etc/resolv.conf | cut -d' ' -f2-) ) 
+    # TODO - get this from boot config
+    local x
+    local build
+    local registries=( ${DOCKER_REGISTRIES//,/ } )
+    mkdir -p /etc/docker
+    pairs_to_json \
+        "dns" "$(array_to_json "${nameservers[@]}")" \
+        "dns-search" "$(array_to_json "${searchdomains[@]}")" \
+        "insecure-registries" "$(array_to_json "${registries[@]}")" \
+        > /etc/docker/daemon.json
 }
 
 function configure_standalone_server()
@@ -394,6 +541,7 @@ function configure_standalone_server()
     copy_bundled_files
 
     prepare_network_for_docker
+    prepare_docker_for_nexus
 
     rpm -qa | grep docker-ce || yum -y --enablerepo='*' install docker-ce
 
@@ -404,6 +552,12 @@ function configure_standalone_server()
     configure_standalone_network 
 
     # patch_hostfile_for_nexus
+
+    if ! require_docker
+    then
+        echo "WARNING: Nexus cannot be provisioned without docker - skipping" 1>&2
+        return 1
+    fi
 
     if ! docker ps | grep -q nexus-mirror 
     then 
@@ -424,6 +578,7 @@ function switchover_to_nexus()
 {
     if start_nexus 
     then 
+        echo "Disabling old yum repos and switching over to nexus bootstrap repos" 1>&2
         mv -f /etc/yum.repos.d/*repo /etc/yum.repos.d/disable/
         /bin/cp -f /soestack/provision/common/inc/bootstrap-centos.repo /etc/yum.repos.d/
         yum makecache

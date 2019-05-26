@@ -8,7 +8,7 @@
 #        - name:   postconf -e "home_mailbox = Maildir/"
 #        - unless: grep "home_mailbox = Maildir/" /etc/postfix/main.cf
 
-postconf:
+.postconf:
     file.managed: 
         - name: /etc/postfix/main.cf
         - user: root

@@ -62,6 +62,8 @@ deployments:
                     /etc/elasticsearch:
 
                 files:
+                    /etc/sysctl.d/99-elasticsearch.conf:
+                        contents:        'vm.max_map_count=262144'
                     /etc/elasticsearch/elasticsearch.yml:
                         config_pillar:   ':config'
                         template:        elasticsearch-yml

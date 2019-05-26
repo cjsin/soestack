@@ -4,7 +4,7 @@
 #}
 {%- set parent = args.parent %}
 {%- if parent %}
-{%-     for action in ['uninstalled','installed'] %}
+{%-     for action in ['absent','installed'] %}
 {%-         if action in parent %}
 {%-             for style in ['package-groups','package-sets'] %}
 {%-                 if style in parent[action] %}

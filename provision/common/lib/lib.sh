@@ -189,12 +189,33 @@ function get_kickstart_commandline_settings()
     echo "${ss_vars[@]}"
 }
 
+function dump_array()
+{
+    local name="${1}"
+    local quoted="${2:-}"
+    shift 2
+    echo "${name}=("
+    local item
+    local qt=""
+    case "${quoted}" in
+        single|sq|quoted|single-quoted) qt="'";;
+        double|dq|double-quoted) qt='"';;
+        *) qt="${quoted}";;
+    esac 
+    for item in "${@}" 
+    do
+        echo "    ${qt}${item}${qt}"
+    done
+    echo ")"
+}
+
 function process_commandline_vars()
 {
     local item
     local -a vars=()
     local -a hosts=()
     local -a repos=()
+    local -a netdevs=()
     local nexus=""
     local -a pairs=()
 
@@ -223,6 +244,10 @@ function process_commandline_vars()
                 repo_entry="${repo_entry//,/ }"
                 repos+=("${repo_entry}")
                 ;;
+            ADD_NETDEV=*)
+                local spec="${item#*=}"
+                netdevs+=("${spec}")
+                ;;
             *=*)
                 left="${item%%=*}"
                 left="${left^^}"  # uppercase it
@@ -246,15 +271,8 @@ function process_commandline_vars()
         esac
     done
 
-    # Add any hosts we've been informed about
-    echo "hosts=("
-    for item in "${hosts[@]}"
-    do
-        echo "    '${item}'"
-    done
-    echo ")"
-
-    echo "repos=("
+    # Substitute the NEXUS var in any repos
+    local repos_expanded=()
     for item in "${repos[@]}"
     do
         local nexus_var_regex='^(.*)[$]NEXUS(.*)$'
@@ -262,15 +280,20 @@ function process_commandline_vars()
         then 
             item="${BASH_REMATCH[1]}${nexus}${BASH_REMATCH[2]}"
         fi
-        echo "    '${item}'"
+        repos_expanded+=("${item}")
     done
-    echo ")"
 
     for item in "${vars[@]}"
     do
         echo "${item}"
         eval "${item}"
     done
+
+    # Add any hosts we've been informed about
+    dump_array "hosts"   "quoted" "${hosts[@]}"
+    dump_array "netdevs" "quoted" "${netdevs[@]}"
+    dump_array "repos"   "quoted" "${repos_expanded[@]}"
+
 }
 
 function indent_vars()
@@ -479,6 +502,11 @@ function is_inspect()
     [[ -n "${INSPECT}" ]] && (( INSPECT ))
 }
 
+function is_wireless_simulated()
+{
+    [[ -n "${WLAN_SIM}" ]] && (( WLAN_SIM ))
+}
+
 function is_development()
 {
     if [[ -n "${DEVELOPMENT}" ]] && (( DEVELOPMENT ))
@@ -488,6 +516,30 @@ function is_development()
     else
         return 1
     fi
+}
+
+
+function array_to_json()
+{
+    local i="" s=""
+    for i in "${@}"
+    do 
+        s+="\"${i}\", "
+    done
+    echo -n "[ ${s%, } ]" # NOTE the final comma is stripped off
+}
+
+function pairs_to_json()
+{
+    local k="" v="" s=""
+    while (( $# ))
+    do
+        k="${1}"
+        v="${2}"
+        shift 2
+        s+="\"${k}\": ${v}, "
+    done
+    echo "{ ${s%, } }" # NOTE the final comma is stripped off
 }
 
 function interactive_prompt()
@@ -535,3 +587,97 @@ function step()
 
     "${@}"
 }
+
+function configure_wireless()
+{
+    local devname="${1}"
+    local devinfo="${2}"
+    local part="" pw="" ssid=""
+
+    for part in ${devinfo//,/ }
+    do 
+        case "${part}" in 
+            psk=*)
+                psk="${part#psk=}"
+                ;;
+            pw=*)
+                pw="${part#pw=}"
+                ;;
+            ssid=*)
+                ssid="${part#ssid=}"
+                ;;
+        esac 
+    done
+
+    local status=$(nmcli device status | egrep "^${devname}[[:space:]]")
+    if ! [[ "${status}" =~ wifi ]]
+    then 
+        echo "Device ${devname} is not a wireless device (or nmcli not available)!" 1>&2
+        return 1
+    fi
+    if ! nmcli radio | egrep -i 'enabled.*enabled.*enabled.*enabled'
+    then
+        echo "The wireless radio is at least partially disabled!" 1>&2
+        return 1
+    fi
+
+    # systemctl | egrep hostapd 
+    # This is incomplete because it seems that hostapd cannot configure
+    # the emulated device if NetworkManager already is using it.
+    # However the whole point of simulating the device was to test that
+    # the NetworkManager setup of a wireless device was working, without
+    # any real hardware. So that makes it pointless.
+    if is_wireless_simulated
+    then 
+        if ! systemctl | grep hostapd
+        then 
+            nmcli radio wifi off
+            rfkill unblock wlan
+            ip link add addr 10.0.0.2/24
+            ip link set wlan0 up
+
+            if ! systemctl start hostapd 
+            then 
+                echo "ERROR: Failed starting hostapd for wireless simulation" 1>&2
+                return 1
+            fi
+            sleep 5
+        fi 
+    fi 
+
+    nmcli device wifi rescan
+    sleep 5
+
+    nmcli device wifi list
+    if [[ -n "${ssid}" && -n "${pw}" ]]
+    then
+        if ! nmcli device wifi connect "${ssid}" password "${pw}"
+        then 
+            echo "wifi connection Failed" 1>&2
+        fi
+    fi
+}
+
+
+function simulate_wireless()
+{ 
+    local base_dir="${1}"
+    echo options mac80211_hwsim radios=1 >> "${base_dir}"/etc/modprobe.d/99-wireless-emulation.conf
+    echo "mac80211_hwsim" > /etc/modules-load.d/99-wireless-emulation.conf
+    if [[ -z "${ANA_INSTALL_PATH}" ]]
+    then
+        yum_install hostapd
+
+        cat > /etc/hostapd/hostapd.conf <<-EOF
+			interface=wlan0
+			ssid=TEST
+			hw_mode=g
+			wpa=2
+			wpa_passphrase=TESTTEST
+			wpa_key_mgmt=WPA-PSK WPA-EAP WPA-PSK-SHA256 WPA-EAP-SHA256
+		EOF
+
+        systemctl status hostapd || systemctl restart hostapd
+    fi
+}
+

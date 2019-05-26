@@ -16,3 +16,6 @@ salt-test:
 bundled-server:
 	(cd bundled && python -m http.server 9999 )&
 
+ssh:
+	(cd provision/vagrant; vagrant ssh )
+

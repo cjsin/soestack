@@ -275,4 +275,3 @@ function load_kickstart_vars()
     #    sed -i "/NETDEV/ s/.*/NETDEV=${NETDEV}/" "${KS_VARS}"
     #fi
 }
-

@@ -1,8 +1,13 @@
 _loaded:
     {{sls}}:
 
-# Override DNS on the infra server
+deployments:
+    gitlab_baremetal:
+        gitlab:
+            config:
+                hostname: gitlab.qemu
 
+# Override DNS on the infra server
 dns:
     # if is_server is set, the server will have a customised dns configuration
     server:      infra.qemu
@@ -22,15 +27,15 @@ managed-hosts:
             lan:     qemu
             aliases: ipa ipa.qemu
             type:    dns
-        pxe-client:
-            ip:       192.168.121.250
+        pxe-client1:
+            ip:       192.168.121.241
             mac:      '52:54:00:96:72:f9'
             lan:      qemu
             type:     client
             hostfile:
-                - pxe-client
+                - pxe-client1
         pxe-client2:
-            ip:       192.168.121.251
+            ip:       192.168.121.242
             mac:      '52:54:00:b9:62:3b'
             lan:      qemu
             type:     client
@@ -75,8 +80,19 @@ managed-hosts:
 
 network:
     devices:
+        # Can't just ignore this device as we need to use PEERDNS=no 
+        # to stop stupid NetworkManager overwriting the resolv.conf
+        #eth0:
+        #    ignore: True 
         eth0:
-            ignore: True 
+            inherit:
+                - no-peerdns
+                - ethernet
+                - enabled
+                - no-defroute
+                - dhcp
+                - no-nm-controlled
+
         eth1:
             inherit:
                 - defaults
@@ -88,3 +104,7 @@ network:
                 - infra-dns
 
 layer-host-loaded: {{sls}}
+
+include:
+    - layers.private.gitlab
+    - layers.private.timezone

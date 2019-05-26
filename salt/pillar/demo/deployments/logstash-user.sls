@@ -7,7 +7,7 @@ deployments:
         logstash-user:
             hosts:
                 - '.*'
-            activated: True
+            activated: False
             activated_where: {{sls}}
             activate:
                 firewall:

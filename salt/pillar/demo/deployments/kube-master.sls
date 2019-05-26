@@ -30,7 +30,7 @@ deployments:
                 helm:
                     enabled:           True 
                     charts:            http://nexus:7081/repository/kube-charts
-                    registry:          nexus:7085/
+                    registry:          nexus:7085/repository/gcrio
                     version:           v2.11.0
 
                 metallb:
@@ -70,9 +70,9 @@ deployments:
 
                     gcr.io:
                         pull_from: nexus:7085
-                        tag_into:  ''
+                        tag_into:  'gcr.io/'
                         images:
-                            gcr.io/kubernetes-helm/tiller:    v2.11.0
+                            kubernetes-helm/tiller:    v2.14.0
                     
                     k8s.gcr.io:
                         pull_from: nexus:7084

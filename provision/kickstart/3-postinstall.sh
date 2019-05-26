@@ -29,4 +29,10 @@ step copy_logs
 echo "Almost done. Syncing written data."
 sync
 
+# Set up a fake wireless prior to reboot, if required
+if is_wireless_simulated 
+then
+    simulate_wireless
+fi
+
 echo "$(date) ${0##*/} Done."

@@ -62,7 +62,7 @@
         - identifier: SALT-IPA-TICKET-RENEWAL
         - user:       root
         - special:    '@daily'
-        - name:       /usr/local/sbin/salt-ipa-ticket-{{deployment_name}}
+        - name:       /usr/local/sbin/salt-ipa-ticket-{{deployment_name}} --renew
 
 {%-     set args = deployment_args %}
 {%      include('templates/deployment/ipa_common/ipa_common.sls') with context %}
@@ -92,43 +92,38 @@
 {%-                     set nss_conf = '/etc/httpd/conf.d/nss.conf' %}
 {%-                     set ssl_conf = '/etc/httpd/conf.d/ssl.conf' %}
 
-{%- do dependent_states.append(['cmd', 'patch-http-conf']) %}
+{%- do dependent_states.append(['file', 'patch-http-conf']) %}
+
 {{sls}}.{{deployment_name}}.patch-http-conf:
-    cmd.run:
-        - name:     sed -r -i -e 's/^Listen[[:space:]].*:80/Listen {{listen_ip}}:80/' '{{http_conf}}'
-        - unless:   grep '^Listen {{listen_ip}}:80' '{{http_conf}}'
-        - onlyif:   test -f /etc/ipa/ca.crt
+    file.replace:
+        - name:     '{{http_conf}}'
+        - pattern:  '^Listen([\t ].*|)$'
+        - repl:     'Listen {{listen_ip}}:80'
+        - onlyif:   test -f '{{http_conf}}'
 
 {%- do dependent_states.append(['pkg', 'mod-ssl-conflicts']) %}
 {{sls}}.{{deployment_name}}.mod-ssl-conflicts:
     pkg.removed:
         - name: mod_ssl
 
-{#- do dependent_states.append(['cmd', 'patch-http-conf']) #}
-{#
- #{{sls}}.{{deployment_name}}.patch-ssl-conf:
- #    cmd.run:
- #        - name:     sed -i -e 's/^Listen 443/Listen {{listen_ip}}:443/' '{{ssl_conf}}'
- #        - unless:   grep '^Listen {{listen_ip}}' '{{ssl_conf}}'
- #        - onlyif:   test -f /etc/ipa/ca.crt
- #}
-
-{%- do dependent_states.append(['cmd', 'patch-nss-conf']) %}
+{%- do dependent_states.append(['file', 'patch-nss-conf']) %}
 {{sls}}.{{deployment_name}}.patch-nss-conf:
-    cmd.run:
-        - name:     sed -i -e 's/^Listen 443/Listen {{listen_ip}}:443/' '{{nss_conf}}'
-        - unless:   grep '^Listen {{listen_ip}}' '{{nss_conf}}'
-        - onlyif:   test -f /etc/ipa/ca.crt
+    file.replace:
+        - name:     '{{nss_conf}}'
+        - pattern:  '^Listen([\t ].*|)$'
+        - repl:     'Listen {{listen_ip}}:443'
+        - onlyif:   test -f '{{nss_conf}}'
 
 {%-                 elif service_name == 'named' %}
 {%-                     set named_conf  = '/etc/named.conf' %}
 
-{%- do dependent_states.append(['cmd', 'patch-named-conf']) %}
+{%- do dependent_states.append(['file', 'patch-named-conf']) %}
 {{sls}}.{{deployment_name}}.patch-named-conf:
-    cmd.run:
-        - name:     sed -r -i '/listen-on-v6/ s/^([[:space:]]*).*/\1listen-on { {{listen_ip}}; 127.0.0.1; }; listen-on-v6 {none;};/' '{{named_conf}}'
-        - unless:   egrep 'listen-on [{] {{listen_ip}}' '{{named_conf}}'
-        - onlyif:   test -f /etc/ipa/ca.crt
+    file.replace:
+        - name:     '{{named_conf}}'
+        - pattern:  'listen-on-v6.*;'
+        - repl:     'listen-on-v6 {none;};'
+        - onlyif:   test -f '{{named_conf}}'
 
 {%-                 endif %}
 {%-             endfor %}

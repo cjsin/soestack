@@ -1,20 +1,5 @@
 {
   "__inputs": [
-    {
-      "name": "DS_PROMETHEUS",
-      "label": "prometheus",
-      "description": "",
-      "type": "datasource",
-      "pluginId": "prometheus",
-      "pluginName": "Prometheus"
-    },
-    {
-      "name": "VAR_JOB",
-      "type": "constant",
-      "label": "job",
-      "value": "\"node_exporter\"",
-      "description": ""
-    }
   ],
   "__requires": [
     {
@@ -68,7 +53,7 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "${DS_PROMETHEUS}",
+      "datasource": "prometheus",
       "editable": true,
       "error": false,
       "fill": 1,
@@ -158,7 +143,7 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "${DS_PROMETHEUS}",
+      "datasource": "prometheus",
       "editable": true,
       "error": false,
       "fill": 1,
@@ -276,7 +261,7 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "${DS_PROMETHEUS}",
+      "datasource": "prometheus",
       "editable": true,
       "error": false,
       "fill": 1,
@@ -318,13 +303,6 @@
           "legendFormat": "{{device}}",
           "refId": "A",
           "step": 120
-        },
-        {
-          "expr": "node_disk_io_time_seconds_total",
-          "format": "time_series",
-          "intervalFactor": 1,
-          "legendFormat": "",
-          "refId": "B"
         }
       ],
       "thresholds": [],
@@ -371,7 +349,7 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "${DS_PROMETHEUS}",
+      "datasource": "prometheus",
       "editable": true,
       "error": false,
       "fill": 1,
@@ -407,7 +385,7 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "node_filesystem_free_bytes{job=$job,instance=\"$instance\",fstype!='rootfs',mountpoint!~'^(/run.*|/var.*)',mountpoint!=''} / node_filesystem_size_bytes",
+          "expr": "1-(node_filesystem_free_bytes{job=$job,instance=\"$instance\",fstype!~\"dev.*|rootfs|iso9660\",mountpoint!~\"/dev/.*\", mountpoint!~\"^(/sys|/proc|/var/lib/nfs).*\"} / node_filesystem_size_bytes)",
           "format": "time_series",
           "interval": "",
           "intervalFactor": 2,
@@ -419,7 +397,7 @@
       "thresholds": [],
       "timeFrom": null,
       "timeShift": null,
-      "title": "Filesystem Fullness",
+      "title": "Filesystem Space Used",
       "tooltip": {
         "msResolution": false,
         "shared": true,
@@ -462,7 +440,7 @@
           "value": "current"
         }
       ],
-      "datasource": "${DS_PROMETHEUS}",
+      "datasource": "prometheus",
       "editable": true,
       "error": false,
       "fontSize": "100%",
@@ -505,7 +483,7 @@
       ],
       "targets": [
         {
-          "expr": "(node_filesystem_size_bytes{job=$job,instance=\"$instance\"} - node_filesystem_free_bytes{job=$job,instance=\"$instance\"}) / deriv(node_filesystem_free_bytes{job=$job,instance=\"$instance\",mountpoint!~\"^(/dev/|/sys/|/proc|/var/lib/nfs).*\",fstype!=\"rootfs\"}[3d]) > 0",
+          "expr": "(node_filesystem_size_bytes{job=$job,instance=\"$instance\"} - node_filesystem_free_bytes{job=$job,instance=\"$instance\"}) / deriv(node_filesystem_free_bytes{job=$job,instance=\"$instance\",mountpoint!~\"^(/dev/|/sys/|/proc|/var/lib/nfs).*\",fstype!=\"rootfs\", fstype!~\"iso.*\"}[3d]) > 0",
           "format": "table",
           "interval": "",
           "intervalFactor": 2,
@@ -525,7 +503,7 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "${DS_PROMETHEUS}",
+      "datasource": "prometheus",
       "fill": 1,
       "gridPos": {
         "h": 9,
@@ -616,97 +594,13 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "${DS_PROMETHEUS}",
+      "datasource": "prometheus",
       "fill": 1,
       "gridPos": {
         "h": 9,
         "w": 12,
         "x": 12,
         "y": 14
-      },
-      "id": 9,
-      "legend": {
-        "avg": false,
-        "current": false,
-        "max": false,
-        "min": false,
-        "show": true,
-        "total": false,
-        "values": false
-      },
-      "lines": true,
-      "linewidth": 1,
-      "links": [],
-      "nullPointMode": "null",
-      "percentage": false,
-      "pointradius": 5,
-      "points": false,
-      "renderer": "flot",
-      "seriesOverrides": [],
-      "spaceLength": 10,
-      "stack": false,
-      "steppedLine": false,
-      "targets": [
-        {
-          "expr": "node_hwmon_temp_celsius{job=$job,instance=\"$instance\"}",
-          "format": "time_series",
-          "intervalFactor": 1,
-          "legendFormat": "{{chip}} {{sensor}}",
-          "refId": "A"
-        }
-      ],
-      "thresholds": [],
-      "timeFrom": null,
-      "timeShift": null,
-      "title": "Temparature",
-      "tooltip": {
-        "shared": true,
-        "sort": 0,
-        "value_type": "individual"
-      },
-      "type": "graph",
-      "xaxis": {
-        "buckets": null,
-        "mode": "time",
-        "name": null,
-        "show": true,
-        "values": []
-      },
-      "yaxes": [
-        {
-          "format": "celsius",
-          "label": null,
-          "logBase": 1,
-          "max": null,
-          "min": null,
-          "show": true
-        },
-        {
-          "format": "short",
-          "label": null,
-          "logBase": 1,
-          "max": null,
-          "min": null,
-          "show": true
-        }
-      ],
-      "yaxis": {
-        "align": false,
-        "alignLevel": null
-      }
-    },
-    {
-      "aliasColors": {},
-      "bars": false,
-      "dashLength": 10,
-      "dashes": false,
-      "datasource": "${DS_PROMETHEUS}",
-      "fill": 1,
-      "gridPos": {
-        "h": 9,
-        "w": 12,
-        "x": 0,
-        "y": 23
       },
       "id": 11,
       "legend": {
@@ -789,26 +683,26 @@
     "list": [
       {
         "current": {
-          "value": "${VAR_JOB}",
-          "text": "${VAR_JOB}"
+          "value": "\"node_exporter\"",
+          "text": "\"node_exporter\""
         },
         "hide": 2,
         "label": "job",
         "name": "job",
         "options": [
           {
-            "value": "${VAR_JOB}",
-            "text": "${VAR_JOB}"
+            "value": "\"node_exporter\"",
+            "text": "\"node_exporter\""
           }
         ],
-        "query": "${VAR_JOB}",
+        "query": "\"node_exporter\"",
         "type": "constant"
       },
       {
         "allFormat": "glob",
         "allValue": null,
         "current": {},
-        "datasource": "${DS_PROMETHEUS}",
+        "datasource": "prometheus",
         "hide": 0,
         "hideLabel": false,
         "includeAll": false,

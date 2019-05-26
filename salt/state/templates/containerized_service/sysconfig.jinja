@@ -1,4 +1,5 @@
 ENV={{container.env|join(" ") if ('env' in container and container.env) else ''}}
+TZ={{'--env TZ='~pillar.timezone if 'timezone' in pillar and pillar.timezone else ''}}
 PORTS={{container.ports|join(" ") if ('ports' in container and container.ports) else ''}}
 VOLUMES={{container.volumes|join(" ") if ('volumes' in container and container.volumes) else ''}}
 DOCKER_OPTIONS={{container.docker_options if ('docker_options' in container and container.docker_options) else ''}}

@@ -58,7 +58,7 @@ function write_role_grains()
 
 function write_layer_grains()
 {
-    if ! grep -s "^layers:" /etc/salt/grains 
+    if ! grep -q "^layers:" /etc/salt/grains 
     then 
         if [[ -n "${LAYERS}" ]]
         then
@@ -115,6 +115,8 @@ function configure_etc_salt()
     cp "${SS_INC}"/minion.d/* /etc/salt/minion.d/
 
     echo "id: $(hostname -s)" > /etc/salt/minion.d/id.conf
+
+    configure_ipa_integration
     
     if [[ "${minion_type}" == "master" ]]
     then
@@ -127,6 +129,15 @@ function configure_etc_salt()
 
     #write_role_grains # this will be done instead with grains.set in salt_state_provision
     write_layer_grains
+}
+
+function configure_ipa_integration()
+{
+    cat > /etc/salt/minion.d/saltipa.conf <<-EOF
+		saltipa:
+		    ticket_file:  '/var/cache/salt/master/salt.krb'
+		    check_server: 'infra.${DOMAIN}'
+	EOF
 }
 
 function start_salt_minion()
@@ -153,35 +164,87 @@ function wait_for_enrolment()
     done
 }
 
+function salt-step()
+{
+    local what="${1}"
+    shift
+    local -a args=("${@}")
+    local name="misc"
+    case "${what}" in
+        grains.set) name="grains-${args[0]}";;
+        state.sls)  name="state-${args[0]}";;
+        state.apply) name="apply";;
+        *) name="${what}-${args[0]}"; name="${name//./-}";;
+    esac
+    local logdir="/var/log/provision/salt"
+    mkdir -p "${logdir}"
+    local logfile="${logdir}/${name}.log"
+    echo "Salt step ${what} ${args[*]} [log file ${logfile}]" 1>&2
+    local result=0
+    salt-call "${what}" "${args[@]}" 2>&1 | tee -a "${logfile}"
+    result=$?
+    if (( ${result} ))
+    then 
+        echo "FAILED: Salt step ${what} ${args[*]} [log file ${logfile}]" 1>&2
+    else
+        echo "OK: Salt step ${what} ${args[*]} [log file ${logfile}]" 1>&2
+    fi
+    return ${result}
+}
 
 function salt_state_provision()
 {
     local preconfigured_roles="${1}"
+    local fail_fast="${2:-0}"
 
     # Setting host grain to match short hostname
     # The 'host' grain is otherwise dynamically calculated and is affected by the installed hosts file,
     # especially when there are multiple interfaces on the machine, it can get the name from
     # the IP associated from the wrong network interface
-    salt-call grains.set host "$(hostname -s)"
-
-    if [[ "${preconfigured_roles}" =~ ^role-set ]]
-    then 
-        salt-call grains.set role-set "${preconfigured_roles#role-set:}" force=True
-        salt-call state.sls common.role-sets.apply
-    else
-        # This works to set multiple roles with a simple string 'a,b,c'
-        salt-call grains.set roles "[${preconfigured_roles}]" force=True
-    fi
+    salt-step grains.set host "$(hostname -s)"
 
     if [[ "${PROVISION_TYPE}" == "vagrant" ]]
     then 
-        salt-call grains.set vagrant True
+        salt-step grains.set vagrant True
     fi
 
-    salt-call state.sls provision.pre
-    salt-call state.sls provision.main
-    salt-call state.apply
-    salt-call state.sls provision.post
+    if [[ "${preconfigured_roles}" =~ ^role-set ]]
+    then 
+        salt-step grains.set role-set "${preconfigured_roles#role-set:}" force=True
+        salt-step state.sls common.role-sets.apply
+    else
+        # This works to set multiple roles with a simple string 'a,b,c'
+        salt-step grains.set roles "[${preconfigured_roles}]" force=True
+    fi
+
+    local steps=(
+        "state.sls provision.pre"
+        "state.sls provision.main"
+        "state.apply"
+        "state.sls provision.post"
+    )
+
+    local step
+    local problems=0
+    for step in "${steps[@]}"
+    do
+        local result
+        # The step variable is deliberately not quoted in the following line
+        salt-step ${step}
+        result=$?
+        if (( result ))
+        then
+            ((problems++))
+            echo "ERROR: Salt step ${step}" failed  1>&2
+            if (( fail_fast ))
+            then
+                echo "Fail-fast mode enabled - aborting salt provisioning immediately."
+                break
+            fi
+        fi
+    done
+    echo "Salt provisioning done - ${problems} problems occurred." 1>&2
+    return ${problems}
 } 
 
 function run_salt_state_provision()

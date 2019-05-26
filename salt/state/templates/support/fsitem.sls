@@ -123,9 +123,9 @@
                     config: {{config|json}}
                 {%-     elif 'source' in spec %}
                 - source:  {{spec.source}}
-                {%-     elif contents is defined %}
+                {%-     elif contents_specified is defined and contents_specified is not none %}
                 - contents: |
-                    {{contents|indent(12)}}
+                    {{contents_specified|indent(20)}}
                 {%-     elif contents_pillar %}
                 - contents_pillar: {{contents_pillar}}
                 {%-     else %}
@@ -165,9 +165,9 @@
             config: {{config|json}}
         {%-     elif 'source' in spec %}
         - source:  {{spec.source}}
-        {%-     elif contents is defined %}
+        {%-     elif contents_specified is defined and contents_specified is not none %}
         - contents: |
-            {{contents|indent(12)}}
+            {{contents_specified|indent(12)}}
         {%-     elif contents_pillar %}
         - contents_pillar: {{contents_pillar}}
         {%-     else %}

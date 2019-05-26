@@ -119,12 +119,19 @@ function soestack_provision()
     provision_salt
     salt_failed=$?
 
+    local nexus_failed=0
     if [[ -n "${STANDALONE}" ]] && (( STANDALONE ))
     then
         switchover_to_nexus
+        nexus_failed=$?
     fi 
 
-    if (( salt_failed ))
+    if (( nexus_failed))
+    then
+        echo "Skipping further provisioning since nexus setup failed."
+        echo "Done."
+        failed_provision
+    elif (( salt_failed ))
     then 
         echo "Skipping salt state provision since salt setup failed."
         echo "Done."
@@ -176,9 +183,12 @@ function fix_bootflags()
 function disable_repos()
 {
     local prefix="${1}"
-    echo "Disable default OS repos"
+    echo "Disable default '${prefix}' repos"
     mkdir -p /etc/yum.repos.d/disable
-    mv -f "/etc/yum.repos.d/${prefix}"*.repo /etc/yum.repos.d/disable
+    if ( cd /etc/yum.repos.d/ && ls | egrep -q "^${prefix}.*[.]repo")
+    then
+        mv -f "/etc/yum.repos.d/${prefix}"*.repo /etc/yum.repos.d/disable/
+    fi
     echo "done"
 }
 
@@ -234,13 +244,13 @@ function yum_setting()
 {
     local varname="${1}"
     local varval="${2}"
-    local regex1="^${varname}="
+    local regex="^${varname}="
     local line="${varname}=${varval}"
     local f=/etc/yum.conf
     if ! ( egrep "${regex}" "${f}" | grep -qF "${line}" )
     then
-        echo "Delete yum setting " "$(egrep "${regex}" "${f}" | tr '\n' ' ')"
-        sed -i '/${regex1}/ d' "${f}"
+        echo "Delete yum setting '${varname}' : " "$(egrep "${regex}" "${f}" | tr '\n' ' ')"
+        sed -i "/${regex}/ d" "${f}"
         echo "Add yum setting ${line}"
         echo "${line}" >> "${f}"
     fi

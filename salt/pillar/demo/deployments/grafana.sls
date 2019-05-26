@@ -96,7 +96,5 @@ deployments:
                     /etc/grafana/provisioning/datasources/datasources.yaml:
                         config_pillar:   :config
                         template:        grafana-datasources-yml
-                    /etc/grafana/provisioning/dashboards/basic.json:
-                        source:          salt://deployments/grafana_container/dashboards/Basic.json
                     /etc/grafana/provisioning/dashboards/host-stats.json:
                         source:          salt://deployments/grafana_container/dashboards/Host-Stats.json

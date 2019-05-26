@@ -28,7 +28,7 @@ deployments:
 
             config:
                 clients:
-                    - pxe-client
+                    - pxe-client1
                     - pxe-client2
                     - client
 

@@ -39,6 +39,17 @@ include:
 
 {# A salt bug requires this comment here (without a comment, it appends an 'f' to the line above) #}
 
+{%-         if 'textfile_directory' in config and config.textfile_directory %}
+
+{{sls}}.node_exporter_baremetal.textfile-collector-dir:
+    file.directory:
+        - name:   {{config.textfile_directory}}
+        - user:   root
+        - group:  root
+        - mode:   '0755'
+
+{%-         endif %}
+
 {%-     endif %}
 
 {%-     if action in [ 'all', 'activate'] %}

@@ -1,6 +1,6 @@
 {%- set package_group      = args.package_group %}
 
-{%- set suffix = salt['cmd.exec_code']('python','import uuid; print(str(uuid.uuid4())); ')[:8] %}
+{%- set suffix = salt['uuid.short']() %}
 
 {# # support recursion #}
 {%- if 'package-groups' in package_group %}

@@ -196,6 +196,7 @@ network:
         dhcp:
             sysconfig:
                 BOOTPROTO: 'dhcp'
+                PERSISTENT_DHCLIENT: 'yes'
 
         no-dhcp:
             sysconfig:
@@ -240,6 +241,7 @@ nexus:
         rubygems:
         interwebs:       http://nexus:7081/repository/interwebs
         built-rpms:      http://nexus:7081/repository/built-rpms
+        google-storage:  http://nexus:7081/repository/google-storage
 
     blobstores:
         dockerhub:
@@ -411,6 +413,12 @@ nexus:
             format:              raw
             blobstore:           raw
             remote_url:          http://github.com/
+
+        google-storage:
+            type:                proxy
+            format:              raw
+            blobstore:           raw
+            remote_url:          https://storage.googleapis.com/
 
         gitlab:
             type:                proxy
@@ -652,17 +660,16 @@ node_lists:
     prometheus:
         primary:
             - infra
-        secondary:
-            #- pxe-client
-            #- pxe-client2
-            - infra
+        #secondary:
+        #    #- pxe-client1
+        #    #- pxe-client2
         workstations: []
 
 npm:
     host_config:
         send-metrics:     false
         metrics-registry: 
-        registry:     http://nexus:7081/repository/npmjs/
+        registry:         http://nexus:7081/repository/npmjs/
 
 pip:
     host_config: |
@@ -736,16 +743,16 @@ service-status:
             
 
 service-reg:
-    nexus_http:    nexus:7081
-    nexus_docker:  nexus:7082
+    nexus_http:       nexus:7081
+    nexus_docker:     nexus:7082
     default_registry: nexus:7082
-    gitlab_http:   gitlab
-    gitlab_docker: gitlab-registry:5005
-    prometheus:    prometheus:9090
-    grafana:       grafana:7070
-    ipa_https:     infra:443
-    nginx_http:    192.168.121.102:80
-    nginx_https:   192.168.121.102:443
+    gitlab_http:      gitlab
+    gitlab_docker:    gitlab-registry:5005
+    prometheus:       prometheus:9090
+    grafana:          grafana:7070
+    ipa_https:        infra:443
+    nginx_http:       192.168.121.102:80
+    nginx_https:      192.168.121.102:443
 
 ssh:
     sshd:

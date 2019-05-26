@@ -7,7 +7,7 @@ nuggets:
             nuggets-required:
                 - firewall-implementations
 
-            uninstalled:
+            absent:
                 package-sets:
                     - iptables-firewall
 

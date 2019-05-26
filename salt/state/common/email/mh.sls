@@ -1,3 +1,5 @@
+#!stateconf yaml . jinja
+
 #Bullshit thunderbird is incapable of reading local mail
 #So we have to use sylpheed.
 #Sylpheed is so shitty it doesn't even support maildir,
@@ -8,13 +10,15 @@
         - pkgs:
             - nmh
 
-/etc/skel/.mh_profile:
+.skel-profile:
     file.managed:
+        - name: /etc/skel/.mh_profile
         - contents: |
             MH-Profile-Version: 1.0
             Path: Mail
 
-/etc/skel/.forward:
+.skel-forward:
     file.managed:
+        - name: /etc/skel/.forward
         # The quoting within this line is important.
         - contents:  '| "/usr/libexec/nmh/rcvstore +inbox"'

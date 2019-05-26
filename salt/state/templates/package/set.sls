@@ -1,16 +1,16 @@
-{%- set suffix = salt['cmd.exec_code']('python','import uuid; print(str(uuid.uuid4())); ')[:8] %}
+{%- set suffix = salt['uuid.short']() %}
 {%- set package_set_name = args.package_set_name %}
 {%- set package_set = args.package_set %}
 
 
-{#- # action can be 'uninstalled', or another saltstack supported mode ('installed','latest') #}
-{%- set action = args.action if 'action' in args else 'installed' %}
+{#- # action can be 'absent', or another saltstack supported mode ('installed','latest') #}
+{%- set action = args.action if 'action' in args else package_set.action if 'action' in package_set else 'installed' %}
 
 {%- set fromrepo = package_set.from if 'from' in package_set else 'any' %}
 
 {%- for subkey, data in package_set.iteritems() %}
 {#-     # Documentation key 'purpose' and metadata key 'from' are ignored during iteration #}
-{%-     if subkey not in [ 'purpose', 'from' ] %}
+{%-     if subkey not in [ 'purpose', 'from', 'action' ] %}
 
 {#-         # The current node operating system is matched against the key which #}
 {#-         # can be a comma separated list of operating system names #}
@@ -45,7 +45,7 @@
 {%-                 endfor %}
 
 {%-                 if groups %}
-{%-                     if action == 'uninstalled' %}
+{%-                     if action == 'absent' %}
 
 {{sls}}.set.error-group-uninstalls-not-supported-for-{{package_set_name}}-{{repo_name}}:
     noop.error
@@ -81,7 +81,7 @@
 {%-                 if regular_pkgs %}
 
 {{sls}}.set.install-package-set-{{package_set_name}}-{{repo_name}}-{{suffix}}:
-    pkg.{{'absent' if action == 'uninstalled' else action }}:
+    pkg.{{'removed' if action == 'absent' else action}}:
         {%- if repo_name != 'any' %}
         - fromrepo: {{repo_name}}
         {%- endif %}

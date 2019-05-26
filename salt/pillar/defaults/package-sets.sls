@@ -13,6 +13,7 @@ package-sets:
             provide tools that improve console usage
         centos,redhat,fedora:
             - gpm
+            - htop
 
     chromium-browser:
         purpose: |
@@ -261,6 +262,14 @@ package-sets:
             - '@General Purpose Desktop'
             - openbox-kde
     
+    git-standard-uninstall:
+        purpose: |
+            uninstall standard version of git included with the OS
+        action: absent
+        centos,redhat:
+            - git
+            - perl-git
+
     git-newer:
         purpose: |
             provide a newer version of git

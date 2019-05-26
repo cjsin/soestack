@@ -44,6 +44,7 @@ package-groups:
             - diff-tools-gui
             - development-base
             - python-development
+            - git-standard-uninstall
             - git-newer
 
     homedir-server-node:

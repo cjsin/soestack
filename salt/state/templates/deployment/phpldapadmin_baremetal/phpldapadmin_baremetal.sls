@@ -1,4 +1,4 @@
-{%- set suffix          = args.suffix if 'suffix' in args else salt['cmd.exec_code']('python','import uuid; print(str(uuid.uuid4())); ')[:8] %}
+{%- set suffix          = args.suffix if 'suffix' in args else salt['uuid.short']() %}
 {%- set deployment_name = args.deployment_name %}
 {%- set deployment_type = args.deployment_type %}
 {%- set deployment      = args.deployment %}

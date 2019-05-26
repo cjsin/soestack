@@ -52,7 +52,7 @@
 {%-         endif %}
 
 {%-         if action == 'install' %}
-{%-             if 'installed' in data or 'uninstalled' in data %}
+{%-             if 'installed' in data or 'absent' in data %}
 {%-                 with args = { 'parent': data } %}
 {%                      include('templates/support/packagesets.sls') with context %}
 {%-                 endwith %}

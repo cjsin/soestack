@@ -1,5 +1,5 @@
 apiVersion: 1
 
 {%- if 'datasources' in config and config.datasources %}
-datasources: {{ config.datasources|json}}
+{{ { 'datasources': config.datasources}|yaml(False)}}
 {%- endif %}

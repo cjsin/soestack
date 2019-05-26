@@ -8,8 +8,11 @@
 
 from __future__ import absolute_import
 
+import time
 import logging
 import os
+import urllib2
+from pprint import pformat
 
 __virtualname__ = 'saltipa'
 
@@ -20,6 +23,10 @@ __outputter__ = {
 KRB5CCNAME = 'KRB5CCNAME'
 TICKET_FILE = '/var/cache/salt/master/salt.krb'
 salt_ticket = TICKET_FILE
+check_server = ''
+last_check = 0
+last_check_result = [False, "Not checked yet"]
+check_period = 30
 
 log = logging.getLogger(__name__)
 
@@ -29,29 +36,58 @@ record_to_cmdline_flags = {
     'cnamerecord': 'cname-hostname'
 }
 
-
-def __init__(opts):
-    pass
+class HeadRequest(urllib2.Request):
+    def get_method(self):
+        return "HEAD"
 
 def __virtual__():
     return __virtualname__
 
 def __init__(opts):
-    global salt_ticket
+    global salt_ticket, check_server
 
     salt_ticket = None
 
-    if 'ticket_file' in opts:
-        salt_ticket = opts['ticket_file']
+    if __virtualname__ in opts:
+        my_opts = opts[__virtualname__]
+        logging.info("SaltIPA integration configuration: \n{}".format(pformat(my_opts)))
 
-    if not salt_ticket:
-        salt_ticket = TICKET_FILE
+        if 'ticket_file' in my_opts:
+            salt_ticket = my_opts['ticket_file']
+
+        if not salt_ticket:
+            salt_ticket = TICKET_FILE
+    
+        if 'check_server' in my_opts:
+            check_server = my_opts['check_server']
 
     os.environ[KRB5CCNAME] = salt_ticket 
 
     check_ticket()
 
+def server_unavailable():
+    """ Return True if the server to check is configured, and is not available """
+    logging.debug("Check IPA server {}".format(check_server))
+    if check_server:
+        try:
+            response = urllib2.urlopen(HeadRequest('https://'+check_server))
+            if response:
+                return False, "IPA service is responding"
+            else:
+                return True, "Problems contacting the IPA service."
+        except:
+            return True, "Cannot contact IPA service."
+    else:
+        # Not configured with a check, so assume it's available
+        return None, "SaltIPA check_server not configured."
+
+def available():
+    """ Return whether the integration seems configured and available """
+    if not os.path.exists(salt_ticket) and loggedin():
+        return False
+
 def check_ticket():
+    global last_check, last_check_result
     if not os.path.exists(salt_ticket):
         message1 = "Salt ticket file does not exist:{}".format(salt_ticket)
         message2 = "Use {}={} kinit admin to initialise it".format(KRB5CCNAME, salt_ticket) 
@@ -59,10 +95,23 @@ def check_ticket():
         log.error(message2)
         return False, message1 + '. ' + message2
     else:
-        return loggedin()        
+        now = time.time()
+        diff = now - last_check
+        if diff < check_period:
+            return last_check_result
 
-def __virtual__():
-    return __virtualname__
+        ok, message = loggedin()
+        if not ok:
+            last_check_result = [ok, message]
+        else:
+            unavailable, message = server_unavailable()
+            if unavailable is True:
+                last_check_result = [False, message ]
+            else:
+                last_check_result = [True, "Logged in"]
+
+        last_check = now
+        return last_check_result
 
 def loggedin():
     os.environ[KRB5CCNAME] = salt_ticket 
@@ -203,6 +252,9 @@ def find_record(category, path, search_type=None,search_value=None):
 
 def add_record(category, path, record_type, value):
     #print("add_record {},{},{},{}".format(category, path, record_type, value))
+
+    if not available():
+        return False,{}
 
     cmd = [ 'ipa', category + '-add' ] + path
 

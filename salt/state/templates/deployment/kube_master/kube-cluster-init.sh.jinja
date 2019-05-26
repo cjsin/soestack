@@ -70,7 +70,7 @@ function configure_helm()
         {%- if 'charts' in helm and helm.charts %}
         --stable-repo-url {{helm.charts}} \
         {%- endif %}
-        --tiller-image    {{helm.registry}}gcr.io/kubernetes-helm/tiller:{{helm.version}} 
+        --tiller-image    {{helm.registry}}/kubernetes-helm/tiller:{{helm.version}} 
     )
 
     helm init "${init_flags[@]}"
