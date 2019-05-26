@@ -88,9 +88,9 @@ function salt_lookup()
     local short_hostname="${1}"
     shift
     local lookup_what=( "${@}" )
-    local -a result
-    local what
-    ret=()
+    local -a result=()
+    local -a ret=()
+    local what=""
     result=( $(salt_lookup_managed_host "${short_hostname}") )
 
     for what in "${lookup_what[@]}"
@@ -121,8 +121,8 @@ function lookup_host_info_registered_hostfile()
 {
     local fqdn="${1}"
 
-    local -a hostdata_lines=()
     local line this_ip this_fqdn remainder aliases found_host_ip found_mac  
+    local -a hostdata_lines=()
 
     readarray -t hostdata_lines < "${registered_hosts_file}"
 

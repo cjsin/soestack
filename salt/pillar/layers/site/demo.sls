@@ -27,24 +27,24 @@ deployments:
     elasticsearch_container:
         elasticsearch-testdev:
             host:        infra
-            activated:   True
+            activated:   False
             activated_where: {{sls}}
     gitlab_runner_baremetal:
         gitlab-runner:
             host:        infra
-            activated:   True
+            activated:   False
             activated_where: {{sls}}
     gitlab_baremetal:
         gitlab:
             host:        infra
-            activated:   True
+            activated:   False
             activated_where: {{sls}}
             config:
                 hostname: gitlab.qemu
     grafana_container:
         grafana-cont:
             host:        infra
-            activated:   True
+            activated:   False
             activated_where: {{sls}}
             config:
                 ip:      192.168.121.108
@@ -59,12 +59,12 @@ deployments:
     kibana_container:
         kibana-frontend:
             host:        infra
-            activated:   True
+            activated:   False
             activated_where: {{sls}}
     logstash_baremetal:
         logstash-sys:
             host:        infra
-            activated:   True
+            activated:   False
             activated_where: {{sls}}
     nexus_container:
         nexus-mirror:
@@ -74,12 +74,12 @@ deployments:
     phpldapadmin_baremetal:
         phpldapadmin:
             host:        infra
-            activated:   True
+            activated:   False
             activated_where: {{sls}}
     prometheus_container:
         prometheus-server:
             host:        infra
-            activated:   True
+            activated:   False
             activated_where: {{sls}}
 
 docker:

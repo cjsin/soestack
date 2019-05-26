@@ -126,8 +126,6 @@ function process_argv()
     fi
 
     [[ ! "${f}" =~ ${fqdn_regex} ]] && die "Invalid host name: '${f}'"
-    [[ -n "${m}" && ! "${m}" =~ ${mac_regex} ]] && die "Invalid MAC address: '${m}'"
-    [[ -n "${i}" && ! "${i}" =~ ${ip_regex} ]] && die "Invalid IP address: '${i}'"
     
     fqdn="${f%.}."
 

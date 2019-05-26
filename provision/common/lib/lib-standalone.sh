@@ -394,7 +394,7 @@ function command_is_available()
 
 function require_docker()
 {
-    if ! command_is_available
+    if ! command_is_available docker
     then
         echo "Docker is not available - perhaps it is not installed"
         return 1
