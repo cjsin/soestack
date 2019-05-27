@@ -1,3 +1,6 @@
+#!/bin/bash
+
+[[ -n "${SS_LOADED_COMMON_LIB}" ]] || . /soestack/provision/common/lib/lib.sh
 
 function validate_enrolment_tarball()
 {
@@ -7,23 +10,23 @@ function validate_enrolment_tarball()
         local tmpd=$(mktemp -t -d tmp_XXXXXXXXX)
         if cd "${tmpd}"
         then
-            echo 
+            msg "" 
             tar xvf "${tarf}"
             touch minion.*
             if [[ ! -f minion.pub || ! -f minion.pem ]]
             then
-                echo "The expected files did not exist"
+                err "The expected files did not exist"
             else 
                 local f
                 for f in minion.{pem,pub}
                 do
                     if [[ ! -s "${f}" ]]
                     then
-                        echo "File ${f} is zero-sized."
-                        echo "This means the minion was already enroled."
-                        echo "Removing this file."
+                        err "File ${f} is zero-sized."
+                        err "This means the minion was already enroled."
+                        err "Removing this file."
                         rm -f "${f}"
-                    echo
+                        msg ""
                     fi
                 done
                 if [[ -f minion.pub && -f minion.pem ]]
@@ -33,18 +36,18 @@ function validate_enrolment_tarball()
                 fi
             fi
         else
-            echo "Could not create temp file"
+            err "Could not create temp file"
         fi
     else 
-        echo "The response was not a tar file (failure)."
+        err "The response was not a tar file (failure)."
     fi
 
     if (( success ))
     then
-        echo 'Success!'
+        msg 'Success!'
         return 0
     else
-        echo "Failed"
+        err "Failed"
         return 1
     fi
 }
@@ -55,7 +58,7 @@ function salt_delete_key()
     then  
         curl -sSk "https://${SALT_MASTER}:9009/run" -d client=wheel -d username=salt-enrol -d 'tgt=*' -d password=d62da93aecc94bd6363d0c7d5fbea7248e8e0c9e15dfca0fb92c1e665760de9a -d eauth=pam -d fun=key.delete -d match="$(hostname -s)"
     else 
-        echo "NO salt master is configured."
+        msg "NO salt master is configured."
     fi
 }
 
@@ -77,7 +80,7 @@ function salt_minion_autoenrol()
         -d eauth=pam \
         -o "${tarf}"
     then 
-        echo "Curl command failed!" 1>&2
+        err "Curl command failed!"
         return 1
     fi
 

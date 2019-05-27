@@ -1,5 +1,5 @@
 [bootstrap-microsoft]
 name=bootstrap-microsoft
-baseurl=file:///e/bundled/bootstrap-pkgs/microsoft
+baseurl=$bundled/bootstrap-pkgs/microsoft
 enabled=1
 gpgcheck=1

@@ -16,10 +16,10 @@ current_output_destination="${current_output_destination:-logfile}"
 # NOTE: This is overriding a routine provided in provision/common/lib.sh
 function bmsg()
 {
-    echo "${*}"
+    echo_return "${*}"
     if [[ "${current_output_destination}" == "console" ]]
     then
-        echo "${*}" >> "${early_boot_logfile}"
+        echo_data "${*}" >> "${early_boot_logfile}"
     fi
 }
 
@@ -79,13 +79,13 @@ function determine_kickstart_type()
         exit 1
     elif (( is_usb ))
     then
-        echo "usb"
+        echo_return "usb"
     elif (( is_nfs ))
     then
-        echo "nfs"
+        echo_return "nfs"
     elif (( is_vagrant ))
     then
-        echo "vagrant"
+        echo_return "vagrant"
     else
         bmsg "ERROR: Could not determine if installation is from the network or from USB" 1>&2
         bmsg "       or a vagrant image (it appears to be none of the above)" 1>&2
@@ -96,14 +96,14 @@ function determine_kickstart_type()
 
 function generate_kickstart_vars()
 {
-    echo "set -e"
+    echo_return "set -e"
 
     # Produce auto-calculated vars first
-    echo "######"
-    echo "# Calculated vars"
-    echo "######"
+    echo_return "######"
+    echo_return "# Calculated vars"
+    echo_return "######"
 
-    echo "# OS release vars"
+    echo_return "# OS release vars"
     if [[ -n "${relname}" ]]
     then
         if [[ -f "${KS_LIB}/${relname}.sh" ]]
@@ -112,21 +112,21 @@ function generate_kickstart_vars()
         fi
     fi
 
-    echo "# Installation vars"
+    echo_return "# Installation vars"
     export NFS_SERVER=$( grep /run/install/repo /proc/mounts | head -n1 | awk '{print $1}' | grep : | cut -d: -f1 )
-    echo "NFS_SERVER=${NFS_SERVER}"
+    echo_return "NFS_SERVER=${NFS_SERVER}"
 
     export USB_SRC=$( grep /run/install/repo /proc/mounts | head -n1 | awk '{print $1}' | grep ^/dev | sed 's%^/dev/%%' )
-    echo "USB_SRC=${USB_SRC}"
+    echo_return "USB_SRC=${USB_SRC}"
 
-    export VAGRANT_SRC=$([[ -d "/vagrant" ]] && echo "/vagrant")
+    export VAGRANT_SRC=$([[ -d "/vagrant" ]] && echo_return "/vagrant")
 
     export KICKSTART_TYPE=$(determine_kickstart_type "${NFS_SERVER}" "${USB_SRC}" "${VAGRANT_SRC}")
-    echo "KICKSTART_TYPE=${KICKSTART_TYPE}"
+    echo_return "KICKSTART_TYPE=${KICKSTART_TYPE}"
 
-    echo "TIMEZONE=${TIMEZONE:-UTC}"
+    echo_return "TIMEZONE=${TIMEZONE:-UTC}"
 
-    echo "# Static vars for ${KICKSTART_TYPE}"
+    echo_return "# Static vars for ${KICKSTART_TYPE}"
     local static_vars="${KS_CFG}/static-vars-${KICKSTART_TYPE}.sh"
     if [[ -f "${static_vars}" ]]
     then
@@ -152,7 +152,7 @@ function generate_kickstart_vars()
         fi    
     elif [[ -z "${IPPREFIX}" ]]
     then
-        echo "Defaulting to IPPREFIX=24" 1>&2
+        notice "Defaulting to IPPREFIX=24"
         export IPPREFIX="24"
     fi
 
@@ -177,7 +177,7 @@ function generate_kickstart_vars()
 
     if [[ -z "${NETDEV}" ]]
     then
-        echo "# NETDEV was not set - determining it from current configuration"
+        notice "# NETDEV was not set - determining it from current configuration"
         current_NETDEV=$(determine_network_device)
         if [[ -n "${current_NETDEV}" && "${current_NETDEV}" != "${SKIP_NETDEV}" ]]
         then
@@ -185,14 +185,14 @@ function generate_kickstart_vars()
         fi
     fi
 
-    echo "# Network vars"
-    [[ -n "${GATEWAY}" ]] && echo "GATEWAY=${GATEWAY}"
-    [[ -n "${IPADDR}" ]] && echo "IPADDR=${IPADDR}"
-    [[ -n "${IPPREFIX}" ]] && echo "IPPREFIX=${IPPREFIX}"
+    echo_return "# Network vars"
+    [[ -n "${GATEWAY}" ]] && echo_return "GATEWAY=${GATEWAY}"
+    [[ -n "${IPADDR}" ]] && echo_return "IPADDR=${IPADDR}"
+    [[ -n "${IPPREFIX}" ]] && echo_return "IPPREFIX=${IPPREFIX}"
 
-    echo "NETDEV=${NETDEV}"
+    echo_return "NETDEV=${NETDEV}"
 
-    echo "# Passwords etc"    
+    echo_return "# Passwords etc"    
     # Load distributed provisioning passwords, prior to the pxe commandline
     if [[ -f "${SS_INC}/password-fallbacks.sh" ]]
     then 
@@ -205,12 +205,12 @@ function generate_kickstart_vars()
         . "${SS_INC}/provisioning-passwords.sh"
     fi
 
-    echo "######"
-    echo "# Boot commandline vars"
-    echo "######"
+    echo_return "######"
+    echo_return "# Boot commandline vars"
+    echo_return "######"
     if [[ -d /vagrant ]]
     then 
-        echo "# Kernel commandline var processing skipped for vagrant install."
+        echo_return "# Kernel commandline var processing skipped for vagrant install."
     else
         process_commandline_vars kernel
     fi
@@ -225,21 +225,21 @@ function generate_kickstart_vars()
             then 
                 ROOT_PW="${FALLBACK_ROOT_PW}"
             fi
-            echo "ROOT_PW='${ROOT_PW}'"
+            echo_return "ROOT_PW='${ROOT_PW}'"
             export ROOT_PW
 
             if [[ -z "${GRUB_PW}" ]]
             then 
                 GRUB_PW="${FALLBACK_GRUB_PW}"
             fi
-            echo "GRUB_PW='${GRUB_PW}'"
+            echo_return "GRUB_PW='${GRUB_PW}'"
             export GRUB_PW
 
             if [[ -z "${SSH_PW}" ]]
             then 
                 SSH_PW="${FALLBACK_SSH_PW}"
             fi
-            echo "SSH_PW='${SSH_PW}'"
+            echo_return "SSH_PW='${SSH_PW}'"
             export SSH_PW
 
         } > "${PW_VARS}"
@@ -248,8 +248,8 @@ function generate_kickstart_vars()
     # These are then loaded but not echoed
     . "${PW_VARS}"
 
-    echo "######"
-    echo "set +e" 
+    echo_return "######"
+    echo_return "set +e" 
 }
 
 function load_kickstart_vars()

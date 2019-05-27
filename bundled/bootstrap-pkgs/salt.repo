@@ -1,5 +1,5 @@
 [bootstrap-salt]
 name=bootstrap-salt
-baseurl=file:///e/bundled/bootstrap-pkgs/salt
+baseurl=$bundled/bootstrap-pkgs/salt
 enabled=1
 gpgcheck=1

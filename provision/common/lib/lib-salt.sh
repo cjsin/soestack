@@ -1,3 +1,6 @@
+#!/bin/bash
+
+[[ -n "${SS_LOADED_COMMON_LIB}" ]] || . /soestack/provision/common/lib/lib.sh
 
 function saltstack_fixes()
 {
@@ -33,7 +36,7 @@ function salt_test_ping()
 {
     local h="${1}"
     msg "Test ping minion '${h}'"
-    salt "${h}" test.ping
+    salt "${h}" test.ping 2>&1 | indent
 }
 
 function write_role_grains()
@@ -43,15 +46,15 @@ function write_role_grains()
        if [[ -n "${ROLES}" ]]
        then
             {
-                echo "roles:"
+                echo_data "roles:"
                 local r
                 for r in ${ROLES//,/ }
                 do
-                    echo "    - ${r}"
+                    echo_data "    - ${r}"
                 done
             } >> /etc/salt/grains
         else
-            echo "roles: []" >> /etc/salt/grains
+            echo_data "roles: []" >> /etc/salt/grains
         fi
     fi 
 }
@@ -63,14 +66,14 @@ function write_layer_grains()
         if [[ -n "${LAYERS}" ]]
         then
             {
-                echo "layers:"
+                echo_data "layers:"
                 if [[ "${LAYERS}" =~ : ]]
                 then
                     local items=(${LAYERS//,/ })
                     local item
                     for item in "${items[@]}"
                     do
-                        echo "    ${item//:/: }"
+                        echo_data "    ${item//:/: }"
                     done
                 elif [[ "${LAYERS}" =~ , ]]
                 then
@@ -78,14 +81,14 @@ function write_layer_grains()
                     local item
                     for item in "${items[@]}"
                     do
-                        echo "    - ${item}"
+                        echo_data "    - ${item}"
                     done
                 else
-                    echo "    - ${LAYERS}"
+                    echo_data "    - ${LAYERS}"
                 fi
             } >> /etc/salt/grains
         else
-            echo "layers: []" >> /etc/salt/grains
+            echo_data "layers: []" >> /etc/salt/grains
         fi
     fi
 }
@@ -97,11 +100,11 @@ function best_hostname()
     do 
         if egrep -q "[[:space:]]${h}([[:space:]]|\$)" /etc/hosts
         then 
-            echo "${h}"
+            echo_return "${h}"
             return 0
         fi
     done
-    echo "$(hostname -f)"
+    echo_return "$(hostname -f)"
 }
 
 function configure_etc_salt()
@@ -114,7 +117,7 @@ function configure_etc_salt()
     # Copy some static configuration
     cp "${SS_INC}"/minion.d/* /etc/salt/minion.d/
 
-    echo "id: $(hostname -s)" > /etc/salt/minion.d/id.conf
+    echo_data "id: $(hostname -s)" > /etc/salt/minion.d/id.conf
 
     configure_ipa_integration
     
@@ -125,7 +128,7 @@ function configure_etc_salt()
         cp "${SS_INC}"/master.d/* /etc/salt/master.d/
     fi
     
-    echo "master: ${SALT_MASTER:-salt}" > /etc/salt/minion.d/master.conf
+    echo_data "master: ${SALT_MASTER:-salt}" > /etc/salt/minion.d/master.conf
 
     #write_role_grains # this will be done instead with grains.set in salt_state_provision
     write_layer_grains
@@ -157,8 +160,8 @@ function wait_for_enrolment()
     while ! salt-call test.ping
     do 
         date
-        echo "Waiting for enrolment"
-        echo "Will try again in 30"
+        msg "Waiting for enrolment"
+        msg "Will try again in 30"
         sleep 30
         date
     done
@@ -179,15 +182,15 @@ function salt-step()
     local logdir="/var/log/provision/salt"
     mkdir -p "${logdir}"
     local logfile="${logdir}/${name}.log"
-    echo "Salt step ${what} ${args[*]} [log file ${logfile}]" 1>&2
+    msg "Salt step ${what} ${args[*]} [log file ${logfile}]"
     local result=0
     salt-call "${what}" "${args[@]}" 2>&1 | tee -a "${logfile}"
     result=$?
     if (( ${result} ))
     then 
-        echo "FAILED: Salt step ${what} ${args[*]} [log file ${logfile}]" 1>&2
+        err "FAILED: Salt step ${what} ${args[*]} [log file ${logfile}]"
     else
-        echo "OK: Salt step ${what} ${args[*]} [log file ${logfile}]" 1>&2
+        msg "OK: Salt step ${what} ${args[*]} [log file ${logfile}]"
     fi
     return ${result}
 }
@@ -235,33 +238,38 @@ function salt_state_provision()
         if (( result ))
         then
             ((problems++))
-            echo "ERROR: Salt step ${step}" failed  1>&2
+            err "Salt step ${step} failed"
             if (( fail_fast ))
             then
-                echo "Fail-fast mode enabled - aborting salt provisioning immediately."
+                err "Fail-fast mode enabled - aborting salt provisioning immediately."
                 break
             fi
         fi
     done
-    echo "Salt provisioning done - ${problems} problems occurred." 1>&2
+    if (( problems ))
+    then 
+        err "Salt provisioning done - ${problems} problems occurred."
+    else
+        msg "Salt provisioning done - No problems occurred."
+    fi
     return ${problems}
 } 
 
 function run_salt_state_provision()
 {
+    echo_start "Starting salt state provisioning."
     local logfile=/var/log/provision/salt-state-provision.log
-    echo "Starting salt state provisioning."
-    echo "Log file is ${logfile}".
+    msg "Log file is ${logfile}"
     salt_state_provision "${*}" >> "${logfile}" 2>&1
-    echo "Completed salt state provisioning."
+    echo_done "Completed salt state provisioning."
 }
 
 function provision_minion_client()
 {
     if ! salt_minion_autoenrol
     then 
-        echo "Automatic enrolment failed!"
-        echo "It will need to be enroled manually on the master."
+        err "Automatic enrolment failed!"
+        err "It will need to be enroled manually on the master."
         # Continue below, it will wait in a loop
     fi
 
@@ -269,7 +277,7 @@ function provision_minion_client()
 
     start_salt_minion
 
-    wait_for_enrolment
+    wait_for_enrolment 2>&1 | indent
 }
 
 function provision_minion_master()

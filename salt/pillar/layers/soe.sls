@@ -1,5 +1,9 @@
 _loaded_layers:
+    {%- if 'layers' in grains and grains.layers is mapping and 'site' in grains.layers %}
     {{sls}}: {{grains.layers.soe|json}}
+    {%- else %}
+    {{sls}}: 'no layers soe grain set yet, or not a mapping' 
+    {%- endif %}
 
 {%- if 'layers' in grains and grains.layers is mapping and 'soe' in grains.layers and grains.layers.soe %}
 {#-    # wtf, it seems slspath is not set at all while processing pillar data #}

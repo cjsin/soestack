@@ -1,9 +1,10 @@
 #!/bin/bash
 
-. /soestack/provision/common/lib/lib.sh
+[[ -n "${SS_LOADED_COMMON_LIB}" ]] || . /soestack/provision/common/lib/lib.sh
 
 function install_development_tools()
 {
+    echo_start 
     if is_development
     then
         ensure_installed \
@@ -18,6 +19,7 @@ function install_development_tools()
     ensure_installed gpm
     systemctl enable gpm
     systemctl start gpm 
+    echo_done
 }
 
 function ssh_alternate_port()
@@ -66,8 +68,8 @@ function successful_provision()
 function failed_provision()
 {
     systemctl disable soestack-provision
-    echo "system service soestack-provision has run but failed."
-    echo "To retry, manually run /soestack/provision/common/provision.sh"
+    err "system service soestack-provision has run but failed."
+    err "To retry, manually run /soestack/provision/common/provision.sh"
 }
 
 function provision_client()
@@ -91,10 +93,9 @@ function provision_common_middle()
     install_utils
     fix_bootflags
 
-    echo "Starting soestack provision at date $(date)"
-    install_development_tools
+    msg "Starting soestack provision at date $(date)"
+    install_development_tools 2>&1 | indent
 
-    echo "Replacing firewall"
     replace_firewall
 
     yum makecache
@@ -128,17 +129,17 @@ function soestack_provision()
 
     if (( nexus_failed))
     then
-        echo "Skipping further provisioning since nexus setup failed."
-        echo "Done."
+        err "Skipping further provisioning since nexus setup failed."
+        err "Done."
         failed_provision
     elif (( salt_failed ))
     then 
-        echo "Skipping salt state provision since salt setup failed."
-        echo "Done."
+        err "Skipping salt state provision since salt setup failed."
+        err "Done."
         failed_provision
     else
         run_salt_state_provision "${ROLES}"
-        echo "Done."
+        msg "Done."
         successful_provision
     fi 
 
@@ -146,14 +147,17 @@ function soestack_provision()
 
 function replace_firewall()
 {
-    ensure_installed iptables-services
-    systemctl disable firewalld
-    systemctl enable iptables
-    iptables -F
-    systemctl start iptables   
-    echo "Firewall:"
-    iptables -nvL
-    enable_ssh_during_development
+    msg "Replacing firewall"
+    {
+        ensure_installed iptables-services
+        systemctl disable firewalld
+        systemctl enable iptables
+        iptables -F
+        systemctl start iptables   
+        msg "Firewall:"
+        iptables -nvL
+        enable_ssh_during_development
+    } 2>&1 | indent
 }
 
 function fix_bootflags()
@@ -174,48 +178,51 @@ function fix_bootflags()
         
         if command -v plymouth-set-default-theme 2> /dev/null
         then
-            echo "Rebuilding plymouth initrd" 1>&2
-            plymouth-set-default-theme details --rebuild-initrd
+            msg "Rebuilding plymouth initrd"
+            plymouth-set-default-theme details --rebuild-initrd 2>&1 | indent
         fi
     fi 
 }
 
 function disable_repos()
 {
-    local prefix="${1}"
-    echo "Disable default '${prefix}' repos"
-    mkdir -p /etc/yum.repos.d/disable
-    if ( cd /etc/yum.repos.d/ && ls | egrep -q "^${prefix}.*[.]repo")
-    then
-        mv -f "/etc/yum.repos.d/${prefix}"*.repo /etc/yum.repos.d/disable/
-    fi
-    echo "done"
+    local prefix
+    for prefix in "${@}"
+    do
+        msg "Disable '${prefix}' repos"
+        mkdir -p /etc/yum.repos.d/disable
+        if ( cd /etc/yum.repos.d/ && ls | egrep -q "^${prefix}.*[.]repo")
+        then
+            mv -f "/etc/yum.repos.d/${prefix}"*.repo /etc/yum.repos.d/disable/
+        fi
+    done
+    msg "done"
 }
 
 function import_gpgkeys()
 {
-    echo "Importing GPG keys"
+    msg "Importing GPG keys"
     local f
     for f in /soestack/provision/common/inc/gpgkeys/* 
     do
-        echo "Import ${f}"
+        msg "Import ${f}"
         rpm --import "${f}"
-        echo "  ... done."
+        msg "  ... done."
     done
-    echo "Done."
+    msg "Done."
 }
 
 function bootstrap_repos()
 {
-    echo "Bootstrap repos."
+    msg "Bootstrap repos."
 
     import_gpgkeys
 
-    if [[ -n "${BOOTSTRAP_REPOS[*]}" ]]
+    if [[ -n "${BOOTSTRAP_REPOS}" ]]
     then
         disable_repos ""
         local f
-        for f in "${BOOTSTRAP_REPOS[@]}"
+        for f in ${BOOTSTRAP_REPOS//,/ }
         do
             try="/soestack/provision/common/inc/${f}"
             if [[ -f "${try}" ]]
@@ -225,19 +232,19 @@ function bootstrap_repos()
         done
         yum makecache
     else
-        echo "No BOOTSTRAP_REPOS defined."
+        msg "No BOOTSTRAP_REPOS defined. Preconfigured OS repos will be used."
     fi
 }
 
 function configure_soestack_provision()
 {
-    echo "Configure soestack postinstall provisioning"
+    msg "Configure soestack postinstall provisioning"
     /bin/cp -f /soestack/provision/common/inc/soestack-provision.service /etc/systemd/system/
     chmod a-x  /etc/systemd/system/soestack-provision.service
     chmod a+rx /soestack/provision/*/*.sh
     chmod a+rx /soestack/provision/*/lib/*.sh
     systemctl enable soestack-provision
-    echo "Done."
+    msg "Done."
 }
 
 function yum_setting()
@@ -249,10 +256,10 @@ function yum_setting()
     local f=/etc/yum.conf
     if ! ( egrep "${regex}" "${f}" | grep -qF "${line}" )
     then
-        echo "Delete yum setting '${varname}' : " "$(egrep "${regex}" "${f}" | tr '\n' ' ')"
+        msg "Delete yum setting '${varname}' : " "$(egrep "${regex}" "${f}" | tr '\n' ' ')"
         sed -i "/${regex}/ d" "${f}"
-        echo "Add yum setting ${line}"
-        echo "${line}" >> "${f}"
+        msg "Add yum setting ${line}"
+        msg "${line}" >> "${f}"
     fi
 }
 
@@ -281,8 +288,8 @@ function modify_specific_yum_releasever()
             ;;
     esac
 
-    echo "${releaselong}" > /etc/yum/vars/releaselong
-    echo "${releaseshort}" > /etc/yum/vars/releaseshort
+    echo_data "${releaselong}" > /etc/yum/vars/releaselong
+    echo_data "${releaseshort}" > /etc/yum/vars/releaseshort
 
 }
 
@@ -305,12 +312,12 @@ function configure_yum_bundled_var()
                 bundled_url="file:///e/bundled"
                 ;;
             *)
-                echo "Unrecognised or unsupported BUNDLED_SRC value." 1>&2
+                err "Unrecognised or unsupported BUNDLED_SRC value."
                 return 1
                 ;;
         esac
 
-        echo "${bundled_url}" > "${var_file}"
+        echo_data "${bundled_url}" > "${var_file}"
     fi
 }
 
@@ -347,26 +354,26 @@ function configure_timezone()
     local tz="${TIMEZONE:-UTC}"
 
     ln -sf "/usr/share/zoneinfo/${tz}" /etc/localtime
-    echo "TZ=${tz}" > /etc/profile.d/timezone.sh
+    echo_data "TZ=${tz}" > /etc/profile.d/timezone.sh
     . /etc/profile.d/timezone.sh
 }
 
 function preconfigure_pip()
 {
     {
-        echo "[global]"
-        echo "index http://nexus:7081/repository/pypi/pypi"
-        echo "index-url http://nexus:7081/repository/pypi/simple"
-        echo "trusted-host = nexus"
+        echo_data "[global]"
+        echo_data "index http://nexus:7081/repository/pypi/pypi"
+        echo_data "index-url http://nexus:7081/repository/pypi/simple"
+        echo_data "trusted-host = nexus"
     } >> /etc/pip.conf 
 }
 
 function with_low_tcp_time_wait()
 {
-    echo "1" > /proc/sys/net/ipv4/tcp_fin_timeout
+    echo_data "1" > /proc/sys/net/ipv4/tcp_fin_timeout
     "${@}"
     sleep 1
-    echo "60" > /proc/sys/net/ipv4/tcp_fin_timeout
+    echo_data "60" > /proc/sys/net/ipv4/tcp_fin_timeout
 }
 
 function provision_standalone()
@@ -375,7 +382,15 @@ function provision_standalone()
 
     add_hosts
     add_nameserver # nameserver needs to be configured before docker is installed and started
-    disable_repos CentOS
+    
+    if [[ "${BUNDLED_SRC}" ]]
+    then
+        disable_repos CentOS
+    else 
+        # regardless, disable Source, Debuginfo , Vault repos
+        disable_repos 'CentOS-Sources' 'CentOS-Vault' 'CentOS-fasttrack' 'CentOS-Debuginfo' 'CentOS-CR'
+        disable_repos 'CentOS-Media'
+    fi
 
     configure_standalone_server
 }

@@ -1,5 +1,5 @@
 [bootstrap-centos]
 name=bootstrap-centos
-baseurl=file:///e/bundled/bootstrap-pkgs/centos
+baseurl=$bundled/bootstrap-pkgs/centos
 enabled=1
 gpgcheck=1

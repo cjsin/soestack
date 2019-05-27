@@ -12,6 +12,8 @@
 {%- set domain    = config.domain if 'domain' in config else hostname_domain %}
 
 DEBUG="{{'echo' if 'debug' in install and install.debug else ''}}"
+TIMESTAMP=$(date +%s)
+logprefix="/var/log/ipaserver-install"
 
 function die()
 {
@@ -19,15 +21,24 @@ function die()
     exit 1
 }
 
-function uninstall_first()
+function uninstall_failed_first()
 {
-    if [[ -f /var/log/ipa-install.log ]]
+    local logfile="${logprefix}.log"
+    if [[ -f "${logfile}" ]]
     then
-        ipa-server-install --uninstall -U 
+        if [[ -f "${logprefix}.FAILED" ]]
+        then
+            echo "Uninstalling failed ipa server installation" 1>&2
+            ipa-server-install --uninstall -U 
+            local timestamp=$(stat -c %Z "${logfile}")
+            mv "${logfile}" "${logprefix}.FAILED.${TIMESTAMP}.log"
+        else
+            echo "The IPA service seems to have already been installed successfully" 1>&2
+        fi
     fi
 }
 
-install_server()
+function install_server()
 {
     # Load pregenerated passwords
     . "{{pwfile}}"
@@ -82,13 +93,30 @@ install_server()
     
 }
 
-uninstall_first
-if install_server
-then
+function main()
+{
+    uninstall_failed_first
+    
+    rm -f "${logprefix}.FAILED"
 
-    mkdir -p /var/cache/salt/master
-    export KRB5CCNAME=/var/cache/salt/master/salt.krb
-    kinit admin <<< "${admin_password}"
+    if install_server
+    then
 
-    /usr/local/sbin/ipa-postinstall-{{deployment_name}}
-fi
+        mkdir -p /var/cache/salt/master
+        export KRB5CCNAME=/var/cache/salt/master/salt.krb
+        kinit admin <<< "${admin_password}"
+
+        /usr/local/sbin/ipa-postinstall-{{deployment_name}}
+
+    else
+
+        local saved="${logprefix}.FAILED.${TIMESTAMP}.log"
+        touch -f "${logprefix}.FAILED"
+        cp -f "${logprefix}.log" "${saved}"
+        echo "ERROR: IPA server install failed - log file is ${saved}" 1>&2
+        return 1
+
+    fi
+}
+
+main "${@}"

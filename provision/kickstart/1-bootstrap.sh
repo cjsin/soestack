@@ -8,7 +8,7 @@
 
 function completed_bootstrap()
 {
-    echo "Completed bootstrap: $(date)"
+    msg "Completed bootstrap: $(date)"
 }
 
 # This is done before calculating the kickstart vars, which
@@ -23,7 +23,7 @@ load_kickstart_vars
 
 if [[ -n "${TIMEZONE}" && -f "/usr/share/zoneinfo/${TIMEZONE}" ]]
 then 
-    echo "Configuring timezone in install environment"
+    msg "Configuring timezone in install environment"
     ln -sf "/usr/share/zoneinfo/${TIMEZONE}" /etc/localtime
 fi
 
@@ -37,7 +37,7 @@ date
 
 display_build_configuration
 
-# echo running from ${PWD} Install path will be ${ANA_INSTALL_PATH}
+# notice running from ${PWD} Install path will be ${ANA_INSTALL_PATH}
 
 set -e
 user_rebuild_confirmation

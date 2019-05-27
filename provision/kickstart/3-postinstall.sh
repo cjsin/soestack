@@ -1,10 +1,11 @@
 #!/bin/bash
-echo "$(date) ${0##*/} Start."
+. /soestack/provision/kickstart/lib/lib-nochroot.sh
+
+echo_start "${0##*/}"
 
 # This script will run after package installation but from 
 # within the install environment, not the chroot environment
 
-. /soestack/provision/kickstart/lib/lib-nochroot.sh
 
 load_dyn_vars
 
@@ -16,17 +17,17 @@ step copy_ss_provisioning
 
 if is_standalone
 then
-    echo "Copying files needed for standalone install"
+    echo_sage 3 "Copying files needed for standalone install"
     step copy_isopackages
     step copy_isos
     step copy_bundled_data
     step create_installmedia_repo
 fi
 
-echo "Copying install logs"
+echo_stage 2 "Copying install logs"
 step copy_logs
 
-echo "Almost done. Syncing written data."
+echo_stage 2 "Almost done. Syncing written data."
 sync
 
 # Set up a fake wireless prior to reboot, if required
@@ -35,4 +36,4 @@ then
     simulate_wireless
 fi
 
-echo "$(date) ${0##*/} Done."
+echo_done "${0##*/}"

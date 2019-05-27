@@ -1,5 +1,5 @@
 [bootstrap-drawio]
 name=bootstrap-drawio
-baseurl=file:///e/bundled/bootstrap-pkgs/drawio
+baseurl=$bundled/bootstrap-pkgs/drawio
 enabled=1
 gpgcheck=1

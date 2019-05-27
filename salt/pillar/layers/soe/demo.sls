@@ -238,7 +238,7 @@ nexus:
         elasticsearch:   http://nexus:7081/repository/elasticsearch
         elastic-docker:  http://nexus:7081/repository/elastic-docker
         #elastic-docker: nexus:7082
-        rubygems:
+        rubygems:        http://nexus:7081/repository/rubygems
         interwebs:       http://nexus:7081/repository/interwebs
         built-rpms:      http://nexus:7081/repository/built-rpms
         google-storage:  http://nexus:7081/repository/google-storage

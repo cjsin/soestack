@@ -1,3 +1,6 @@
+#!/bin/bash
+
+[[ -n "${SS_LOADED_COMMON_LIB}" ]] || . /soestack/provision/common/lib/lib.sh
 
 function configure_salt_api()
 {
@@ -5,26 +8,25 @@ function configure_salt_api()
 
     salt-call --local tls.create_self_signed_cert
 
-    {
-        echo "rest_cherrypy:"
-        echo "    port:     9009"
-        echo "    ssl_crt:  /etc/pki/tls/certs/localhost.crt"
-        echo "    ssl_key:  /etc/pki/tls/certs/localhost.key"
-        echo "    # start with auth disabled during dev, get salt e-auth working later"
-        echo "    webhook_disable_auth : True"
-        echo ""
-        echo "external_auth:"
-        echo "    pam:"
-        echo "        salt-enrol:"
-        echo "            - '@wheel'"
-    } > /etc/salt/master.d/salt_api.conf
+    cat > /etc/salt/master.d/salt_api.conf <<-EOF
+		rest_cherrypy:
+		    port:     9009
+		    ssl_crt:  /etc/pki/tls/certs/localhost.crt
+		    ssl_key:  /etc/pki/tls/certs/localhost.key
+		    # start with auth disabled during dev, get salt e-auth working later
+		    webhook_disable_auth : True
+		
+		external_auth:
+		    pam:
+		        salt-enrol:
+		            - '@wheel'
+	EOF
 
     if ! grep -q salt-enrol: /etc/passwd 
     then 
         useradd -s /sbin/nologin -r salt-enrol -d /var/lib/salt-enrol 
         passwd --stdin salt-enrol <<< "d62da93aecc94bd6363d0c7d5fbea7248e8e0c9e15dfca0fb92c1e665760de9a"
     fi
-
 
     mkdir -p /var/lib/salt-enrol/.ssh
     
@@ -49,8 +51,9 @@ function salt_master_enrol_self()
         do 
             # Wait a little for the minion to request enrolment
             sleep 1
-            echo "Waiting for minion pre-enrolment" 1>&2
+            msg "Waiting for minion pre-enrolment"
         done
+
         msg "Enroling salt minion '${h}'"
         
         salt-key -y -a "${h}"
@@ -61,7 +64,7 @@ function salt_master_enrol_self()
      
     while ! salt_test_ping "${h}"
     do
-        echo "Waiting longer for minion to start responding to pings."
+        msg "Waiting longer for minion to start responding to pings."
         sleep 5
     done 
 }

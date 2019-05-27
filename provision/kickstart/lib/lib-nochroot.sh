@@ -7,29 +7,29 @@
 function copy_files()
 {
     local dst_dir="${ANA_INSTALL_PATH}/${2}"
-    echo "Copy install system ${1} to ${dst_dir}/"
+    msg "Copy install system ${1} to ${dst_dir}/"
     mkdir -p "${dst_dir}"
     cp -a ${1} "${dst_dir}/"
 }
 
 function copy_logs()
 {
-    echo "Copy logs"
+    msg "Copy logs"
     copy_files "/tmp/*" "/var/log/provision/tmpdir/"
-    echo "Done copying logs"
+    msg "Done copying logs"
 
-    echo "Copying provisioning ss dir for troubleshooting"
+    msg "Copying provisioning ss dir for troubleshooting"
     copy_files "/etc/ss/*" "/var/log/provision/etc-ss"
-    echo "Done copying provisioning ss dir"
+    msg "Done copying provisioning ss dir"
 }
 
 function copy_ss_provisioning()
 {
-    echo "Copy ss kickstarts to installed system"
+    msg "Copy ss kickstarts to installed system"
     copy_files "/soestack/provision" "/soestack"
     copy_files "${SS_GEN}/*" "${SS_GEN}"
     ls -lR "${ANA_INSTALL_PATH}/soestack/provision"
-    echo "Completed copying ss kickstarts and ss config."
+    msg "Completed copying ss kickstarts and ss config."
 }
 
 function determine_ip()
@@ -39,7 +39,7 @@ function determine_ip()
 
 function configure_hostname()
 {
-    echo "Configuring hostname from dhcp and predfined vars."
+    msg "Configuring hostname from dhcp and predfined vars."
     local host=""
     local domain=""
     
@@ -72,23 +72,23 @@ function configure_hostname()
     else
         if [[ "${host}" =~ [.]${domain} ]]
         then
-            echo "Hostname is already configured appropriately"
+            notice "Hostname is already configured appropriately"
         else
             host="${host}.${domain}"
         fi
     fi
    
-    echo "${host}" > "${ANA_INSTALL_PATH}/etc/hostname"
+    echo_data "${host}" > "${ANA_INSTALL_PATH}/etc/hostname"
 
     hostname "${host}"
 
     local ip=$(determine_ip)
     if [[ -n "${ip}" ]]
     then
-        grep "${host}" /etc/hosts || echo "${ip} ${host}" >> "${ANA_INSTALL_PATH}/etc/hosts"
+        grep -q "${host}" /etc/hosts || echo_data "${ip} ${host}" >> "${ANA_INSTALL_PATH}/etc/hosts"
     fi
 
-    echo "Hostname configured as ${host}"
+    notice "Hostname configured as ${host}"
 }
 
 #
@@ -126,11 +126,11 @@ function create_installmedia_repo()
     local bootstrap_repo="${repos_dir}/bootstrap-centos.repo"
 
     {
-        echo "[installmedia]"
-        echo "name=installmedia"
-        echo "baseurl=file://${pkg_dst}"
-        echo "enabled=1"
-        echo "gpgcheck=1"
+        echo_data "[installmedia]"
+        echo_data "name=installmedia"
+        echo_data "baseurl=file://${pkg_dst}"
+        echo_data "enabled=1"
+        echo_data "gpgcheck=1"
     } > "${repos_dir}/installmedia.repo"
 
     mkdir -p "${disable_dir}"
@@ -167,7 +167,7 @@ function copy_isos()
     mkdir -p "${iso_dst}"
     if [[ ! -d "${iso_src}" ]]
     then
-        echo "WARNING: No isos dir at ${iso_src}!"
+        warn "No isos dir at ${iso_src}!"
         return 1
     fi
     local -a iso_files=( "${iso_src}"/*.iso )
@@ -175,7 +175,7 @@ function copy_isos()
 
     if ! (( ${#iso_files[@]} ))
     then
-        echo "WARNING: No isos found within ${iso_src}"
+        warn "No isos found within ${iso_src}"
         ls -l "${iso_src}"
         return 1
     fi
@@ -198,23 +198,23 @@ function copy_isos()
     do
         if (( copy_all )) || [[ "${iso_file}" == "${selected_iso}" ]]
         then
-            echo "Copy ${iso_file} to ${iso_dst}"
+            msg "Copy ${iso_file} to ${iso_dst}"
             cp "${iso_file}" "${iso_dst}/"
         fi 
     done
 
     if [[ -n "${selected_iso}" ]]
     then
-        echo "Found ${selected_iso} - configuring mount."
-        echo "${iso_dir}/${selected_iso##*/} ${pkg_dir} auto defaults,ro,loop,auto,nofail 0 0 " >> "${ANA_INSTALL_PATH}/etc/fstab"
+        notice "Found ${selected_iso} - configuring mount."
+        echo_data "${iso_dir}/${selected_iso##*/} ${pkg_dir} auto defaults,ro,loop,auto,nofail 0 0 " >> "${ANA_INSTALL_PATH}/etc/fstab"
     else
-        echo "WARNING: Could not find a recognised iso file. Packages will need to be copied instead."
+        warn "Could not find a recognised iso file. Packages will need to be copied instead."
     fi
 }
 
 function copy_bundled_data()
 {
-    echo "Copying bundled data.."
+    msg "Copying bundled data.."
     #cp /lib/anaconda-lib.sh /mnt/sysimage/
 
     # TODO - use /run/install/repo path from anaconda lib, not hard coded.
@@ -226,10 +226,10 @@ function copy_bundled_data()
     if [[ -d "${bundled_src}" ]]
     then
         cp -a "${bundled_src}" "${bundled_dst}"
-        echo "Done copying bundled data from '${bundled_src}' to '${bundled_dst}'"
+        msg "Done copying bundled data from '${bundled_src}' to '${bundled_dst}'"
     else
-        echo "No bundled data dir was found."
-        echo "Looked for it at ${bundled_src}:"
-        ls -al "${bundled_src}"
+        notice "No bundled data dir was found."
+        notice "Looked for it at ${bundled_src}:"
+        ls -al "${bundled_src}" 1>&2 | indent
     fi
 }

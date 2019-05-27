@@ -80,8 +80,7 @@
 {{sls}}.{{deployment_name}}.deploy:
     cmd.run:
         - name:     /usr/local/sbin/deploy-ipa-server-{{deployment_name}}
-        - unless:   test -f /etc/ipa/ca.crt
-        - creates:  /var/log/ipaserver-install.log
+        - unless:   test -f /var/log/ipaserver-install.log && ! test -f /var/log/ipaserver-install.FAILED
 
 {%-         set dependent_states = [] %}
 {%-         if 'bind_ips' in config and config.bind_ips %}

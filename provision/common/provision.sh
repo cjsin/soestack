@@ -18,9 +18,9 @@
 
 function provision_routine()
 {
-    echo "$(date) ${0##*/} Start."
-
     . /soestack/provision/common/lib/lib-provision.sh 
+
+    echo_start "${0##*/}"
 
     load_dyn_vars
 
@@ -28,7 +28,7 @@ function provision_routine()
 
     soestack_provision 2>&1 | tee -a /var/log/provision/provision-soestack.log
 
-    echo "$(date) ${0##*/} Done."
+    echo_done "${0##*/}"
 }
 
 mkdir -p /var/log/provision

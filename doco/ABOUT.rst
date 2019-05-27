@@ -39,7 +39,9 @@ In its current state, it is primarily designed to support:
 Getting Started
 ###############
 
-Before you can use the files you will need to:
+To just try it out and see what it does, please see :ref:`quickstart`.
+
+Before you can use the files for your own purposes you will need to:
 
     - Determine your desired network configuration
 

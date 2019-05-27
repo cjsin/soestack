@@ -25,5 +25,5 @@ INTERACTIVE=1
 SELINUX=permissive
 TIMEZONE=UTC
 HWCLOCK=UTC
-BOOTSTRAP_REPOS=(bootstrap-centos.repo)
+BOOTSTRAP_REPOS=bootstrap-centos.repo
 

@@ -1,0 +1,37 @@
+variables:
+    PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
+
+cache:
+  key: ${CI_COMMIT_REF_SLUG}
+  paths:
+    - venv/
+
+#before_script:
+#  - echo "Before script section"
+
+#after_script:
+#  - echo "After script section"
+
+bash-syntax:
+  image: bash:latest
+  stage: test
+  script:
+    - for f in provision/{common/lib,kickstart,vagrant}/*.sh; do echo "Check ${f}"; bash -n "${f}" 2>&1 ;done
+  tags:
+    - docker
+
+# NOTE this job must be called pages, in order to be used for Gitlab Pages
+pages:
+  image: python:3
+  stage: deploy
+  script:
+    - python3 -m venv venv
+    - . venv/bin/activate
+    - pip install --upgrade pip
+    - pip install sphinx
+    - sphinx-build doco public
+  tags:
+    - docker
+  artifacts:
+    paths:
+      - public

@@ -1,5 +1,5 @@
 [bootstrap-kubernetes]
 name=bootstrap-kubernetes
-baseurl=file:///e/bundled/bootstrap-pkgs/kubernetes
+baseurl=$bundled/bootstrap-pkgs/kubernetes
 enabled=1
 gpgcheck=1

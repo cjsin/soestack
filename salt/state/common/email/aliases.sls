@@ -19,7 +19,7 @@
         - name: newaliases
         - onchanges:
             {%- for r in reqs %}
-            - cmd: {{r}}
+            - cmd: {{sls}}::{{r}}
             {%- endfor %}
 
 {%- endif %}

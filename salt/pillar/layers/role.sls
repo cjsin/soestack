@@ -1,5 +1,9 @@
 _loaded_layers:
+    {%- if 'roles' in grains %}
     {{sls}}: {{grains.roles|json}}
+    {%- else %}
+    {{sls}}: 'no roles grain set yet'
+    {%- endif %}
 
 {#- # wtf, it seems slspath is not set at all while processing pillar data #}
 {#- # so it is hard coded here for now, but should raise a bug or feature request with saltstack #}

@@ -1,0 +1,9 @@
+python-cherrypy-5.6.0-2.el7.noarch.rpm
+python-zmq-15.3.0-2.el7.x86_64.rpm
+PyYAML-3.11-1.el7.x86_64.rpm
+salt-2018.3.2-1.el7.noarch.rpm
+salt-api-2018.3.2-1.el7.noarch.rpm
+salt-master-2018.3.2-1.el7.noarch.rpm
+salt-minion-2018.3.2-1.el7.noarch.rpm
+salt-ssh-2018.3.2-1.el7.noarch.rpm
+zeromq-4.1.4-7.el7.x86_64.rpm

@@ -1,10 +1,10 @@
 #!/bin/bash
-echo "$(date) ${0##*/} Start."
-
 . /soestack/provision/kickstart/lib/lib.sh
+
+echo_start "${0##*/}"
 
 load_dyn_vars
 
 add_hosts
 
-echo "$(date) ${0##*/} Done."
+echo_done "${0##*/}"

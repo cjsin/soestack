@@ -85,6 +85,10 @@ function main()
             -r|-renew|--renew|renew)
                 renew_ticket
                 ;;
+            -s|-shell|--shell|shell)
+                shift
+                bash "${@}"
+                ;;
             *)
                 usage
                 exit 1

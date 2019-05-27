@@ -18,7 +18,7 @@ function scan_devices()
     local d
     for d in "${devs[@]}"
     do
-        echo "Checking device ${d}" 1>&2
+        msg "Checking device ${d}"
         if [[ "${USB_SRC#${d}}" != "${USB_SRC}" ]]
         then
             usbdev="${d}"
@@ -26,7 +26,7 @@ function scan_devices()
             hds+=("${d}")
         fi
     done 
-    echo "USB=${usbdev}" "${hds[@]}"
+    echo_return "USB=${usbdev}" "${hds[@]}"
 }
 
 function patch_partitioning_for_usb()
@@ -50,7 +50,7 @@ function patch_partitioning_for_usb()
     
     if [[ -n "${usbdev}" ]]
     then
-        echo "USB device is ${usbdev}"
+        notice "USB device is ${usbdev}"
         # This device is the install source - protect it.
         sed -i "s,%USB%,${usbdev}," "${partfile}.new"
     fi
@@ -58,7 +58,7 @@ function patch_partitioning_for_usb()
     local i=0
     for d in "${hds[@]}"
     do
-        echo "hd[$i] is $d"
+        notice "hd[$i] is $d"
         sed -i "s,%HD${i}%,${d}," "${partfile}.new"
         ((i++))
     done
@@ -90,9 +90,9 @@ function update_root_password()
 
     sed "s,%ROOT_PW%,${directives}," < "${KS_INC}/rootpw.cfg" > "${SS_GEN}/rootpw.cfg"
 
-    echo "Root password config is:"
-    cat "${SS_GEN}/rootpw.cfg"
-    echo ""
+    notice "Root password config is:"
+    cat "${SS_GEN}/rootpw.cfg" 1>&2
+    notice ""
 }
 
 function update_ssh_password()
@@ -209,7 +209,7 @@ function generate_timezone()
         fi
     fi 
 
-    echo "${tzconfig}" > $KS_GEN/timezone.cfg
+    echo_data "${tzconfig}" > $KS_GEN/timezone.cfg
 }
 
 function generate_selinux()
@@ -234,7 +234,7 @@ function generate_selinux()
         esac 
     fi
 
-    echo "${selinuxconf}" > $KS_GEN/selinux.cfg
+    echo_data "${selinuxconf}" > "${KS_GEN}/selinux.cfg"
 }
 
 function user_rebuild_confirmation()

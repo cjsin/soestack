@@ -6,6 +6,7 @@ export SS_INC="${PROVISION_DIR}/common/inc"
 export SS_LIB="${PROVISION_DIR}/common/lib"
 export SS_GEN="/etc/ss"
 export BS_VARS="${SS_GEN}/0-bs-vars.sh"
+outline_level=3
 
 function msg()
 {
@@ -22,9 +23,76 @@ function err()
     echo "${FUNCNAME[1]}:ERROR:" "${@}" 1>&2
 }
 
+function notice()
+{
+    echo "${FUNCNAME[1]}:NOTICE:" "${@}" 1>&2
+}
+
+function warn()
+{
+    echo "${FUNCNAME[1]}:WARN:" "${@}" 1>&2
+}
+
+function info()
+{
+    echo "${FUNCNAME[1]}:INFO:" "${@}" 1>&2
+}
+
+function echo_stage()
+{
+    local level="${1:-0}"
+    shift
+    local spaces=$(printf " %.0s" {0..${level}})
+    if [[ "${level}" -ge "${outline_level}" ]]
+    then 
+        echo "${spaces}########################################" 1>&2
+        echo "${spaces}# ${*}" 1>&2
+        echo "${spaces}########################################" 1>&2
+    fi
+}
+
+# Echo some text as an explicit return value within the calling function
+function echo_return()
+{
+    echo "${*}"
+}
+
+# Echo some text intended to be redirected or saved to an artifact
+function echo_data()
+{
+    echo "${*}"
+}
+
+# Echo some text, but explicitly with it being as returned data from a function
+# or being prodocued / generated into a file or other artifact
+function echo_data()
+{
+    echo "${*}"
+}
+
+function echo_progress()
+{
+    echo "$(date) ${*}" 1>&2
+}
+
+auto_level="${auto_level:-1}"
+export auto_level
+
+function echo_start()
+{
+    echo_stage "${auto_level}" "$(date) Start ${FUNCNAME[1]} ${*}"
+    ((auto_level++))
+}
+
+function echo_done()
+{
+    ((auto_level--))
+    echo_stage "${auto_level}" "$(date) Done ${FUNCNAME[1]} ${*}"
+}
+
 function die()
 {
-    echo "${FUNCNAME[1]}:FATAL:" "${@}" 1>&2
+    msg "${FUNCNAME[1]}:FATAL:" "${*}"
     exit 1
 }
 
@@ -37,7 +105,7 @@ function indented()
 {
     local heading="${1}"
     shift
-    echo "${heading}:"
+    echo_return "${heading}:"
     "${@}" | indent
 }
 
@@ -67,7 +135,7 @@ function is_installed()
 
 function update_mlocate()
 {
-    ensure_installed mlocate && updatedb
+    ensure_installed mlocate && command -v updatedb > /dev/null 2> /dev/null && updatedb
 }
 
 function install_utils()
@@ -81,7 +149,8 @@ function unless_installed()
 {
     local what="${1}"
     shift
-    is_installed "${what}" || "${@}"
+    msg "${what}"
+    is_installed "${what}" || "${@}" 2>&1 | indent
 }
 
 function ensure_installed()
@@ -93,7 +162,9 @@ function ensure_installed()
     done 
 }
 
-
+# Append lines to a file
+# arg 1: outfile - a filename
+# arg 2: mode - 'create' (create or overwrite file) or other (will append)
 function append_lines()
 {
     local outfile="${1}"
@@ -106,7 +177,7 @@ function append_lines()
     local n
     for n in "${@}"
     do
-        grep -q "${n}" < "${outfile}" || echo "${n}" 
+        grep -q "${n}" < "${outfile}" || echo_data "${n}" 
     done >> "${outfile}"
 }
 
@@ -131,8 +202,8 @@ function display_build_configuration()
         #cat "${STATICVARS}" | egrep '^[a-zA-Z].*=' | egrep -v '=[(]' | sed -r 's/^([^=]*)=/\1 /' | indent_vars
         #display_bar "######" 
 
-        echo
-        echo "                       Dynamic build configuration:"
+        msg 
+        msg "                       Dynamic build configuration:"
         
         display_bar "######"
 
@@ -147,15 +218,15 @@ function display_build_configuration()
 
         if ! (( ${#var_names[@]} ))
         then 
-            echo "No dynamic vars generated in ${f} - generation may have failed."
+            msg "No dynamic vars generated in ${f} - generation may have failed."
         fi
 
         display_bar "######"
-        echo "                              Repositories:"
+        msg "                              Repositories:"
         display_bar "######"
         display_repos 
         display_bar "######"
-        echo "                            Well known hosts:"
+        msg "                            Well known hosts:"
         display_bar "######"
         display_well_known_hosts
         display_bar "######"
@@ -186,7 +257,7 @@ function get_kickstart_commandline_settings()
     local lines=$(cat /proc/cmdline | tr '\0 ' '\n' | egrep -i '^ss[.]' | cut -c4- | egrep "${pattern}" | sed -r -e "s/^([^=]*)=(.*)\$/\1='\2'/")
     local -a ss_vars
     readarray -t ss_vars <<< "${lines}"
-    echo "${ss_vars[@]}"
+    echo_return "${ss_vars[@]}"
 }
 
 function dump_array()
@@ -194,7 +265,7 @@ function dump_array()
     local name="${1}"
     local quoted="${2:-}"
     shift 2
-    echo "${name}=("
+    echo_return "${name}=("
     local item
     local qt=""
     case "${quoted}" in
@@ -204,9 +275,9 @@ function dump_array()
     esac 
     for item in "${@}" 
     do
-        echo "    ${qt}${item}${qt}"
+        echo_return "    ${qt}${item}${qt}"
     done
-    echo ")"
+    echo_return ")"
 }
 
 function process_commandline_vars()
@@ -265,7 +336,7 @@ function process_commandline_vars()
                 then
                     vars+=("${item^^}=1")
                 else
-                    echo "Ignore commandline var '${item}'"
+                    notice "Ignore commandline var '${item}'"
                 fi
                 ;;
         esac
@@ -285,7 +356,7 @@ function process_commandline_vars()
 
     for item in "${vars[@]}"
     do
-        echo "${item}"
+        echo_return "${item}"
         eval "${item}"
     done
 
@@ -310,7 +381,7 @@ function indent_vars()
 
 function display_bar()
 {
-    echo " $(printf "######%.0s" {1..13})"
+    echo_return " $(printf "######%.0s" {1..13})"
 }
 
 function display_array()
@@ -361,11 +432,11 @@ function determine_network_device()
         then
             continue
         fi 
-        echo "${d}"
+        echo_return "${d}"
         return 0
     done
     # Fall back to eth0
-    echo "eth0"
+    echo_return "eth0"
     return 1
 }
 
@@ -381,12 +452,12 @@ function determine_vm_or_baremental()
 {
     if [[ -e /dev/vda ]]
     then
-        echo "vm"
+        echo_return "vm"
     elif [[ -e /dev/sda ]]
     then
-        echo "baremetal"
+        echo_return "baremetal"
     else
-        echo "unknown"
+        echo_return "unknown"
     fi
 }
 
@@ -394,34 +465,34 @@ function determine_vagrant_or_kickstart()
 {
     if grep -q vagrant /etc/passwd
     then
-        echo "vagrant"
+        echo_return "vagrant"
     else
-        echo "kickstart"
+        echo_return "kickstart"
     fi
 }
 
 function generate_bootstrap_vars()
 {
-    echo "set -e"
+    echo_return "set -e"
 
     # Load operating system name / information
     if [[ -f /etc/os-release ]]
     then
         . /etc/os-release
         export releasever="${VERSION_ID}"
-        echo "releasever=${releasever}"
+        echo_return "releasever=${releasever}"
 
         export basearch=$(uname -i)
-        echo "basearch=${basearch}"
+        echo_return "basearch=${basearch}"
 
         export relname="${ID,,}-${VERSION_ID}"
-        echo "relname=${relname}"
+        echo_return "relname=${relname}"
 
         export OS_NAME="${ID,,}"
-        echo "OS_NAME=${OS_NAME}"
+        echo_return "OS_NAME=${OS_NAME}"
     else
         export basearch=$(uname -i)
-        echo "basearch=${basearch}"
+        echo_return "basearch=${basearch}"
     fi
 
     local h=$(hostname -f)
@@ -429,19 +500,19 @@ function generate_bootstrap_vars()
     then 
         # Use the hostname from DHCP
         export HOSTNAME="${h}"
-        echo "HOSTNAME=${HOSTNAME}"
+        echo_return "HOSTNAME=${HOSTNAME}"
         if [[ "${h}" =~ [.] ]]
         then
             export DOMAIN="${h#*.}"
-            echo "DOMAIN=${DOMAIN}"
+            echo_return "DOMAIN=${DOMAIN}"
         fi
     fi
 
     export HARDWARE=$(determine_vm_or_baremental)
-    echo "HARDWARE=${HARDWARE}"
+    echo_return "HARDWARE=${HARDWARE}"
   
     export PROVISION_TYPE=$(determine_vagrant_or_kickstart)
-    echo "PROVISION_TYPE=${PROVISION_TYPE}"
+    echo_return "PROVISION_TYPE=${PROVISION_TYPE}"
   
     if [[ -f "${SS_INC}/fallback-passwords.sh" ]]
     then 
@@ -449,7 +520,7 @@ function generate_bootstrap_vars()
         cat "${SS_INC}/fallback-passwords.sh"
     fi
 
-    echo "set +e"
+    echo_return "set +e"
 }
 
 function load_bootstrap_vars()
@@ -511,7 +582,7 @@ function is_development()
 {
     if [[ -n "${DEVELOPMENT}" ]] && (( DEVELOPMENT ))
     then
-        echo "Development mode features being enabled."
+        notice "Development mode features being enabled."
         return 0
     else
         return 1
@@ -526,7 +597,7 @@ function array_to_json()
     do 
         s+="\"${i}\", "
     done
-    echo -n "[ ${s%, } ]" # NOTE the final comma is stripped off
+    echo_return -n "[ ${s%, } ]" # NOTE the final comma is stripped off
 }
 
 function pairs_to_json()
@@ -539,7 +610,7 @@ function pairs_to_json()
         shift 2
         s+="\"${k}\": ${v}, "
     done
-    echo "{ ${s%, } }" # NOTE the final comma is stripped off
+    echo_return "{ ${s%, } }" # NOTE the final comma is stripped off
 }
 
 function interactive_prompt()
@@ -549,23 +620,23 @@ function interactive_prompt()
     
     while [ 1 ] 
     do 
-        echo "${prompt}"
+        msg "${prompt}"
         read -p "Hit enter to continue, skip to skip this step, shell for a shell: " answer
         case "${answer,,}" in 
             skip)
-                echo "OK - skipping this step"
+                msg "OK - skipping this step"
                 return 1
                 ;;
             shell)
-                echo "OK - dropping into a shell. Use 'exit 1' to skip the step, and 'exit 0' to continue."
+                msg "OK - dropping into a shell. Use 'exit 1' to skip the step, and 'exit 0' to continue."
                 bash -i
                 ;;
             "")
-                echo "OK - continuing with [${prompt}]"
+                msg "OK - continuing with [${prompt}]"
                 return 0
                 ;;
             *)
-                echo "Invalid answer."
+                err "Invalid answer."
                 ;;
         esac 
     done
@@ -582,7 +653,7 @@ function step()
         fi 
     elif is_verbose
     then
-        echo "${*}"
+        msg "${*}"
     fi
 
     "${@}"
@@ -612,12 +683,12 @@ function configure_wireless()
     local status=$(nmcli device status | egrep "^${devname}[[:space:]]")
     if ! [[ "${status}" =~ wifi ]]
     then 
-        echo "Device ${devname} is not a wireless device (or nmcli not available)!" 1>&2
+        err "Device ${devname} is not a wireless device (or nmcli not available)!"
         return 1
     fi
     if ! nmcli radio | egrep -i 'enabled.*enabled.*enabled.*enabled'
     then
-        echo "The wireless radio is at least partially disabled!" 1>&2
+        err "The wireless radio is at least partially disabled!"
         return 1
     fi
 
@@ -638,7 +709,7 @@ function configure_wireless()
 
             if ! systemctl start hostapd 
             then 
-                echo "ERROR: Failed starting hostapd for wireless simulation" 1>&2
+                err "Failed starting hostapd for wireless simulation"
                 return 1
             fi
             sleep 5
@@ -653,7 +724,7 @@ function configure_wireless()
     then
         if ! nmcli device wifi connect "${ssid}" password "${pw}"
         then 
-            echo "wifi connection Failed" 1>&2
+            err "wifi connection Failed"
         fi
     fi
 }
@@ -662,8 +733,8 @@ function configure_wireless()
 function simulate_wireless()
 { 
     local base_dir="${1}"
-    echo options mac80211_hwsim radios=1 >> "${base_dir}"/etc/modprobe.d/99-wireless-emulation.conf
-    echo "mac80211_hwsim" > /etc/modules-load.d/99-wireless-emulation.conf
+    echo_data options mac80211_hwsim radios=1 >> "${base_dir}"/etc/modprobe.d/99-wireless-emulation.conf
+    echo_data "mac80211_hwsim" > /etc/modules-load.d/99-wireless-emulation.conf
     if [[ -z "${ANA_INSTALL_PATH}" ]]
     then
         yum_install hostapd
@@ -681,3 +752,4 @@ function simulate_wireless()
     fi
 }
 
+export SSL_LOADED_COMMON_LIB=1

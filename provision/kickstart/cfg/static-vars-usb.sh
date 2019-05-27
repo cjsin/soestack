@@ -24,4 +24,4 @@ SELINUX=permissive
 TIMEZONE=UTC
 HWCLOCK=UTC
 #WAIT=1
-BOOTSTRAP_REPOS=(bootstrap-centos.repo)
+BOOTSTRAP_REPOS=bootstrap-centos.repo

@@ -253,7 +253,8 @@ def find_record(category, path, search_type=None,search_value=None):
 def add_record(category, path, record_type, value):
     #print("add_record {},{},{},{}".format(category, path, record_type, value))
 
-    if not available():
+    if not check_ticket():
+        log.error("IPA server does not appear to be available")
         return False,{}
 
     cmd = [ 'ipa', category + '-add' ] + path

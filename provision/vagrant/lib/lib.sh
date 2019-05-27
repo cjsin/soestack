@@ -34,7 +34,7 @@ function update_hostfile()
         line="${IPADDR} $(hostname -f) $(hostname -s)"
         if ! grep -q "${line}" /etc/hosts 
         then
-            echo "${line}" >> /etc/hosts 
+            echo_return "${line}" >> /etc/hosts 
         fi
     fi 
 
@@ -43,7 +43,7 @@ function update_hostfile()
         line="${vagrant_ip} vagrant-ip.$(hostname -f)"
         if ! grep -q "${line}" /etc/hosts 
         then
-            echo "${line}" >> /etc/hosts 
+            echo_return "${line}" >> /etc/hosts 
         fi
     fi 
 
@@ -79,13 +79,13 @@ function set_root_password()
         escaped="${escaped//\$/\\\$}"
         sed -i -r -e "s%^root:([^:]*):%root:${escaped}:%" /etc/shadow 
         pwconv
-        echo "Updated root password"
+        msg "Updated root password"
     fi
 }
 
 function update_yum_repos()
 {
-    echo "Disable existing yum repos."
+    msg "Disable existing yum repos."
 
     # Disable bundled repos
     mkdir -p /etc/yum.repos.d/disable
@@ -93,7 +93,7 @@ function update_yum_repos()
     ls /etc/yum.repos.d/ | egrep -q '[.]repo' && mv -f /etc/yum.repos.d/*.repo /etc/yum.repos.d/disable/
 
     # Add our own repos
-    echo "Install bootstrap repos."
+    msg "Install bootstrap repos."
     cp -f "/soestack/provision/common/inc/bootstrap-${OS_NAME}.repo" /etc/yum.repos.d/
     # grep '^\[' /etc/yum.repos.d/bootstrap-*repo
 }
@@ -111,7 +111,7 @@ function find_bad_packages()
             then
                 sed "s/^/${p}:/" <<< "${output}"
             else
-                echo "${p}"
+                echo_return "${p}"
             fi
         fi
     done
@@ -134,31 +134,31 @@ function generate_vagrant_vars()
     
     load_bootstrap_vars
 
-    echo "set -e"
+    echo_return "set -e"
 
     # Produce auto-calculated vars first
-    echo "######"
-    echo "# Calculated vars"
-    echo "######"
+    echo_return "######"
+    echo_return "# Calculated vars"
+    echo_return "######"
 
     local h=$(hostname -f)
     if ! [[ "${h}" =~ localhost ]]
     then 
         # Use the hostname from DHCP
         export HOSTNAME="${h}"
-        echo "HOSTNAME=${HOSTNAME}"
+        echo_return "HOSTNAME=${HOSTNAME}"
         if [[ "${h}" =~ [.] ]]
         then
             export DOMAIN="${h#*.}"
-            echo "DOMAIN=${DOMAIN}"
+            echo_return "DOMAIN=${DOMAIN}"
         fi
     fi
 
     export HARDWARE="vm"
-    echo "HARDWARE=vm"
+    echo_return "HARDWARE=vm"
 
     export PROVISION_TYPE="vagrant"
-    echo "PROVISION_TYPE=${PROVISION_TYPE}"
+    echo_return "PROVISION_TYPE=${PROVISION_TYPE}"
 
     if [[ -z "${NETDEV}" ]]
     then 
@@ -187,7 +187,7 @@ function generate_vagrant_vars()
             fi 
         fi
     else
-        echo "No IPPREFIX was specified, but IPADDR was - using an IPPREFIX of 24"
+        warn "No IPPREFIX was specified, but IPADDR was - using an IPPREFIX of 24"
         if [[ -z "${IPPREFIX}" ]]
         then
             export PREFIX="24"
@@ -213,20 +213,20 @@ function generate_vagrant_vars()
         fi
     fi
 
-    [[ -n "${GATEWAY}" ]] && echo "GATEWAY=${GATEWAY}"
-    [[ -n "${IPADDR}" ]] && echo "IPADDR=${IPADDR}"
-    [[ -n "${IPPREFIX}" ]] && echo "IPPREFIX=${IPPREFIX}"
+    [[ -n "${GATEWAY}" ]] && echo_return "GATEWAY=${GATEWAY}"
+    [[ -n "${IPADDR}" ]] && echo_return "IPADDR=${IPADDR}"
+    [[ -n "${IPPREFIX}" ]] && echo_return "IPPREFIX=${IPPREFIX}"
 
-    echo "NETDEV=${NETDEV}"
+    echo_return "NETDEV=${NETDEV}"
 
-    echo "######"
-    echo "# Boot commandline vars"
-    echo "######"
+    echo_return "######"
+    echo_return "# Boot commandline vars"
+    echo_return "######"
     
     process_commandline_vars "${SS_GEN}/vagrant-commandline"
-    echo "######"
+    echo_return "######"
     
-    echo "set +e" 
+    echo_return "set +e" 
 }
 
 function vagrant_provision_common()
@@ -260,7 +260,7 @@ function load_vagrant_vars()
     then 
         generate_vagrant_vars > "${VAGRANT_VARS}"
     else
-        echo "${VAGRANT_VARS} already created" 1>&2
+        notice "${VAGRANT_VARS} already created"
     fi 
 
     . "${VAGRANT_VARS}"
@@ -272,7 +272,7 @@ function vagrant_provision()
     local item 
     local cfg_suffix='[.]cfg$'
     
-    echo "Create ${SS_GEN}/vagrant-commandline"
+    echo_stage 2 "Create ${SS_GEN}/vagrant-commandline"
     mkdir -p "${SS_GEN}"
     for item in "${@}"
     do 
@@ -287,7 +287,7 @@ function vagrant_provision()
             local l r
             l="${item%%=*}"
             r="${item#*=}"
-            echo "${l^^}=${r}"
+            echo_data "${l^^}=${r}"
         fi
     done > "${SS_GEN}/vagrant-commandline"
 
@@ -303,22 +303,22 @@ function vagrant_provision()
     then
         update_yum_repos
     else 
-        echo "Standalone server - bootstrap packages will be used."
+        notice "Standalone server - bootstrap packages will be used."
     fi
 
     configure_soestack_provision
 
-    #echo "Running SS Provisioning"
+    #echo_stage 5 "Running SS Provisioning"
     #systemctl restart soestack-provision
     #ls -lR "${SS_GEN}"
     # /soestack/provision/common/provision.sh
     #systemctl start soestack-provision
-    echo "Provisioning may be continued by starting the soestack-provision service"
-    echo "Or by running '/soestack/provision/common/provision.sh console' to view"
-    echo "the progress, or rebooting."
+    msg "Provisioning may be continued by starting the soestack-provision service"
+    msg "Or by running '/soestack/provision/common/provision.sh console' to view"
+    msg "the progress, or rebooting."
 
-    echo ""
-    echo "If building a standalone infrastructure server then, at this point"
-    echo "you should check the network configuration first, before continuing."
-    echo "."
+    msg ""
+    msg "If building a standalone infrastructure server then, at this point"
+    msg "you should check the network configuration first, before continuing."
+    msg "."
 }

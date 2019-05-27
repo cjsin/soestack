@@ -5,34 +5,31 @@ Vagrant.configure("2") do |config|
     #config.vm.box = "centos/1805"
     config.vm.box = "centos/7.1902.01"
     config.vm.box_check_update = false
-    #config.ssh.username = "root"
-    #config.ssh.password = "vagrant"
-    #config.ssh.insert_key = "true"
-    #config.vm.synced_folder ".", "/home/vagrant/sync", type: "rsync"
 
     config.vm.provider "libvirt" do |lv, override|
         lv.driver = "kvm"
-        #libvirt.memory = 4096
         lv.memory = 10240
         lv.cpus = 2
         lv.storage_pool_name = 'linux'
         lv.input :type => "tablet", :bus => "usb"
     end
-        
-    config.vm.define "infra" do |infra|
+    
+    # A machine configuration for a quick start without bundled files
+    config.vm.define "quickstart", primary: true, autostart: false do |infra|
         infra.vm.hostname = "infra.qemu"
         config.vm.network "private_network", ip: "192.168.121.101", auto_config: false
-        
+        config.vm.synced_folder ".", "/vagrant", type: "rsync", rsync__exclude: [ ".git" ]
+        config.vm.synced_folder "../../", "/soestack/", type: "rsync", rsync__exclude: [".git", "*.raw", "*.qcow2", "*.iso", "usb", "bundled" ] 
+        config.vm.provision "shell", inline: "/soestack/provision/vagrant/provision.sh quickstart.cfg"
+    end
+
+    config.vm.define "standalone", primary: false, autostart: false do |infra|
+        infra.vm.hostname = "infra.qemu"
+        config.vm.network "private_network", ip: "192.168.121.101", auto_config: false
         config.vm.synced_folder ".", "/vagrant", type: "rsync", rsync__exclude: [ ".git" ]
         config.vm.synced_folder "../../", "/soestack/", type: "rsync", rsync__exclude: [".git", "*.raw", "*.qcow2", "*.iso", "usb", "bundled" ] 
         config.vm.synced_folder "../../bundled", "/e/bundled/", type: "rsync", rsync__exclude: [ "*prior*","*.rpm", "repodata","*.tar","*.iso" ] 
-
-
-        #config.vm.provider "libvirt" do |lv|
-        #    lv.storage :file, :path=> "infra-data-0.disk", :size => "50G", :type=> "qcow2"
-        #end
-
-        config.vm.provision "shell", inline: "/soestack/provision/vagrant/provision.sh infra.cfg"
+        config.vm.provision "shell", inline: "/soestack/provision/vagrant/provision.sh standalone.cfg"
     end
 
 end

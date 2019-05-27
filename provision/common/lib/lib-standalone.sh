@@ -1,19 +1,21 @@
+#!/bin/bash
+
 # routines for bootstrapping an initial standalone server
 # so that it can proceed to provision itself like any other node.
 
-. /soestack/provision/kickstart/lib/lib.sh
+[[ -n "${SS_LOADED_COMMON_LIB}" ]] || . /soestack/provision/common/lib/lib.sh
 
 function import_gpgkeys()
 {
-    echo "Import GPG keys"
+    msg "Import GPG keys"
     if [[ -d "/soestack/provision/common/inc/gpgkeys" ]]
     then 
         if rpm --import /soestack/provision/common/inc/gpgkeys/*
         then
-            echo "OK".
+            msg "OK".
         fi
     else 
-        echo "GPG keys were not found for import"
+        err "GPG keys were not found for import"
     fi
 }
 
@@ -22,11 +24,11 @@ function create_installmedia_repo()
     local pkg_dst="/e/yum-repos/installmedia"
     local repos_dir="${ANA_INSTALL_PATH}/etc/yum.repos.d"
     {
-        echo "[installmedia]"
-        echo "name=installmedia"
-        echo "baseurl=file://${pkg_dst}"
-        echo "enabled=1"
-        echo "gpgcheck=1"
+        echo_data "[installmedia]"
+        echo_data "name=installmedia"
+        echo_data "baseurl=file://${pkg_dst}"
+        echo_data "enabled=1"
+        echo_data "gpgcheck=1"
     } > "${repos_dir}/installmedia.repo"
 
     yum --disablerepo='*' --enablerepo=installmedia makecache
@@ -34,7 +36,7 @@ function create_installmedia_repo()
 
 function configure_standalone_network()
 {
-    echo "Configure network for standalone server"
+    echo_stage 3 "Configure network for standalone server"
 
     local IP_INFO="${IPADDR}${IPADDRS}"
     if [[ -n "${NETDEV}" && -n "${IP_INFO}" && -n "${IPPREFIX}" ]]
@@ -84,12 +86,12 @@ function configure_standalone_network()
             -r -e "s/^(NAME|DEVICE)=.*/\1=${NETDEV}/" 
         )
 
-        echo "Network configuration file is ${netcfgfile}"
+        msg "Network configuration file is ${netcfgfile}"
         if [[ -f "${netcfgfile}" ]] && grep -qi soestack "${netcfgfile}"
         then 
-            echo "Network device appears to have already been installed"
+            msg "Network device appears to have already been installed"
         else
-            echo "Configuring network device from template"
+            msg "Configuring network device from template"
             /bin/cp -f "${netcfgtemplate}" "${netcfgfile}"
             sed -i -r "${ip_edits[@]}" "${netcfgfile}"
         fi 
@@ -98,14 +100,14 @@ function configure_standalone_network()
  
         systemctl restart network
     else 
-        echo "Network device was not autodetected or IP address and PREFIX not configured"
-        echo " - skipping network configuration"
+        notice "Network device was not autodetected or IP address and PREFIX not configured"
+        notice " - skipping network configuration"
     fi
 }
 
 function copy_bundled_files()
 {
-    echo "Copy bootstrap packages"
+    msg "Copy bootstrap packages"
  
     # NOTE these still use /e/bundled, for accessing the bundled repo files and soe copy.
     # However BUNDLED_SRC should be set to specify the downloading large bundled files,
@@ -115,7 +117,7 @@ function copy_bundled_files()
         /bin/cp -f /e/bundled/bootstrap-pkgs/*repo /etc/yum.repos.d/
         yum makecache
     else
-        echo "No bootstrap repos for bundled rpms found."
+        notice "No bootstrap repos for bundled rpms found."
     fi 
 
     ensure_installed rsync
@@ -124,10 +126,10 @@ function copy_bundled_files()
     then 
         if [[ -d /e/bundled/soe ]]
         then 
-            echo "Copy bundled SOE to /e/soestack"
+            nsg "Copy bundled SOE to /e/soestack"
             rsync -av /e/bundled/soe/salt/ /soestack/salt/
         else 
-            echo "No SOE copy is availble for pre-configuration"
+            notice "No SOE copy is availble for pre-configuration"
         fi
     fi
 
@@ -140,7 +142,7 @@ function copy_bundled_files()
         local fstab_line="${selected_iso} ${pkg_dir} auto defaults,ro,loop,auto,nofail 0 0 "
         if ! grep -F -q "${fstab_line}" /etc/fstab 
         then
-            echo "${fstab_line}" >> "/etc/fstab"
+            echo_data "${fstab_line}" >> "/etc/fstab"
         fi
         mkdir -p "${pkg_dir}"
         if ! grep -q "${pkg_dir}" /proc/mounts 
@@ -149,7 +151,7 @@ function copy_bundled_files()
             create_installmedia_repo
         fi
     else
-        echo "Could not mount ${pkg_dir} (no iso available)" 1>&2
+        notice "Could not mount ${pkg_dir} (no iso available)"
         return 1
     fi
 }
@@ -172,7 +174,7 @@ function select_iso()
 
     if ! (( ${#available[@]} ))
     then
-        echo "WARNING: No isos found within ${src}"
+        warn "No isos found within ${src}"
         return 1
     fi
 
@@ -191,9 +193,9 @@ function select_iso()
     done
     if [[ -n "${selected_iso}" ]]
     then
-        echo "${src}/${selected_iso}"
+        echo_return "${src}/${selected_iso}"
     else
-        echo "WARNING: No recognised iso filename was found in ${src}" 1>&2
+        warn "No recognised iso filename was found in ${src}"
     fi
 }
 
@@ -205,7 +207,7 @@ function obtain_isos()
 
     if ! cd "${dst_dir}" 
     then
-        echo "Could not enter ${dst_dir}." 1>&2
+        err "Could not enter ${dst_dir}."
         return 1
     fi
 
@@ -216,8 +218,8 @@ function obtain_isos()
         local selected=$(select_iso "${dst_dir}")
         if [[ -n "${selected}" ]]
         then 
-            echo "Iso ${selected} is suitable." 1>&2
-            echo "${selected}"
+            msg "Iso ${selected} is suitable."
+            echo_return "${selected}"
             return 0
         fi
     fi
@@ -232,27 +234,27 @@ function obtain_isos()
         then
             if [[ "${selected}" =~ ^http:// ]]
             then 
-                echo "Downloading ${selected}" 1>&2
+                msg "Downloading ${selected}"
                 if curl -o "./${filename}" "${selected}" 
                 then
-                    echo "Successfully downloaded ${selected}" 1>&2
-                    echo "${dst_dir}/${filename}"
+                    nsg "Successfully downloaded ${selected}"
+                    echo_return "${dst_dir}/${filename}"
                 else
-                    echo "Failed downloading ${selected}" 1>&2
+                    err "Failed downloading ${selected}"
                     rm -f "./${filename}"
                 fi
             elif [[ "${selected:0:1}" == "/" ]]
             then
                 ln -s "${selected}"
-                echo "${selected}"
+                echo_return "${selected}"
             else
-                echo "I do not know how to obtain iso '${selected}'" 1>&2
+                err "I do not know how to obtain iso '${selected}'"
             fi
         else 
-            echo "Iso filename '${selected}' extension '${extension}' did not end in 'iso' as expected." 1>&2
+            err "Iso filename '${selected}' extension '${extension}' did not end in 'iso' as expected."
         fi
     else
-        echo "No source isos available at ${BUNDLED_SRC}/" 1>&2
+        err "No source isos available at ${BUNDLED_SRC}/"
     fi
 )
 
@@ -269,7 +271,7 @@ function unpack_tar()
     then
         tar x -C "${dst}" -f "${src}${path}"
     else
-        echo "No tar archive available for ${src}${path}" 1>&2
+        err "No tar archive available for ${src}${path}"
     fi
 }
 
@@ -279,13 +281,13 @@ function restore_nexus_data()
     local db_dest="${datadir}/restore-from-backup"
     local problems=0
 
-    echo "Restoring nexus data from bundled source" 1>&2
+    echo_stage 3 "Restoring nexus data from bundled source"
 
     if [[ ! -d "${db_dest}" ]]
     then 
         mkdir -p "${db_dest}"
     else
-        echo "Nexus DB backup files appear to have been unpacked already. Will overwrite anyway."
+        notice "Nexus DB backup files appear to have been unpacked already. Will overwrite anyway."
         rm -f "${db_dest}"/*bak
     fi
 
@@ -294,21 +296,21 @@ function restore_nexus_data()
 
     if [[ ! -d "${datadir}/blobs" ]]
     then
-        echo "Install Nexus Blobs backup. This may take a while."
+        notice "Install Nexus Blobs backup. This may take a while."
         unpack_tar "${BUNDLED_SRC}" "/nexus/blobs.tar" "${datadir}"
         ((problems+=$?))
     else
-        echo "Nexus Blobs appear to have been unpacked already"
+        notice "Nexus Blobs appear to have been unpacked already"
     fi
 
     if (( problems ))
     then 
-        echo "No Nexus backup database is available. Nexus will probably be configured as a new instance."
+        notice "No Nexus backup database is available. Nexus will probably be configured as a new instance."
     else
-        echo "Nexus backup data copied"
+        msg "Nexus backup data copied"
     fi
 
-    echo "Fix nexus file contexts"
+    msg "Fix nexus file contexts"
     chcon -R -t container_file_t "${datadir}"
 
     return 0
@@ -316,17 +318,18 @@ function restore_nexus_data()
 
 function start_docker()
 {
+    echo_stage 3 "Enable and start docker"
     yum -y install git
 
-    echo "Enable docker"
     systemctl enable docker
     # Docker is restarted not just started, because
     # if the network has been reconfigured it will need 
     # to reinstall firewall rules
     systemctl restart docker
 
-    echo "Pause for docker startup"
+    msg "Pause for docker startup"
     sleep 10
+    
 }
 
 function obtain_bundled_file()
@@ -339,19 +342,19 @@ function obtain_bundled_file()
 
     if [[ -z "${dst}" || "${dst}" == "/" || ! "${dst}" =~ .... ]]
     then
-        echo "Refusing to download to '${dst}' - sanity check failed." 1>&2
-        echo "A required variable may be empty" 1>&2
+        warn "Refusing to download to '${dst}' - sanity check failed."
+        warn "A required variable may be empty"
         return 1
     fi
 
     if [[ -f "${dst}" ]]
     then
-        echo "${dst} was already obtained" 1>&2
-        echo "${dst}"
+        notice "${dst} was already obtained"
+        echo_return "${dst}"
     elif [[ "${src}" =~ ^http:// ]]
     then
         
-        echo "Downloading ${src} to ${dst}" 1>&2
+        msg "Downloading ${src} to ${dst}"
         if curl -o "${dst}" "${src}" 
         then
             #local sz=$(stat -c %s "${dst}")
@@ -361,29 +364,29 @@ function obtain_bundled_file()
             then
                 if head -n 100 "${dst}" | egrep -i 'error.*404|http.*not.*found' 
                 then 
-                    echo "ERROR: The file appears to have been missing" 1>&2
+                    err " The file appears to have been missing"
                     head -n100 "${dst}" 1>&2 | sed 's/^/    /'
                     rm -f "${dst}"
                     return 1
                 else
-                    echo "WARNING: The file downloaded was HTML - could be a file-not-found error" 1>&2
-                    echo "${dst}"
+                    warn "The file downloaded was HTML - could be a file-not-found error"
+                    echo_return "${dst}"
                     return 0
                 fi
             else
-                echo "Successfully downloaded ${src}" 1>&2
-                echo "${dst}"
+                msg "Successfully downloaded ${src}"
+                echo_return "${dst}"
             fi
         else
-            echo "Failed downloading ${src}" 1>&2
+            err "Failed downloading ${src}"
             rm -f "${dst}"
         fi
     elif [[ "${src:0:1}" == "/" && "${src}" != "${dst}" ]]
     then
         ln -s "${selected}" "${dst}"
-        echo "${dst}"
+        echo_return "${dst}"
     else
-        echo "I do not know how to obtain '${src}'" 1>&2
+        err "I do not know how to obtain '${src}'"
     fi
 }
 
@@ -396,7 +399,7 @@ function require_docker()
 {
     if ! command_is_available docker
     then
-        echo "Docker is not available - perhaps it is not installed"
+        err "Docker is not available - perhaps it is not installed"
         return 1
     fi
 }
@@ -407,10 +410,10 @@ function load_container_file()
 
     require_docker || return 1
 
-    echo "Checking docker status" 1>&2
+    msg "Checking docker status"
     if ! systemctl status docker
     then 
-        echo "Docker failed to start" 1>&2
+        err "Docker failed to start"
         return 1
     fi
 
@@ -419,14 +422,19 @@ function load_container_file()
     then 
         return 1
     fi
-    echo "Load nexus container ${image_file}" 1>&2
+    msg "Load nexus container ${image_file}"
     docker load -i "${image_file}"
 }
 
 function load_nexus_container()
 {
     sonatype_version="3.13.0"
-    load_container_file "sonatype_nexus3__${sonatype_version}.tar"
+    if [[ -n "${BUNDLED_SRC}" ]]
+    then 
+        load_container_file "sonatype_nexus3__${sonatype_version}.tar"
+    else
+        docker pull "sonatype/nexus3:${sonatype_version}"
+    fi
 }
 
 function prepare_network_for_docker()
@@ -442,7 +450,7 @@ function prepare_network_for_docker()
 
 function prepare_nexus_service()
 {
-    echo "Preparing nexus user and service"
+    echo_stage 3 "Preparing nexus user and service"
     cp /soestack/provision/common/inc/nexus-mirror.service /etc/systemd/system/
     groupadd -g 200 nexus
     useradd -r -d /d/local/data/nexus -u 200 -g 200 nexus
@@ -453,10 +461,10 @@ function prepare_nexus_service()
 
 function patch_hostfile_for_nexus()
 {
-    echo "Patch hostfile for nexus in standalone instance."
+    echo_stage 4 "Patch hostfile for nexus in standalone instance."
     sed -i -r -e 's/[[:space:]]nexus($|[[:space:]]|[.][^[:space:]]+)/ /g' /etc/hosts
-    echo "Result:"
-    cat /etc/hosts
+    msg "Result:"
+    cat /etc/hosts 1>&2
     # This is a temporary hack because I don't have the disk
     # space to allow copying the nexus blobs inside the VM,
     # so on a VM will change it to use nexus on the host (the gateway)
@@ -473,45 +481,45 @@ function patch_hostfile_for_nexus()
             sed -i "/gateway/ s/$/ nexus/" /etc/hosts
         fi
     fi
-    echo "Result:"
-    cat /etc/hosts
+    msg "Result:"
+    cat /etc/hosts 1>&2
 }
 
 function start_nexus()
 {
     if docker ps | egrep nexus-mirror && docker logs nexus-mirror | egrep -i 'Started Sonatype Nexus' 
     then
-        echo "Nexus appears to already be running" 1>&2
+        notice "Nexus appears to already be running"
         return 0
     fi
 
-    echo "Starting nexus service"
+    msg "Starting nexus service"
     if systemctl start nexus-mirror.service
     then
-        echo "Wait for nexus mirror startup"
+        msg "Wait for nexus mirror startup"
         sleep 30 
         if docker ps | egrep nexus-mirror
         then 
             max_wait=600
             while ! docker logs --since=10s nexus-mirror | egrep -i 'Started Sonatype Nexus' 
             do
-                echo "Still waiting for Nexus to recreate its database and finish starting up."
+                msg "Still waiting for Nexus to recreate its database and finish starting up."
                 sleep 5
                 ((max_wait-=5))
                 if [[ "${max_wait}" -le 0 ]]
                 then
-                    echo "Timed out - Nexus took too long to start. Something probably went wrong." 
+                    warn "Timed out - Nexus took too long to start. Something probably went wrong." 
                     return 1
                 fi
-                echo "Waiting a max of ${max_wait} seconds longer"
+                notice "Waiting a max of ${max_wait} seconds longer"
             done
-            echo "Nexus appears to have completed startup" 1>&2
+            msg "Nexus appears to have completed startup"
         else 
-            echo "Nexus appears to have failed to start" 1>&2
+            err "Nexus appears to have failed to start"
             return 1
         fi
     else 
-        echo "Starting nexus failed"
+        err "Starting nexus failed"
         return 1
     fi 
 }
@@ -538,39 +546,58 @@ function configure_standalone_server()
 {
     import_gpgkeys 
 
-    copy_bundled_files
+    if [[ -n "${BUNDLED_SRC}" ]]
+    then
+        copy_bundled_files
+    fi
 
-    prepare_network_for_docker
-    prepare_docker_for_nexus
+    echo_stage 5 "Docker"
+    {
+        prepare_network_for_docker
+        prepare_docker_for_nexus
+    } | indent 
 
-    rpm -qa | grep docker-ce || yum -y --enablerepo='*' install docker-ce
+    # We prefer to use docker community edition, although unfortunately it 
+    # does not support the ability to block the default registry, for operation in a standalone network
+    if ls /etc/yum.repos.d | egrep -q 'docker.*ce' 
+    then 
+        rpm -qa | grep docker-ce || yum -y --enablerepo='*' install docker-ce
+    else
+        ensure_installed docker
+    fi
 
-    replace_firewall 
+    replace_firewall
 
-    restore_nexus_data
+    if [[ -n "${BUNDLED_SRC}" ]]
+    then
+        restore_nexus_data
+    fi
 
     configure_standalone_network 
 
-    # patch_hostfile_for_nexus
-
-    if ! require_docker
+    if [[ -n "${BUNDLED_SRC}" ]]
     then
-        echo "WARNING: Nexus cannot be provisioned without docker - skipping" 1>&2
-        return 1
-    fi
+        # patch_hostfile_for_nexus
 
-    if ! docker ps | grep -q nexus-mirror 
-    then 
-        if start_docker
+        if ! require_docker
         then
-            load_nexus_container
-        else
-            echo "Docker seems to have failed to start"
+            warn "Nexus cannot be provisioned without docker - skipping"
             return 1
         fi
 
-        prepare_nexus_service
+        if ! docker ps | grep -q nexus-mirror 
+        then 
+            if start_docker
+            then
+                load_nexus_container
+            else
+                err "Docker seems to have failed to start"
+                return 1
+            fi
 
+            prepare_nexus_service
+
+        fi
     fi
 }
 
@@ -578,11 +605,11 @@ function switchover_to_nexus()
 {
     if start_nexus 
     then 
-        echo "Disabling old yum repos and switching over to nexus bootstrap repos" 1>&2
+        msg "Disabling old yum repos and switching over to nexus bootstrap repos"
         mv -f /etc/yum.repos.d/*repo /etc/yum.repos.d/disable/
         /bin/cp -f /soestack/provision/common/inc/bootstrap-centos.repo /etc/yum.repos.d/
         yum makecache
     else 
-        echo "Skipping yum repo switchover because nexus is not available"
+        notice "Skipping yum repo switchover because nexus is not available"
     fi
 }
