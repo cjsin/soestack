@@ -2,6 +2,6 @@
 
 echo "Primary provisioning - Vagrant-specific" 1>&2
 
-. /soestack/provision/vagrant/lib/lib.sh
+. "${SS_DIR:-${BASH_SOURCE[0]%/provision/*}}"/provision/vagrant/lib/lib.sh
 
 vagrant_provision "${@}"

@@ -1,14 +1,15 @@
 #!/bin/bash
 
-. /soestack/provision/common/lib/lib.sh 
+[[ -n "${SS_LOADED_COMMON_LIB}" ]] || . "${SS_DIR:=${BASH_SOURCE[0]%/provision/*}}"/provision/common/lib/lib.sh
 
-export KS_DIR="${PROVISION_DIR}/kickstart"
+export KS_DIR="${PROVISION_DIR:=${SS_DIR}/provision}/kickstart"
 export KS_LIB="${KS_DIR}/lib"
 export KS_INC="${KS_DIR}/inc"
 export KS_CFG="${KS_DIR}/cfg"
 export KS_GEN="${SS_GEN}" # Note, generating into the toplevel soestack cfg gen folder
 export KS_VARS="${KS_GEN}/2-ks-dynamic-vars.sh"
 export PW_VARS="${KS_GEN}/3-ks-passwords.sh"
+export SS_LOADED_KS_LIB=1
 
 early_boot_logfile="/tmp/provision-1-bootstrap.log"
 current_output_destination="${current_output_destination:-logfile}"
@@ -86,6 +87,9 @@ function determine_kickstart_type()
     elif (( is_vagrant ))
     then
         echo_return "vagrant"
+    elif is_docker
+    then
+        echo_return "docker"
     else
         bmsg "ERROR: Could not determine if installation is from the network or from USB" 1>&2
         bmsg "       or a vagrant image (it appears to be none of the above)" 1>&2
@@ -163,7 +167,7 @@ function generate_kickstart_vars()
 
         if [[ -z "${current_GATEWAY}" ]]
         then
-            if command -v route > /dev/null 2> /dev/null
+            if command_is_available route > /dev/null 2> /dev/null
             then
                 current_GATEWAY=$( route -n | egrep '^0[.]0[.]0[.]0' | head -n1 | awk '{print $2}' ) 
             fi

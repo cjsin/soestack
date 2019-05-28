@@ -46,7 +46,7 @@
 .fix-yum-for-mirror-use-{{expect[0]}}:
     cmd.run:
         - name:   sed -i -e '/{{expect[0]}}/ d' -e '$ p; n; a {{expect_text}}' /etc/yum.conf
-        - unless: grep -s '{{expect_text}}' /etc/yum.conf
+        - unless: grep -q '{{expect_text}}' /etc/yum.conf
 {%- endfor %}
 
 {%- if diagnostics %}

@@ -1,9 +1,7 @@
-SPHINXOPTS    =
 SPHINXBUILD   = sphinx-build
-SOURCEDIR     = doco
-BUILDDIR      = build
 
-.PHONY: venv sync syncloop us-update update salt-test bundled-server ssh venv html
+.PHONY: venv sync syncloop us-update update salt-test bundled-server ssh venv html \
+	ss-centos-base podman docker buildah 
 	
 sync:
 	cd provision/vagrant && make sync
@@ -17,7 +15,7 @@ ks-update:
 update:	ks-update sync
 
 salt-test:
-	salt-call state.highstate --file-root=$PWD/salt --local --retcode-passthrough mocked=True
+	salt-call state.highstate --file-root=$(PWD)/salt --local --retcode-passthrough mocked=True
 
 bundled-server:
 	(cd bundled && python -m http.server 9999 )&
@@ -29,13 +27,23 @@ venv:
 	test -d venv || python3 -m venv venv 
 	. venv/bin/activate && ( pip install --upgrade pip && pip list | egrep sphinx || pip install sphinx  )
 	
-html: venv
-	. venv/bin/activate
-
-sphinx-help:
-	@$(SPHINXBUILD) -M help "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
+sphinx-help: venv
+	. venv/bin/activate && @$(SPHINXBUILD) -M help docs public $(O)
 
 # Catch-all target: route all unknown targets to Sphinx using the new
 # "make mode" option.  $(O) is meant as a shortcut for $(SPHINXOPTS).
-html: venv doco/*.rst
-	$(SPHINXBUILD) "$(SOURCEDIR)" "$(BUILDDIR)" 
+html: venv docs/*.rst
+	. venv/bin/activate && $(SPHINXBUILD) docs public
+
+ss-centos-base:
+	buildah bud --layers -t ss-centos-base:latest -f Dockerfile.base . 
+
+docker:
+	docker build .
+
+podman:
+	podman build .
+
+buildah:
+	buildah bud --layers -f Dockerfile .
+

@@ -1,4 +1,4 @@
-# NOTE thse should be single-quoted because of the dollar signs.
+# NOTE these should be single-quoted because of the dollar signs.
 
 #Default password here is 'password' - this should be changed before deployment
 FALLBACK_ROOT_PW='$1$NxR2J0fM$QS2U2lrQxpDAlb9JPWB2v/'

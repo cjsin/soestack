@@ -1,0 +1,5 @@
+[bootstrap-epel]
+name=bootstrap-epel
+baseurl=$bundled/bootstrap-pkgs/epel
+enabled=1
+gpgcheck=1

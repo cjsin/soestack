@@ -11,5 +11,5 @@ Licensed under the GNU GENERAL PUBLIC LICENSE, Version 2, June 1991.
 Please read the license before using the software and please take 
 special note of the section labelled NO WARRANTY.
 
-See the doco folder for further documentation.
+See the docs folder for further documentation.
 

@@ -1,0 +1,521 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+# pretty printing
+require 'pp'
+# Stop vagrant using custom macvtap devices which cannot communicate with the host
+# (avoid much testing frustration)
+# LIBVIRT-specific detail to get networking working from host to guest
+SHARED_SUBNET_BRIDGE_DEV="virbr0"
+#DEFAULT_NET= { :mode => "bridge", :type=> "bridge" }
+DEFAULT_NET={ :dev => "#{SHARED_SUBNET_BRIDGE_DEV}", :mode => "bridge", :type=> "bridge" }
+DEFAULT_NET_DEV=SHARED_SUBNET_BRIDGE_DEV
+
+#:dev => "#{SHARED_SUBNET_BRIDGE_DEV}",
+TZ="Australia/Adelaide"
+CLUSTER_NAME_FORMAT="%{cluster_name}%{node_subtype}0%{num}"
+SYNC="/vagrant"
+DEBUG=ENV["DEBUG"] || false
+VERBOSE=ENV["VERBOSE"] || false
+DRY_RUN=ENV["DRY_RUN"] || false
+GROUP="soestack"
+HOSTNAME_FORMAT="%{name}"
+NAME_FORMAT="%{id}"
+BOX             = "centos/7.1902.01"
+PROVISION       = "/soestack/provision/vagrant/provision.sh"
+DOMAIN          = "qemu"
+LIBVIRT_STORAGE = "linux"
+RW_SYNC_SUBFOLDER="/rw"
+RO_SYNC_DIR=VAGRANT_DIR
+RW_SYNC_DIR=VAGRANT_DIR+RW_SYNC_SUBFOLDER
+CLUSTER_HOSTNAME_FORMAT="%{GROUP}-%{cluster_name}%{node_subtype}0%{num}"
+ALIASES_FORMAT="#{GROUP}-%{name}.#{DOMAIN} #{GROUP}-%{name}"
+CLUSTER_ALIASES_FORMAT="#{GROUP}-%{name}.#{DOMAIN} #{GROUP}-%{name} %{name}.#{DOMAIN} %{name}.%{cluster_name}.#{DOMAIN} %{cluster_name}0%{num} %{cluster_name}0%{num}.#{DOMAIN} %{cluster_name}0%{num}.%{cluster_name}.#{DOMAIN}"
+DOCKER_SUBNET="172.17"                    # Edit this to match the docker config on your vagrant host
+VAGRANT_SUBNET="192.168.121"              # Edit this to match the vagrant libvirt network or virtualbox network used for bringing up boxes
+SHARED_SUBNET="192.168.122"               # Edit this to match the regular subnet shared with the host
+CLUSTER_DEFAULT_SUBNET="#{SHARED_SUBNET}" # By default run all cluster nodes in the shared subnet
+CLUSTER_X_SUBNET="#{SHARED_SUBNET}"
+
+GROUP_DEFAULTS={
+    GROUP:           GROUP,
+    PROVISION:       PROVISION,
+    name_format:     NAME_FORMAT,
+    hostname_format: HOSTNAME_FORMAT,
+    aliases_format:  ALIASES_FORMAT,
+    ip_format:       "%{subnet}.%{ip_num}", #only used if ip is not specified
+    default_net:     DEFAULT_NET,
+    net_dev:         DEFAULT_NET_DEV,
+    #net_dev:         '',
+    memory:          512
+}
+
+CLUSTER_DEFAULTS={
+    hostname_format: CLUSTER_HOSTNAME_FORMAT,  
+    name_format:     CLUSTER_NAME_FORMAT,
+    aliases_format:  CLUSTER_ALIASES_FORMAT,
+    net_dev:         "auto",
+    node_subtype:       ""
+}
+
+ALPHABET=('a'..'z').to_a
+
+
+def addbox(v)
+    name=v[:name]
+    $vmNames.push(name)
+    $vmDefs[name]=v
+end
+
+def numpair(separator,stringval)
+    stringval.split(separator).map{|n| n.to_i}
+end
+
+def max (a,b)
+    a>b ? a : b
+end
+
+def format_val(val,indent)
+    cl=val.class.to_s
+    ind2=indent+"   "
+    if cl == "Hash"
+        return "{"+"\n"+ind2+hash_format(val,ind2)+"\n"+ind2+"}"
+    elsif cl == "Array"
+        return "[\n"+ind2+"  "+array_format(val,ind2)+"\n"+ind2+"]"
+    else
+        return sprintf("%s",val)
+    end
+end
+
+def array_format(arr,indent="",quote="",separator="",newline="\n")
+    out=[]
+    arr.each do |val|
+        out.push(quote + format_val(val,indent+"  ")+quote)
+    end
+    return out.join(newline+separator+indent+"  ")
+end
+
+def hash_format(vars,indent="",newline="\n",quote="",commas="",separator=" : ")
+    lenmax=0
+    vars.keys.each do |k|
+        lenmax=max(lenmax,k.length)
+    end
+    out=[]
+    vars.keys.each do |k|
+        extra_ind=sprintf("%#{lenmax+2}s","")
+        val=quote+format_val(vars[k],indent+extra_ind)+quote
+        out.push(sprintf("%#{lenmax}s%s%s",k,separator,val))
+    end
+    return "  "+out.join(commas+newline+indent+"  ")
+end
+
+def noderange(stringval)
+    return numpair(" ",stringval)
+end
+
+def merge_default(defvar,*hashlist)
+    vars=Hash.new(defvar)
+    hashlist.each do |v|
+        vars.update(v)
+    end
+    return vars
+end
+
+# Merge with a default value of nil, so that values can be overridden with ||= and without key errors
+def merge(*hashlist)
+    return merge_default(nil,*hashlist)
+end
+
+# Make a bash-compatible list of variable assignments from a hash.
+# Use the exclude list to exclude values that are not compatible
+def flatten_vars(h, *exclude)
+    list=[]
+    h.keys.each do |k| 
+        if ! exclude.include?(k)
+            list.push("#{k}='#{h[k]}'")
+        end
+    end
+    return list.join(" ")
+end
+
+
+def dbg(*s)
+    if ! DEBUG
+        return
+    end
+
+    *list=s
+    out=[]
+    list.each do |x|
+        if x.class.inspect == "String"
+            out.push(x)
+        else
+            out.push(x.pretty_inspect)
+        end
+    end
+    puts out.join(" ")
+end
+
+def verb(*s)
+    if ! (VERBOSE || DEBUG)
+        return
+    end
+
+    *list=s
+    out=[]
+    list.each do |x|
+        out.push(format_val(x,"    "))
+    end
+    puts out.join("\n")
+end
+
+def add_syncdir_prefix(p)
+    first_token = p.partition(" ").first
+    if first_token
+        if File.exist?("./"+first_token)
+            p=SYNC+"/"+p
+        end
+    end
+    return p
+end
+
+# Set a bunch of extra variables for different node sets
+# to allow them to be configured similarly but slightly different
+def cluster(defaults,*nodesets)
+    subnet=defaults[:subnet]
+    cluster_name=defaults[:cluster_name]
+  
+    dbg "\nCluster #{cluster_name} Subnet #{subnet}, Settings\n",defaults.pretty_inspect,"\n"
+  
+    nodesets.each do |nodeset|
+      if nodeset
+        dbg "\nNodeset %{s}" % {s: nodeset.inspect}
+        range=nodeset[:range]
+        if range.class.inspect == "String"
+          range = noderange(range)
+        end
+        start,finish = range
+        finish ||= start # if finish is not specified, use the start value
+        if start
+          (start .. finish).each do |num|
+            vars = merge(GROUP_DEFAULTS,CLUSTER_DEFAULTS,defaults,nodeset)
+            vars[:num]            = num
+            vars[:subnet]         = vars[:subnet] || subnet
+            vars[:start]        ||= start
+            vars[:finish]       ||= finish
+            vars[:cluster_name] ||= cluster_name
+            vars[:ip_base]      ||= ip_base
+            vars[:ip_num]       ||= vars[:ip_base].to_i+num
+            vars[:box]          ||= box
+            machine(vars)
+          end
+        end
+      end
+    end
+  end
+
+def vmdef_generate(vars)
+    name=vars[:name]
+    hostname = vars[:hostname]
+    use_rsync = true
+    
+    puts "    config.vm.define '#{name}' do |n|"
+
+    puts "        n.vm.synced_folder './', '#{SYNC}/', type: 'rsync', disabled: true"
+    puts "        n.vm.synced_folder './', '/vagrant', type: 'rsync', disabled: true"
+    puts "        # This one is enabled"
+    puts "        n.vm.synced_folder './', '#{SYNC}/', type: 'rsync', rsync__args: [ '-avL' ]"
+        
+    if ! File.exists?(RW_SYNC_DIR)
+        puts 'Dir.mkdir RW_SYNC_DIR'
+    end
+        
+    if ! use_rsync
+        # If nfs doesn't work, check that the secondary network is bridged to the correct libvirt network bridge
+        # ie check the ':net_dev' parameter
+        # Set up a rw mount of the certs & auth area if possible, with nfs
+        puts '        n.vm.synced_folder "#{RW_SYNC_DIR}", 
+            "#{SYNC}/#{RW_SYNC_SUBFOLDER}", 
+            type:          "nfs", 
+            disabled:      false, 
+            mount_options: [ "vers=4","rw", "sec=sys:none", "proto=tcp", "actimeo=0" ]'
+    end
+    
+    puts "        n.vm.box      = '#{vars[:box]}'"
+    puts "        n.vm.hostname = '#{vars[:hostname]}'"
+
+    puts "        n.vm.network   'public_network', { ip: '#{vars[:ip]}', " + hash_format(vars[:net],"","","'",", ",": ") + "}"
+
+    extra_rsyncs = vars[:extra_rsyncs] || []
+
+    extra_rsyncs.each do |syncdata|
+        excludes = syncdata[:exclude] || []
+        if excludes
+            puts "        n.vm.synced_folder '#{syncdata[:src]}', '#{syncdata[:dst]}', type: 'rsync', rsync__exclude: [" + array_format(excludes,"","'",",","") + " ]"
+        else
+            puts "        n.vm.synced_folder '#{syncdata[:src]}', '#{syncdata[:dst]}', type: 'rsync'"
+        end
+    end
+    
+    #configure storage
+    puts '        config.vm.provider "libvirt" do |lv|'
+
+    puts "            lv.storage_pool_name='#{LIBVIRT_STORAGE}'"
+        
+    disks = vars[:extra_disks] || ""
+    disks = disks.split(" ")
+    disks.each do |spec|
+        idx, sz = numpair(":",spec)
+        
+        dev="vd#{ALPHABET[idx]}"
+        if dev == "vda" 
+            puts "#Refusing to use disk #{dev}. Increment the numbers in :extra_disks (lowest index to use is 1)"
+            return 
+        end
+        puts "            lv.storage :file, 
+                    :path           => '#{name}-data-#{idx}.img', 
+                    :size           => '#{sz}G',
+                    :type           => 'qcow2',
+                    :bus            => 'virtio',
+                    :allow_existing => true"
+    end
+
+    if vars.has_key?(:memory)
+        puts "            lv.memory=#{vars[:memory]}"
+    end
+    if vars.has_key?(:cpus)
+        puts "            lv.cpus=#{vars[:cpus]}"
+    end
+
+    puts '            end'
+    
+    vars[:provision].each do |p| 
+        puts "            n.vm.provision('shell', privileged: true, inline: '#{p}') "
+    end
+    puts '        end'
+
+end
+
+def vmdef(config,vars)  
+    name=vars[:name]
+    
+    config.vm.define name do |n|
+
+        hostname = vars[:hostname]
+        
+        use_rsync = true
+        
+        # Disable the default synced folder because the Centos Atomic Vagrant Libvirt box has no /vagrant dir
+        # and the toplevel filesystem is read-only?
+        n.vm.synced_folder "./", "#{SYNC}/", type: "rsync", disabled: true
+        n.vm.synced_folder "./", "/vagrant", type: "rsync", disabled: true
+        # This one is enabled
+        n.vm.synced_folder "./", "#{SYNC}/", type: "rsync", rsync__args: [ "-avL" ]
+        
+        if ! File.exists?(RW_SYNC_DIR)
+            Dir.mkdir RW_SYNC_DIR
+        end
+        
+        if ! use_rsync
+            # If nfs doesn't work, check that the secondary network is bridged to the correct libvirt network bridge
+            # ie check the ':net_dev' parameter
+            # Set up a rw mount of the certs & auth area if possible, with nfs
+            n.vm.synced_folder "#{RW_SYNC_DIR}", 
+                "#{SYNC}/#{RW_SYNC_SUBFOLDER}", 
+                type:          "nfs", 
+                disabled:      false, 
+                mount_options: [ "vers=4","rw", "sec=sys:none", "proto=tcp", "actimeo=0" ]
+        end
+    
+        n.vm.box      = vars[:box]
+        n.vm.hostname = vars[:hostname]
+
+        dbg "n.vm.network 'public_network', ", { ip: vars[:ip], **vars[:net] }
+
+        n.vm.network   "public_network", { ip: vars[:ip], dev: 'virbr0', **vars[:net] }
+
+        disks = vars[:extra_disks] || ""
+        disks = disks.split(" ")
+        
+        extra_rsyncs = vars[:extra_rsyncs] || []
+        extra_rsyncs.each do |syncdata|
+            excludes = syncdata[:exclude] || []
+            dbg "excludes", excludes
+            if excludes
+                n.vm.synced_folder syncdata[:src], syncdata[:dst], type: "rsync", rsync__exclude: excludes
+            else
+                n.vm.synced_folder syncdata[:src], syncdata[:dst], type: "rsync"
+            end
+        end
+
+        #configure storage
+        config.vm.provider "libvirt" do |lv|
+
+            lv.storage_pool_name=LIBVIRT_STORAGE
+            
+            disks.each do |spec|
+                dbg "VM #{name} has extra disk #{spec}"
+                idx, sz = numpair(":",spec)
+                
+                dev="vd#{ALPHABET[idx]}"
+                if dev == "vda" 
+                    puts "Refusing to use disk #{dev}. Increment the numbers in :extra_disks (lowest index to use is 1)"
+                    return 
+                end
+                lv.storage :file, 
+                            #:device         => "vd#{ALPHABET[idx]}",  #libvirt creates ok device names by default
+                            :path           => "#{name}-data-#{idx}.img", 
+                            :size           => "#{sz}G",
+                            :type           => "qcow2",
+                            :bus            => "virtio",
+                            :allow_existing => true
+            end
+
+            if vars.has_key?(:memory)
+                lv.memory=vars[:memory]
+            end
+            if vars.has_key?(:cpus)
+                lv.cpus=vars[:cpus]
+            end
+        end
+        
+        #n.vm.provision :update_hostfile
+
+        #if USE_HOSTMANAGER && Vagrant.has_plugin?("vagrant-hostmanager")
+        #    n.vm.provision :hostmanager
+        #end
+
+        vars[:provision].each do |p| 
+            n.vm.provision("shell", privileged: "true", inline: p) 
+        end
+    
+    end
+end
+
+
+def machine(machinevars)
+    # Merge defaults, but don't yet provide any default value
+    vars = merge(GROUP_DEFAULTS,machinevars)
+
+    # Generate required keys from formats if not already set
+    if (!vars.has_key?(:name)) && vars.has_key?(:name_format)
+        #dbg "Generate name from name_format using "+vars[:name_format]
+        vars[:name]     = vars[:name_format] % vars
+    end
+    
+    if ! vars.has_key?(:hostname) && vars.has_key?(:hostname_format)
+        #dbg "Generate hostname from hostname_format using "+vars[:hostname_format]
+        vars[:hostname] = vars[:hostname_format] % vars
+    end
+
+    if ! vars.has_key?(:ip) && vars.has_key?(:ip_format)
+        #dbg "Generate ip - no ip defined for "+vars[:name]
+        vars[:ip]       = vars[:ip_format] % vars
+    end
+
+    if ! vars.has_key?(:net_dev)
+        vars[:net_dev] = 'auto'
+    end
+    
+    if ! vars.has_key?(:subnet)
+        subnet=vars[:ip]
+        subnet.sub /[.][0-i]*$/, ""
+        vars[:subnet] = subnet
+    end
+    
+    if vars[:net_dev] == 'auto'
+        vars[:net_dev] = auto_net_dev(vars[:subnet], vars[:name])
+    else
+        #dbg "vm #{vars[:name]} uses specific net dev #{vars[:net_dev]}"
+    end
+    
+    if ! vars.has_key?(:net)
+        vars[:net] = { **vars[:default_net] , dev: vars[:net_dev] }
+    end
+    
+    if vars[:net].has_key?(:dev)
+        #if vars[:net][:dev] == ''
+        #    dbg "Deleting empty net dev"
+        #    vars[:net].delete(:dev)
+        #end
+    end
+    
+    dbg "Net dev is '#{vars[:net][:dev]}'"
+    dbg "vars[net] is ", vars[:net]
+
+    if ! vars.has_key?(:aliases)
+        aliases=vars[:aliases_format] % vars
+        vars[:aliases]=aliases.split(" ")
+    end
+
+    #dbg vars[:net].pretty_inspect
+    
+    vars[:build_date]=Time.new.strftime("%Y-%m-%d %H:%M:%S")
+
+    # From here use a var hash with a default value so string replacments are tolerant of missing keys
+    vars = merge_default("",vars)
+    
+    # Produce a list of variables to dump into the guest so
+    # it can see the values it was built with
+    #save_vars="#{SYNC}/lib/save_vars.sh "+ flatten_vars(vars,:provision,:default_net,:net)
+    
+    # Take what might be just a single string or several, make a list of it
+    # and prepend the vagrant sync dir if it refers to a script in the sync dir
+    *provision = vars[:provision]
+    
+    provision = provision.map {|p| add_syncdir_prefix(p % vars) }
+    
+    # Store the list of provision scripts back into the vars hash,
+    # but with the save_vars script prepended
+    vars[:provision] = [ 
+        #save_vars, 
+        *provision
+    ]
+
+    # Allow nodes to be disabled using ':disabled' key
+    return if vars[:disabled] == true
+    
+    dbg "VM HOSTNAME", vars[:hostname]
+    
+    #vmdef(config,vars)
+    addbox(vars)
+end
+
+def Build()
+   
+    dbg "ARGV" , ARGV
+    
+    if (VERBOSE || DEBUG)
+        if ARGV[1]
+            if $vmDefs.has_key?(ARGV[1])
+                v=$vmDefs[ARGV[1]]
+                vname=v[:name]
+                verb "\n###\nMachine #{vname}\n###\n",hash_format(v)
+            end
+        else
+            $vmNames.each do |vname|
+                verb "\n###\nMachine #{vname}\n###\n",$vmDefs[vname]
+            end
+        end
+    end
+    if ! DRY_RUN
+        Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
+            $vmNames.each do |vname|
+                v=$vmDefs[vname]
+                vmdef(config,v) unless v[:disabled] == true
+            end
+        end
+    end
+end
+
+def Generate()
+   
+    puts "Vagrant.configure(\"#{VAGRANTFILE_API_VERSION}\") do |config| "
+
+    $vmNames.each do |vname|
+        v=$vmDefs[vname]
+        vmdef_generate(v) unless v[:disabled] == true
+    end
+
+    puts "end"
+end

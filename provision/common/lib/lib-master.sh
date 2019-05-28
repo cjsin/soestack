@@ -1,6 +1,6 @@
 #!/bin/bash
 
-[[ -n "${SS_LOADED_COMMON_LIB}" ]] || . /soestack/provision/common/lib/lib.sh
+[[ -n "${SS_LOADED_COMMON_LIB}" ]] || . "${SS_DIR:=${BASH_SOURCE[0]%/provision/*}}"/provision/common/lib/lib.sh
 
 function configure_salt_api()
 {
@@ -28,15 +28,9 @@ function configure_salt_api()
         passwd --stdin salt-enrol <<< "d62da93aecc94bd6363d0c7d5fbea7248e8e0c9e15dfca0fb92c1e665760de9a"
     fi
 
+    ensure_installed openssh
     mkdir -p /var/lib/salt-enrol/.ssh
-    
-    local keyfile=/var/lib/salt-enrol/.ssh/id_rsa
-
-    if [[ ! -f "${keyfile}" ]]
-    then
-        ssh-keygen -t rsa -N '' -q -f "${keyfile}"
-    fi 
-
+    create_ssh_key_file /var/lib/salt-enrol/.ssh/id_rsa
     chown -R salt-enrol.salt-enrol /var/lib/salt-enrol/
     chmod 700 /var/lib/salt-enrol/.ssh 
 }

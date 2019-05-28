@@ -1,0 +1,113 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+VAGRANTFILE_API_VERSION = "2"
+VAGRANT_DIR     = File.dirname(File.expand_path(__FILE__))
+PARENT_DIR      = File.dirname(VAGRANT_DIR)
+LIB_DIR         = VAGRANT_DIR+"/lib"
+
+#########################################################################
+Dir.chdir VAGRANT_DIR
+load 'lib/Vagrantfile.lib'
+system("pwd")
+#########################################################################
+
+
+# Globals
+$vmDefs         = {}
+$vmNames        = []
+$hostData       = ""
+
+PLUGINS=[
+    #"vagrant-triggers",
+    #"vagrant-hostmanager"
+]
+ 
+USE_HOSTMANAGER=false # it does stupid stuff and is generally broken and doesn't do enough anyway
+ 
+PLUGINS.each do |p|
+    unless Vagrant.has_plugin?(p) 
+        "Some features require #{p} plugin"
+    end
+end
+
+def basic(box,id,ip_num, provision, **customisation)
+    vars= { box: box,id: id, ip: "#{SHARED_SUBNET}.#{ip_num}", provision: provision }
+    if customisation
+        vars=merge_default(nil,vars,customisation)
+    end
+    machine(vars)
+end
+
+def infra(box,id,ip_num, provision, **customisation)
+    vars= { 
+        box:             box,
+        id:              id, 
+        ip:              "#{SHARED_SUBNET}.#{ip_num}", 
+        provision:       provision,
+        name_format:     "%{id}",
+        hostname_format: "%{id}",
+        domain:          "qemu",
+        aliases_format:  "%{id}.%{domain} %{id}",
+    }
+    if customisation
+        vars=merge_default(nil,vars,customisation)
+    end
+    machine(vars)
+end
+
+def auto_net_dev(subnet,name)
+    net_file=`egrep "address=.#{subnet}[.]" /etc/libvirt/qemu/networks/*.* 2> /dev/null | cut -d: -f1`
+    net_file.chomp!
+    #puts "net file for #{subnet} is #{net_file}"
+    #puts "command egrep bridge '#{net_file}' | sed 's/.*name=.//' | cut -d' -f1"
+    br_name=`egrep bridge "#{net_file}" 2> /dev/null | sed 's/.*name=.//' | cut -d"'" -f1`
+    br_name.chomp!
+    #puts "BRIDGE for #{name} (#{subnet}) is #{br_name}"
+    if ! br_name
+        dbg "FAILED determining bridge dev for subnet #{subnet} machine #{name}"
+        return DEFAULT_NET_DEV
+    else
+        return br_name
+    end
+end
+
+
+#         if private_ip > 0
+#             puts "private netork configure octet #{private_ip}"
+#             n.vm.network "private_network", ip: "#{SHARED_SUBNET}.#{private_ip}", auto_config: false
+#         end
+
+#         if public_ip > 0
+#             puts "public netork configure octet #{public_ip}"
+#             n.vm.network   "public_network", { ip: "#{SHARED_SUBNET}.#{public_ip}", **DEFAULT_NET }
+#         end
+ 
+def Define()
+  
+    infra(BOX, "infra", 101, "#{PROVISION} infra.cfg",{
+        cpus:   2, 
+        memory: 10240, 
+        extra_disks: "1:30",
+        extra_rsyncs: [
+            { src: "../../",        dst: "/soestack/",  exclude: [".git", "*.raw", "*.qcow2", "*.iso", "usb", "bundled" ] },
+            { src: "../../bundled", dst: "/e/bundled/", exclude: [ "*prior*","*.rpm", "repodata","*.tar","*.iso" ] }
+        ]
+    })
+
+    # cluster({ 
+    #     cluster_name: "qemu_pxe", 
+    #     box: BOX,
+    #     subnet: "192.168.121",
+    #     ip_base: 241,
+    #     provision: "%{PROVISION}" 
+    #   },
+    #   { range: "241 244" }
+    # )
+
+end
+
+Define()
+if DEBUG
+    Generate()
+end
+Build()

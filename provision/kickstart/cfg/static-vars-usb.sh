@@ -6,7 +6,7 @@ hosts=(
 
 # A standalone USB build will set up its own nexus repo
 
-NEXUS=http://nexus:7081/repository
+NEXUS=http://nexus:7081/
 
 repos=(
 )

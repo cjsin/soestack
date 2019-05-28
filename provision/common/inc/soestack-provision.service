@@ -5,7 +5,7 @@ After=network.target network-online.target
 
 [Service]
 Type=oneshot
-ExecStart=/soestack/provision/common/provision.sh
+ExecStart=$SS_DIR/provision/common/provision.sh
 RemainAfterExit=yes
 
 [Install]

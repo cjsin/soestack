@@ -1,6 +1,6 @@
 #!/bin/bash
 
-[[ -n "${SS_LOADED_COMMON_LIB}" ]] || . /soestack/provision/common/lib/lib.sh
+[[ -n "${SS_LOADED_COMMON_LIB}" ]] || . "${SS_DIR:=${BASH_SOURCE[0]%/provision/*}}"/provision/common/lib/lib.sh
 
 function saltstack_fixes()
 {
@@ -41,7 +41,9 @@ function salt_test_ping()
 
 function write_role_grains()
 {
-    if ! grep -s "^roles:" /etc/salt/grains 
+    [[ -f /etc/salt/grains ]] || touch /etc/salt/grains
+
+    if ! grep -q "^roles:" /etc/salt/grains 
     then 
        if [[ -n "${ROLES}" ]]
        then
@@ -61,25 +63,24 @@ function write_role_grains()
 
 function write_layer_grains()
 {
+    [[ -f /etc/salt/grains ]] || touch /etc/salt/grains
+    
     if ! grep -q "^layers:" /etc/salt/grains 
     then 
         if [[ -n "${LAYERS}" ]]
         then
             {
+                local item
                 echo_data "layers:"
                 if [[ "${LAYERS}" =~ : ]]
                 then
-                    local items=(${LAYERS//,/ })
-                    local item
-                    for item in "${items[@]}"
+                    for item in ${LAYERS//,/ }
                     do
                         echo_data "    ${item//:/: }"
                     done
                 elif [[ "${LAYERS}" =~ , ]]
                 then
-                    local items=(${LAYERS//,/ })
-                    local item
-                    for item in "${items[@]}"
+                    for item in ${LAYERS//,/ }
                     do
                         echo_data "    - ${item}"
                     done
@@ -291,9 +292,9 @@ function provision_minion_master()
     wait_for_enrolment
 }
 
-function provision_salt_client()
+function provision_salt_minion()
 {
-    . /soestack/provision/common/lib/lib-client.sh
+    . "${SS_DIR}"/provision/common/lib/lib-client.sh
 
     echo "Installing salt minion"
     install_salt_minion
@@ -311,7 +312,7 @@ function provision_salt_client()
 
 function provision_salt_master()
 {
-    . /soestack/provision/common/lib/lib-master.sh
+    . "${SS_DIR}"/provision/common/lib/lib-master.sh
 
     # The master uses the master and client 
     echo "Installing salt master"

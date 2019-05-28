@@ -1,6 +1,6 @@
 #!/bin/bash
 
-. /soestack/provision/kickstart/lib/lib.sh
+[[ -n "${SS_LOADED_KS_LIB}" ]] || . "${SS_DIR:=${BASH_SOURCE[0]%/provision/*}}"/provision/kickstart/lib/lib.sh
 
 # Patch device names of the style %USB%, or %HD0%, %HD1%,
 # to match the found device names.

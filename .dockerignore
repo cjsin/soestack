@@ -1,0 +1,10 @@
+.git
+bundled/**/*.rpm
+bundled/**/repodata
+bundled/**/*.tar
+provision/vagrant/.vagrant
+venv
+examples-etc
+bundled
+soestack.code-workspace
+obsolete

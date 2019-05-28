@@ -1,6 +1,8 @@
 #!/bin/bash
 
-export SS_DIR=/soestack
+# Set SS_DIR if not set already, using the path of this script
+: ${SS_DIR:-${BASH_SOURCE[0]%/provision/*}} ;
+
 export PROVISION_DIR="${SS_DIR}/provision"
 export SS_INC="${PROVISION_DIR}/common/inc"
 export SS_LIB="${PROVISION_DIR}/common/lib"
@@ -8,9 +10,26 @@ export SS_GEN="/etc/ss"
 export BS_VARS="${SS_GEN}/0-bs-vars.sh"
 outline_level=3
 
+#BEGIN_COLOR=$'\u001b['
+COLOR_BEGIN=$'\e['
+COLOR_RED=31m
+COLOR_GREEN=32m
+COLOR_GRAY=30m
+COLOR_BLUE=34m
+COLOR_YELLOW=33m
+COLOR_CYAN=36m
+COLOR_PURPLE=35m
+COLOR_WHITE=37m
+COLOR_ERR=${COLOR_RED}
+COLOR_WARN=${COLOR_YELLOW}
+COLOR_NOTICE=${COLOR_BLUE}
+COLOR_INFO=${COLOR_GREY}
+#COLOR_RESET=$'\u001b[0m'
+COLOR_RESET=$'\e[0m'
+
 function msg()
 {
-    echo "${FUNCNAME[1]}:" "${@}"
+    echo "${FUNCNAME[1]}:" "${@}" 1>&2
 }
 
 function bmsg()
@@ -18,24 +37,33 @@ function bmsg()
     echo "${*}"
 }
 
+function colored()
+{
+    local color="${1}"
+    local text="${2}"
+    shift 2
+
+    echo "${COLOR_BEGIN}${color}${FUNCNAME[2]}:${text}${COLOR_RESET}" "${@}" 1>&2
+}
+
 function err()
 {
-    echo "${FUNCNAME[1]}:ERROR:" "${@}" 1>&2
+    colored ${COLOR_RED} ERROR: "${@}"
 }
 
 function notice()
 {
-    echo "${FUNCNAME[1]}:NOTICE:" "${@}" 1>&2
+    colored ${COLOR_NOTICE} NOTICE: "${@}"
 }
 
 function warn()
 {
-    echo "${FUNCNAME[1]}:WARN:" "${@}" 1>&2
+    colored ${COLOR_WARN} WARN: "${@}"
 }
 
 function info()
 {
-    echo "${FUNCNAME[1]}:INFO:" "${@}" 1>&2
+    colored ${COLOR_INFO} INFO: "${@}"
 }
 
 function echo_stage()
@@ -53,12 +81,6 @@ function echo_stage()
 
 # Echo some text as an explicit return value within the calling function
 function echo_return()
-{
-    echo "${*}"
-}
-
-# Echo some text intended to be redirected or saved to an artifact
-function echo_data()
 {
     echo "${*}"
 }
@@ -133,9 +155,23 @@ function is_installed()
     rpm -q "${1}" > /dev/null 2> /dev/null
 }
 
+function is_docker()
+{
+    # This works for docker
+    if egrep -q '/docker|/lxc' /proc/1/cgroup
+    then 
+        return 0
+    elif [[ -n "${PROVISION_TYPE}" && "${PROVISION_TYPE}" =~ docker|vagrant ]]
+    then
+        return 0
+    else
+        return 1
+    fi
+}
+
 function update_mlocate()
 {
-    ensure_installed mlocate && command -v updatedb > /dev/null 2> /dev/null && updatedb
+    ensure_installed mlocate && command_is_available updatedb && updatedb
 }
 
 function install_utils()
@@ -149,12 +185,12 @@ function unless_installed()
 {
     local what="${1}"
     shift
-    msg "${what}"
     is_installed "${what}" || "${@}" 2>&1 | indent
 }
 
 function ensure_installed()
 {
+    msg "${*}"
     local p
     for p in "${@}"
     do
@@ -202,8 +238,8 @@ function display_build_configuration()
         #cat "${STATICVARS}" | egrep '^[a-zA-Z].*=' | egrep -v '=[(]' | sed -r 's/^([^=]*)=/\1 /' | indent_vars
         #display_bar "######" 
 
-        msg 
-        msg "                       Dynamic build configuration:"
+        echo 1>&2
+        echo "                       Dynamic build configuration:" 1>&2
         
         display_bar "######"
 
@@ -218,15 +254,15 @@ function display_build_configuration()
 
         if ! (( ${#var_names[@]} ))
         then 
-            msg "No dynamic vars generated in ${f} - generation may have failed."
+            echo "No dynamic vars generated in ${f} - generation may have failed." 1>&2
         fi
 
         display_bar "######"
-        msg "                              Repositories:"
+        echo "                              Repositories:" 1>&2
         display_bar "######"
         display_repos 
         display_bar "######"
-        msg "                            Well known hosts:"
+        echo "                            Well known hosts:" 1>&2
         display_bar "######"
         display_well_known_hosts
         display_bar "######"
@@ -343,16 +379,17 @@ function process_commandline_vars()
     done
 
     # Substitute the NEXUS var in any repos
-    local repos_expanded=()
-    for item in "${repos[@]}"
-    do
-        local nexus_var_regex='^(.*)[$]NEXUS(.*)$'
-        if [[ "${item}" =~ ${nexus_var_regex} ]]
-        then 
-            item="${BASH_REMATCH[1]}${nexus}${BASH_REMATCH[2]}"
-        fi
-        repos_expanded+=("${item}")
-    done
+    # NOTE this is no longer done because the yum var NEXUS is set up in /etc/yum/vars
+    #local repos_expanded=()
+    #for item in "${repos[@]}"
+    #do
+    #    local nexus_var_regex='^(.*)[$]NEXUS(.*)$'
+    #    if [[ "${item}" =~ ${nexus_var_regex} ]]
+    #    then 
+    #        item="${BASH_REMATCH[1]}${nexus}${BASH_REMATCH[2]}"
+    #    fi
+    #    repos_expanded+=("${item}")
+    #done
 
     for item in "${vars[@]}"
     do
@@ -750,6 +787,11 @@ function simulate_wireless()
 
         systemctl status hostapd || systemctl restart hostapd
     fi
+}
+
+function command_is_available()
+{
+    command -v "${1}" > /dev/null 2> /dev/null
 }
 
 export SSL_LOADED_COMMON_LIB=1

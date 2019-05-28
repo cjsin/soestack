@@ -3,14 +3,14 @@
 # routines for bootstrapping an initial standalone server
 # so that it can proceed to provision itself like any other node.
 
-[[ -n "${SS_LOADED_COMMON_LIB}" ]] || . /soestack/provision/common/lib/lib.sh
+[[ -n "${SS_LOADED_COMMON_LIB}" ]] || . "${SS_DIR:=${BASH_SOURCE[0]%/provision/*}}"/provision/common/lib/lib.sh
 
 function import_gpgkeys()
 {
     msg "Import GPG keys"
-    if [[ -d "/soestack/provision/common/inc/gpgkeys" ]]
+    if [[ -d "${SS_DIR}/provision/common/inc/gpgkeys" ]]
     then 
-        if rpm --import /soestack/provision/common/inc/gpgkeys/*
+        if rpm --import "${SS_DIR}"/provision/common/inc/gpgkeys/*
         then
             msg "OK".
         fi
@@ -42,7 +42,7 @@ function configure_standalone_network()
     if [[ -n "${NETDEV}" && -n "${IP_INFO}" && -n "${IPPREFIX}" ]]
     then 
         local netcfgfile=/etc/sysconfig/network-scripts/ifcfg-"${NETDEV}"
-        local netcfgtemplate=/soestack/provision/common/inc/ifcfg-template
+        local netcfgtemplate="${SS_DIR}"/provision/common/inc/ifcfg-template
 
         local -a ip_edits=()
 
@@ -122,12 +122,12 @@ function copy_bundled_files()
 
     ensure_installed rsync
 
-    if [[ ! -d /soestack/salt ]]
+    if [[ ! -d "${SS_DIR}/salt" ]]
     then 
         if [[ -d /e/bundled/soe ]]
         then 
             nsg "Copy bundled SOE to /e/soestack"
-            rsync -av /e/bundled/soe/salt/ /soestack/salt/
+            rsync -av /e/bundled/soe/salt/ "${SS_DIR}/salt/"
         else 
             notice "No SOE copy is availble for pre-configuration"
         fi
@@ -390,11 +390,6 @@ function obtain_bundled_file()
     fi
 }
 
-function command_is_available()
-{
-    command -v "${1}" > /dev/null 2> /dev/null
-}
-
 function require_docker()
 {
     if ! command_is_available docker
@@ -445,13 +440,18 @@ function prepare_network_for_docker()
 		net.bridge.bridge-nf-call-iptables = 1
 		net.bridge.bridge-nf-call-ip6tables = 1
 	EOF
-    sysctl --system
+    if is_docker
+    then
+        msg "No sysctl setup for docker build"
+    else
+        sysctl --system
+    fi
 }
 
 function prepare_nexus_service()
 {
     echo_stage 3 "Preparing nexus user and service"
-    cp /soestack/provision/common/inc/nexus-mirror.service /etc/systemd/system/
+    cp "${SS_DIR}"/provision/common/inc/nexus-mirror.service /etc/systemd/system/
     groupadd -g 200 nexus
     useradd -r -d /d/local/data/nexus -u 200 -g 200 nexus
     chown -R nexus.nexus /d/local/data/nexus/
@@ -566,14 +566,14 @@ function configure_standalone_server()
         ensure_installed docker
     fi
 
-    replace_firewall
+    is_docker || replace_firewall
 
     if [[ -n "${BUNDLED_SRC}" ]]
     then
         restore_nexus_data
     fi
 
-    configure_standalone_network 
+    is_docker || configure_standalone_network 
 
     if [[ -n "${BUNDLED_SRC}" ]]
     then
@@ -607,7 +607,7 @@ function switchover_to_nexus()
     then 
         msg "Disabling old yum repos and switching over to nexus bootstrap repos"
         mv -f /etc/yum.repos.d/*repo /etc/yum.repos.d/disable/
-        /bin/cp -f /soestack/provision/common/inc/bootstrap-centos.repo /etc/yum.repos.d/
+        /bin/cp -f "${SS_DIR}"/provision/common/inc/bootstrap-centos.repo /etc/yum.repos.d/
         yum makecache
     else 
         notice "Skipping yum repo switchover because nexus is not available"

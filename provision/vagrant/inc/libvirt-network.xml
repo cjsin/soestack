@@ -7,12 +7,12 @@ or other application using the libvirt API.
 
 <network ipv6='yes'>
   <name>vagrant-libvirt</name>
-  <uuid>3c61af17-4488-4ab8-adba-e9c8240feb4b</uuid>
+  <!--
   <forward dev='wlan0' mode='route'>
     <interface dev='wlan0'/>
   </forward>
-  <bridge name='virbr1' stp='on' delay='0'/>
-  <mac address='52:54:00:4f:3e:1c'/>
+  -->
+  <bridge stp='on' delay='0'/>
   <ip address='192.168.121.1' netmask='255.255.255.0'>
     <tftp root='/var/lib/tftpboot'/>
     <dhcp>

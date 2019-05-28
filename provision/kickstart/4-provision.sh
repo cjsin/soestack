@@ -1,6 +1,7 @@
 #!/bin/bash
 # Load kickstart-related vars and routines
-. /soestack/provision/kickstart/lib/lib.sh 
+
+[[ -n "${SS_LOADED_KS_LIB}" ]] || . "${SS_DIR:=${BASH_SOURCE[0]%/provision/*}}"/provision/kickstart/lib/lib.sh
 
 echo_start "${0##*/} Start"
 
@@ -8,7 +9,7 @@ echo_start "${0##*/} Start"
 # but before the reboot
 
 # Load common provisioning routines
-. /soestack/provision/common/lib/lib-provision.sh
+. "${SS_DIR}"/provision/common/lib/lib-provision.sh
 
 load_kickstart_vars
 

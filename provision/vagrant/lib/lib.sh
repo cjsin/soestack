@@ -1,5 +1,6 @@
+#!/bin/bash
 
-. /soestack/provision/common/lib/lib-provision.sh
+. "${SS_DIR:-${BASH_SOURCE[0]%/provision/*}}"/provision/common/lib/lib-provision.sh
 
 VAGRANT_VARS="${SS_GEN}/1-vagrant-vars.sh"
 
@@ -66,8 +67,8 @@ function setup_vagrant_ssh()
 function import_gpgkeys()
 {
     # Copy GPG keys
-    /bin/cp -f /soestack/provision/common/inc/gpgkeys/* /etc/pki/rpm-gpg/
-    rpm --import /soestack/provision/common/inc/gpgkeys/*
+    /bin/cp -f "${SS_DIR}"/provision/common/inc/gpgkeys/* /etc/pki/rpm-gpg/
+    rpm --import "${SS_DIR}"/provision/common/inc/gpgkeys/*
 }
 
 function set_root_password()
@@ -94,7 +95,7 @@ function update_yum_repos()
 
     # Add our own repos
     msg "Install bootstrap repos."
-    cp -f "/soestack/provision/common/inc/bootstrap-${OS_NAME}.repo" /etc/yum.repos.d/
+    cp -f "${SS_DIR}/provision/common/inc/bootstrap-${OS_NAME}.repo" /etc/yum.repos.d/
     # grep '^\[' /etc/yum.repos.d/bootstrap-*repo
 }
 
@@ -201,7 +202,7 @@ function generate_vagrant_vars()
 
         if [[ -z "${current_GATEWAY}" ]]
         then
-            if command -v route > /dev/null 2> /dev/null
+            if command_is_available route > /dev/null 2> /dev/null
             then
                 current_GATEWAY=$( route -n | egrep '^0[.]0[.]0[.]0' | head -n1 | awk '{print $2}' ) 
             fi
@@ -243,10 +244,10 @@ function vagrant_provision_common()
     import_gpgkeys
 
     # Load kickstart-related vars and routines
-    . /soestack/provision/kickstart/lib/lib.sh 
+    . "${SS_DIR}"/provision/kickstart/lib/lib.sh 
 
     # Load common provisioning routines
-    . /soestack/provision/common/lib/lib-provision.sh
+    . "${SS_DIR}"/provision/common/lib/lib-provision.sh
 
     load_kickstart_vars
 
@@ -278,7 +279,7 @@ function vagrant_provision()
     do 
         if [[ "${item}" =~ ${cfg_suffix} ]]
         then 
-            local try_file="/soestack/provision/vagrant/cfg/${item}"
+            local try_file="${SS_DIR}/provision/vagrant/cfg/${item}"
             if [[ -f "${try_file}" ]]
             then
                 egrep -i '^ss[.]' < "${try_file}" | cut -c4-
@@ -311,10 +312,10 @@ function vagrant_provision()
     #echo_stage 5 "Running SS Provisioning"
     #systemctl restart soestack-provision
     #ls -lR "${SS_GEN}"
-    # /soestack/provision/common/provision.sh
+    # ${SS_DIR}/provision/common/provision.sh
     #systemctl start soestack-provision
     msg "Provisioning may be continued by starting the soestack-provision service"
-    msg "Or by running '/soestack/provision/common/provision.sh console' to view"
+    msg "Or by running '${SS_DIR}/provision/common/provision.sh console' to view"
     msg "the progress, or rebooting."
 
     msg ""

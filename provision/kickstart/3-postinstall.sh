@@ -1,5 +1,6 @@
 #!/bin/bash
-. /soestack/provision/kickstart/lib/lib-nochroot.sh
+
+. "${SS_DIR:=${BASH_SOURCE[0]%/provision/*}}"/provision/kickstart/lib/lib-nochroot.sh
 
 echo_start "${0##*/}"
 

@@ -5,7 +5,7 @@
 .update-{{ip}}-ip:
     cmd.run:
         - name: 'sed -i "/^{{ip}}[[:space:]]/ d" /etc/hosts && echo "{{ip}} {{names}}" >> /etc/hosts'
-        - unless: egrep -s "^{{ip}}[[:space:]]+{{names}}" /etc/hosts
+        - unless: egrep -q "^{{ip}}[[:space:]]+{{names}}" /etc/hosts
 
 {%-     endfor %}
 {%- endif %}

@@ -16,10 +16,31 @@ bash-syntax:
   image: bash:latest
   stage: test
   script:
-    - for f in provision/{common/lib,kickstart,vagrant}/*.sh; do echo "Check ${f}"; bash -n "${f}" 2>&1 ;done
+    - for f in provision/{common,common/lib,kickstart,kickstart/lib,vagrant,vagrant/lib,docker,docker/lib}/*.sh; do echo "Check ${f}"; bash -n "${f}" 2>&1 ;done
   tags:
     - docker
 
+docker-test-centos:
+    image: centos:7.6.1810
+    stage: test
+    script:
+      - pwd
+      - ls -l
+      - find . -name "*.sh"
+      - provision/docker/provision.sh docker.cfg
+      - provision/common/provision.sh
+    tags:
+      - docker
+
+
+docker-test-busybox:
+  image: busybox:latest
+  stage: test
+  script:
+    - provision/common/provision.sh
+  tags:
+    - docker
+    
 # NOTE this job must be called pages, in order to be used for Gitlab Pages
 pages:
   image: python:3
@@ -29,7 +50,7 @@ pages:
     - . venv/bin/activate
     - pip install --upgrade pip
     - pip install sphinx
-    - sphinx-build doco public
+    - sphinx-build docs public
   tags:
     - docker
   artifacts:

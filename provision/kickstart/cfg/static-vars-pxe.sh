@@ -12,7 +12,7 @@ repos=(
 
 # These vars are defaults which can be overridden
 # by the boot-time kernel commandline.
-SALT_TYPE=client
+SALT_TYPE=minion
 SALT_MASTER=infra
 DOMAIN=demo
 NAMESERVER=gateway

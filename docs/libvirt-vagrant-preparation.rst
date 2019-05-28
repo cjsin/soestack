@@ -1,4 +1,4 @@
-.. vagrant_prep:
+.. _vagrant_prep:
 
 #############################
 Libvirt / Vagrant Preparation

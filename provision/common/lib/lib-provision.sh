@@ -1,6 +1,6 @@
 #!/bin/bash
 
-[[ -n "${SS_LOADED_COMMON_LIB}" ]] || . /soestack/provision/common/lib/lib.sh
+[[ -n "${SS_LOADED_COMMON_LIB}" ]] || . "${SS_DIR:=${BASH_SOURCE[0]%/provision/*}}"/provision/common/lib/lib.sh
 
 function install_development_tools()
 {
@@ -16,9 +16,14 @@ function install_development_tools()
             nmap socat msr-tools qemu-guest-agent 
     fi
 
-    ensure_installed gpm
-    systemctl enable gpm
-    systemctl start gpm 
+    if ! is_docker 
+    then
+        ensure_installed gpm
+        systemctl enable gpm
+        systemctl start gpm 
+    else
+        notice "Console tools are not installed in docker containers"
+    fi
     echo_done
 }
 
@@ -26,7 +31,7 @@ function ssh_alternate_port()
 {
     local port="${1:-22}"
 
-    if [[ "${port}" != "22" ]]
+    if [[ -d "/etc/ssh" && "${port}" != "22" ]]
     then
         for p in policycoreutils-python policycoreutils-python-utils 
         do 
@@ -49,7 +54,7 @@ function ssh_alternate_port()
 # Enable ssh on a nonstandard port during dev
 function enable_ssh_during_development()
 {
-    if is_development
+    if [[ -d /etc/ssh ]] && is_development
     then
         sed -i \
             -e '/ListenAddress/ s/.*/ListenAddress 0.0.0.0/' \
@@ -69,13 +74,18 @@ function failed_provision()
 {
     systemctl disable soestack-provision
     err "system service soestack-provision has run but failed."
-    err "To retry, manually run /soestack/provision/common/provision.sh"
+    err "To retry, manually run ${SS_DIR}/provision/common/provision.sh"
 }
 
 function provision_client()
 {
     add_hosts
-    add_nameserver
+    if is_docker
+    then 
+        msg "No custom resolv.conf for docker build"
+    else
+        add_nameserver
+    fi
     bootstrap_repos
 }
 
@@ -91,12 +101,13 @@ function provision_common_early()
 function provision_common_middle()
 {
     install_utils
-    fix_bootflags
+    
+    is_docker || fix_bootflags
 
     msg "Starting soestack provision at date $(date)"
     install_development_tools 2>&1 | indent
 
-    replace_firewall
+    is_docker || replace_firewall
 
     yum makecache
 }
@@ -114,7 +125,7 @@ function soestack_provision()
 
     provision_common_middle
 
-    . /soestack/provision/common/lib/lib-salt.sh
+    . "${SS_DIR}"/provision/common/lib/lib-salt.sh
 
     local salt_failed
     provision_salt
@@ -176,7 +187,7 @@ function fix_bootflags()
 
         grub2-mkconfig -o /boot/grub2/grub.cfg
         
-        if command -v plymouth-set-default-theme 2> /dev/null
+        if command_is_available plymouth-set-default-theme
         then
             msg "Rebuilding plymouth initrd"
             plymouth-set-default-theme details --rebuild-initrd 2>&1 | indent
@@ -196,18 +207,16 @@ function disable_repos()
             mv -f "/etc/yum.repos.d/${prefix}"*.repo /etc/yum.repos.d/disable/
         fi
     done
-    msg "done"
 }
 
 function import_gpgkeys()
 {
     msg "Importing GPG keys"
     local f
-    for f in /soestack/provision/common/inc/gpgkeys/* 
+    for f in "${SS_DIR}"/provision/common/inc/gpgkeys/* 
     do
         msg "Import ${f}"
         rpm --import "${f}"
-        msg "  ... done."
     done
     msg "Done."
 }
@@ -218,18 +227,33 @@ function bootstrap_repos()
 
     import_gpgkeys
 
+    [[ -n "${DISABLE_REPOS}" ]] && disable_repos ${DISABLE_REPOS//,/ }
+
     if [[ -n "${BOOTSTRAP_REPOS}" ]]
     then
-        disable_repos ""
+
         local f
         for f in ${BOOTSTRAP_REPOS//,/ }
         do
-            try="/soestack/provision/common/inc/${f}"
-            if [[ -f "${try}" ]]
+            local found=""
+            for try in "${SS_DIR}/provision/${PROVISION_TYPE}/cfg/${f}" "${SS_DIR}/provision/common/inc/${f}"
+            do
+                if [[ -f "${try}" ]]
+                then
+                    found="${try}"
+                    break
+                fi
+            done
+            if [[ -n "${found}" ]]
             then
-                /bin/cp -f "${try}" /etc/yum.repos.d/
+                msg "Installing ${found} which provides the following repos:"
+                egrep '^\[' "${found}" | tr '[]' ':' | cut -d: -f2 | indent
+                /bin/cp -f "${found}" /etc/yum.repos.d/
+            else 
+                err "Bootstrap repos file ${f} was not found!"
             fi 
         done
+        msg "Refreshing yum repo cache - this may take a while."
         yum makecache
     else
         msg "No BOOTSTRAP_REPOS defined. Preconfigured OS repos will be used."
@@ -239,11 +263,15 @@ function bootstrap_repos()
 function configure_soestack_provision()
 {
     msg "Configure soestack postinstall provisioning"
-    /bin/cp -f /soestack/provision/common/inc/soestack-provision.service /etc/systemd/system/
-    chmod a-x  /etc/systemd/system/soestack-provision.service
-    chmod a+rx /soestack/provision/*/*.sh
-    chmod a+rx /soestack/provision/*/lib/*.sh
-    systemctl enable soestack-provision
+    local systemd_dir="/etc/systemd/system"
+    local unit_name="soestack-provision"
+    local unit_file="${systemd_dir}/${unit_name}.service"
+    sed -e "s%\$SS_DIR%${SS_DIR}%" < "${SS_DIR}/provision/common/inc/${unit_name}.service" > "${unit_file}"
+    chmod a-x  "${unit_file}"
+    
+    chmod a+rx "${SS_DIR}"/provision/*/*.sh
+    chmod a+rx "${SS_DIR}"/provision/*/lib/*.sh
+    systemctl enable "${unit_name}"
     msg "Done."
 }
 
@@ -256,10 +284,10 @@ function yum_setting()
     local f=/etc/yum.conf
     if ! ( egrep "${regex}" "${f}" | grep -qF "${line}" )
     then
-        msg "Delete yum setting '${varname}' : " "$(egrep "${regex}" "${f}" | tr '\n' ' ')"
+        # msg "Delete yum setting '${varname}' : " "$(egrep "${regex}" "${f}" | tr '\n' ' ')"
         sed -i "/${regex}/ d" "${f}"
         msg "Add yum setting ${line}"
-        msg "${line}" >> "${f}"
+        echo_data "${line}" >> "${f}"
     fi
 }
 
@@ -291,6 +319,10 @@ function modify_specific_yum_releasever()
     echo_data "${releaselong}" > /etc/yum/vars/releaselong
     echo_data "${releaseshort}" > /etc/yum/vars/releaseshort
 
+    if [[ -n "${NEXUS}" ]]
+    then
+        echo_data "${NEXUS}" > /etc/yum/vars/NEXUS
+    fi
 }
 
 function configure_yum_bundled_var()
@@ -325,7 +357,7 @@ function configure_yum()
 {
     yum_setting minrate 1
     yum_setting timeout $((60*100))
-    yum_setting keepcache 1
+    is_docker || yum_setting keepcache 1
     yum_setting fastestmirror 0
     yum_setting ip_resolve 4
     yum_setting deltarpm 0
@@ -336,16 +368,34 @@ function configure_yum()
     sed -i '/enabled=/ s/=1/=0/' /etc/yum/pluginconf.d/fastestmirror.conf
 }
 
+function create_ssh_key_file()
+{
+    local keyfile="${1}"
+
+    if command_is_available ssh-keygen 
+    then 
+        [[ ! -f "${keyfile}" ]] && ssh-keygen -t rsa -N '' -q -f "${keyfile}"
+    else
+        msg "No ssh client tools available in this environment (cannot create ${keyfile})"
+        : TODO - perhaps install ssh client here ;
+    fi 
+}
+
 function setup_root_ssh()
 {
     # Set up ssh for root
-    [[ -f /root/.ssh/id_rsa ]] || ssh-keygen -t rsa -q -N "" -f /root/.ssh/id_rsa 
+    create_ssh_key_file /root/.ssh/id_rsa
 
-    # Allow root login via ssh
-    if ! grep '^PermitRootLogin yes/' /etc/ssh/sshd_config 
+    if [[ -f /etc/ssh/sshd_config ]]
     then
-        sed -i '/#PermitRootLogin/ s/.*/PermitRootLogin yes/' /etc/ssh/sshd_config
-        systemctl reload sshd
+        # Allow root login via ssh
+        if ! grep '^PermitRootLogin yes/' /etc/ssh/sshd_config 
+        then
+            sed -i '/#PermitRootLogin/ s/.*/PermitRootLogin yes/' /etc/ssh/sshd_config
+            systemctl reload sshd
+        fi
+    else
+        warn "No ssh service available for configuration"
     fi
 }
 
@@ -360,12 +410,15 @@ function configure_timezone()
 
 function preconfigure_pip()
 {
-    {
-        echo_data "[global]"
-        echo_data "index http://nexus:7081/repository/pypi/pypi"
-        echo_data "index-url http://nexus:7081/repository/pypi/simple"
-        echo_data "trusted-host = nexus"
-    } >> /etc/pip.conf 
+    if [[ -n "${NEXUS}" ]]
+    then
+        {
+            echo_data "[global]"
+            echo_data "index http://${NEXUS}/repository/pypi/pypi"
+            echo_data "index-url http://${NEXUS}/repository/pypi/simple"
+            echo_data "trusted-host = nexus"
+        } >> /etc/pip.conf 
+    fi
 }
 
 function with_low_tcp_time_wait()
@@ -378,7 +431,7 @@ function with_low_tcp_time_wait()
 
 function provision_standalone()
 {
-    . /soestack/provision/common/lib/lib-standalone.sh
+    . "${SS_DIR}"/provision/common/lib/lib-standalone.sh
 
     add_hosts
     add_nameserver # nameserver needs to be configured before docker is installed and started
@@ -387,9 +440,7 @@ function provision_standalone()
     then
         disable_repos CentOS
     else 
-        # regardless, disable Source, Debuginfo , Vault repos
-        disable_repos 'CentOS-Sources' 'CentOS-Vault' 'CentOS-fasttrack' 'CentOS-Debuginfo' 'CentOS-CR'
-        disable_repos 'CentOS-Media'
+        [[ -n "${DISABLE_REPOS}" ]] && disable_repos ${DISABLE_REPOS//,/ }
     fi
 
     configure_standalone_server

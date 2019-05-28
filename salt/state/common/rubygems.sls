@@ -19,12 +19,12 @@
             #!/bin/bash
 
             {%- if mirror %}
-            gem sources | grep -s "{{mirror}}" || gem sources --add "{{mirror}}"
-            gem sources | grep -s rubygems.org && gem sources --remove https://rubygems.org/
+            gem sources | grep -q "{{mirror}}" || gem sources --add "{{mirror}}"
+            gem sources | grep -q rubygems.org && gem sources --remove https://rubygems.org/
             {%- endif %}
 
             # Bundler released version 2.0 and decided to break compatibility entirely
-            gem list | egrep -s '^bundler[[:space:]]' || gem install -v bundle "< 2.0"
+            gem list | egrep -q '^bundler[[:space:]]' || gem install -v bundle "< 2.0"
 
             {%- if mirror %}
             if ! bundle config | grep "{{mirror}}"

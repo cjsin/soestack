@@ -11,7 +11,7 @@ Toplevel Structure
 
 ``salt`` - After the initial stages of provisioning, SaltStack configuration from within the ``salt`` subdirectory will be used to complete the provisioning. 
 
-``exclude`` - Area for placement of binary files required for installation / setup of a standalone server configuration only.  The USB and Vagrant provisioning will look for pre-downloaded files here and copy them if available.
+``bundled`` - Area for placement of binary files required for installation / setup of a standalone server configuration only.  The USB and Vagrant provisioning will look for pre-downloaded files here and copy them if available.
 
 Provisioning Structure
 ######################

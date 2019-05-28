@@ -106,7 +106,7 @@ deployments:
                                     #WAIT:              1
                                     DOMAIN:            default
                                     SALT_MASTER:       infra.default
-                                    SALT_TYPE:         client
+                                    SALT_TYPE:         minion
                                     NAMESERVER:        gateway
                                     ROLES:             basic-node
                                     LAYERS:            soe:demo,site:demo,lan:default

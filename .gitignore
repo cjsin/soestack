@@ -8,3 +8,7 @@ __pycache__
 *.private.*
 venv
 build
+public .dockerignore
+nexus-prior
+obsolete
+public

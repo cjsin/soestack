@@ -2,7 +2,7 @@
 # This file runs in the install environment with the destination system
 # mounted at /mnt/sysimage
 
-. /soestack/provision/kickstart/lib/lib.sh
+[[ -n "${SS_LOADED_KS_LIB}" ]] || . "${SS_DIR:=${BASH_SOURCE[0]%/provision/*}}"/provision/kickstart/lib/lib.sh
 
 function copy_files()
 {
@@ -26,7 +26,7 @@ function copy_logs()
 function copy_ss_provisioning()
 {
     msg "Copy ss kickstarts to installed system"
-    copy_files "/soestack/provision" "/soestack"
+    copy_files "${SS_DIR}/provision" "/soestack"
     copy_files "${SS_GEN}/*" "${SS_GEN}"
     ls -lR "${ANA_INSTALL_PATH}/soestack/provision"
     msg "Completed copying ss kickstarts and ss config."
