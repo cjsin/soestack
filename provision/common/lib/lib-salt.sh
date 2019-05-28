@@ -118,6 +118,7 @@ function configure_etc_salt()
     # Copy some static configuration
     cp "${SS_INC}"/minion.d/* /etc/salt/minion.d/
 
+    notice "Minion ID being used for salt registration is $(hostname -s)"
     echo_data "id: $(hostname -s)" > /etc/salt/minion.d/id.conf
 
     configure_ipa_integration
