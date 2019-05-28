@@ -4,8 +4,10 @@
 Libvirt / Vagrant Preparation
 #############################
 
-Installing the tools
-====================
+.. _installing_vm_tools:
+
+Installing virtualisation tools
+===============================
 
 You will need libvirt and vagrant installed. We will also install the vagrant-libvirt integration.
 
@@ -13,6 +15,9 @@ You will need libvirt and vagrant installed. We will also install the vagrant-li
 
     sudo yum -y install vagrant libvirtd virt-manager vagrant-libvirt
 
+.. _libvirt_networking:
+
+.. _vagrant_networking:
 
 Configuring the virtual network for vagrant
 ===========================================
@@ -41,6 +46,8 @@ Create this xml file somewhere then run:
     $> virsh net-define /path/to/vagrant-libvirt-network.xml
 
 Alternatively you can use an existing libvirt network, and search/replace 192.168.121 within the demo files.
+
+.. _configuring_storage_pools:
 
 Configuring a storage pool
 ==========================
@@ -79,6 +86,7 @@ After adding the user to the group you may need to either log out entirely and t
 
     $> newgrp qemu
 
+.. _installing_vagrant_images:
 
 Configuring a Vagrant image file
 ================================

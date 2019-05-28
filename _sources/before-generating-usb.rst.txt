@@ -2,11 +2,20 @@
 Steps to do before generating USB stick
 #######################################
 
+.. _modifying default passwords:
+
+Modifying default passwords
+---------------------------
+
+.. _root_passwords:
+
 - Generate an encrypted root password with:
 
     . code-block:: console
 
         > openssl passwd -1
+
+.. _grub_passwords:
 
 - Generate a grub password with:
 

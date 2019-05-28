@@ -34,15 +34,15 @@
             
   <div class="section" id="libvirt-vagrant-preparation">
 <span id="vagrant-prep"></span><h1>Libvirt / Vagrant Preparation<a class="headerlink" href="#libvirt-vagrant-preparation" title="Permalink to this headline">¶</a></h1>
-<div class="section" id="installing-the-tools">
-<h2>Installing the tools<a class="headerlink" href="#installing-the-tools" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="installing-virtualisation-tools">
+<span id="installing-vm-tools"></span><h2>Installing virtualisation tools<a class="headerlink" href="#installing-virtualisation-tools" title="Permalink to this headline">¶</a></h2>
 <p>You will need libvirt and vagrant installed. We will also install the vagrant-libvirt integration.</p>
 <div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">sudo yum -y install vagrant libvirtd virt-manager vagrant-libvirt</span>
 </pre></div>
 </div>
 </div>
 <div class="section" id="configuring-the-virtual-network-for-vagrant">
-<h2>Configuring the virtual network for vagrant<a class="headerlink" href="#configuring-the-virtual-network-for-vagrant" title="Permalink to this headline">¶</a></h2>
+<span id="vagrant-networking"></span><span id="libvirt-networking"></span><h2>Configuring the virtual network for vagrant<a class="headerlink" href="#configuring-the-virtual-network-for-vagrant" title="Permalink to this headline">¶</a></h2>
 <p>The demo files are designed to work with a subnet <code class="docutils literal notranslate"><span class="pre">192.168.121.x/24</span></code>.</p>
 <p>The following file can be used to configure libvirt to provide this network, if you do not already have it.</p>
 <div class="highlight-xml notranslate"><div class="highlight"><pre><span></span><span class="nt">&lt;network</span> <span class="na">ipv6=</span><span class="s">&#39;yes&#39;</span><span class="nt">&gt;</span>
@@ -64,7 +64,7 @@
 <p>Alternatively you can use an existing libvirt network, and search/replace 192.168.121 within the demo files.</p>
 </div>
 <div class="section" id="configuring-a-storage-pool">
-<h2>Configuring a storage pool<a class="headerlink" href="#configuring-a-storage-pool" title="Permalink to this headline">¶</a></h2>
+<span id="configuring-storage-pools"></span><h2>Configuring a storage pool<a class="headerlink" href="#configuring-a-storage-pool" title="Permalink to this headline">¶</a></h2>
 <p>The included <code class="docutils literal notranslate"><span class="pre">Vagrantfile</span></code> expects <code class="docutils literal notranslate"><span class="pre">libvirt</span></code> to be configured with a storage pool (for disk image files) called <code class="docutils literal notranslate"><span class="pre">linux</span></code>.</p>
 <p>Either change this to match one of your existing storage pools in <code class="docutils literal notranslate"><span class="pre">provision/vagrant/Vagrantfile</span></code>, comment it out, or create a new storage pool.</p>
 <p>Example commands for creating a storage pool are as follows:</p>
@@ -93,7 +93,7 @@
 </div>
 </div>
 <div class="section" id="configuring-a-vagrant-image-file">
-<h2>Configuring a Vagrant image file<a class="headerlink" href="#configuring-a-vagrant-image-file" title="Permalink to this headline">¶</a></h2>
+<span id="installing-vagrant-images"></span><h2>Configuring a Vagrant image file<a class="headerlink" href="#configuring-a-vagrant-image-file" title="Permalink to this headline">¶</a></h2>
 <p>While vagrant itself can download <code class="docutils literal notranslate"><span class="pre">box</span></code> files, it is often (especially in a disconnected network environment) or when intending to re-use the files, preferable to download a box file separately and manually <code class="docutils literal notranslate"><span class="pre">add</span></code> it for use with vagrant.</p>
 <p>The demo <code class="docutils literal notranslate"><span class="pre">Vagrantfile</span></code> specifies an image file (<code class="docutils literal notranslate"><span class="pre">box</span></code> file) named <code class="docutils literal notranslate"><span class="pre">centos/7.1902.01</span></code>.</p>
 <p>To have vagrant automatically download and install the image, replace <code class="docutils literal notranslate"><span class="pre">centos/7.1902.01</span></code> in <code class="docutils literal notranslate"><span class="pre">provision/vagrant/Vagrantfile</span></code> with <code class="docutils literal notranslate"><span class="pre">centos/7</span></code>.</p>
@@ -130,7 +130,7 @@
 <li class="toctree-l1"><a class="reference internal" href="ABOUT.html">About SoeStack</a></li>
 <li class="toctree-l1"><a class="reference internal" href="QUICKSTART.html">QUICKSTART</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Libvirt / Vagrant Preparation</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#installing-the-tools">Installing the tools</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#installing-virtualisation-tools">Installing virtualisation tools</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#configuring-the-virtual-network-for-vagrant">Configuring the virtual network for vagrant</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#configuring-a-storage-pool">Configuring a storage pool</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#configuring-a-user-account-to-allow-vagrant-usage">Configuring a user account to allow vagrant usage</a></li>

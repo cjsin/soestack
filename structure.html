@@ -33,16 +33,16 @@
           <div class="body" role="main">
             
   <div class="section" id="soestack-structure">
-<h1>SoeStack Structure<a class="headerlink" href="#soestack-structure" title="Permalink to this headline">¶</a></h1>
+<span id="id1"></span><h1>SoeStack Structure<a class="headerlink" href="#soestack-structure" title="Permalink to this headline">¶</a></h1>
 <p>The SoeStack SOE is designed to be installed on an infrastructure server which will act as a Salt master and PXE boot server for building and controlling other nodes.</p>
 <div class="section" id="toplevel-structure">
-<h2>Toplevel Structure<a class="headerlink" href="#toplevel-structure" title="Permalink to this headline">¶</a></h2>
+<span id="structure-toplevel"></span><h2>Toplevel Structure<a class="headerlink" href="#toplevel-structure" title="Permalink to this headline">¶</a></h2>
 <p><code class="docutils literal notranslate"><span class="pre">provision</span></code> - Initial provisioning of nodes is performed utilising the code and configuration within the <code class="docutils literal notranslate"><span class="pre">provision</span></code> subdirectory.</p>
 <p><code class="docutils literal notranslate"><span class="pre">salt</span></code> - After the initial stages of provisioning, SaltStack configuration from within the <code class="docutils literal notranslate"><span class="pre">salt</span></code> subdirectory will be used to complete the provisioning.</p>
 <p><code class="docutils literal notranslate"><span class="pre">bundled</span></code> - Area for placement of binary files required for installation / setup of a standalone server configuration only.  The USB and Vagrant provisioning will look for pre-downloaded files here and copy them if available.</p>
 </div>
 <div class="section" id="provisioning-structure">
-<h2>Provisioning Structure<a class="headerlink" href="#provisioning-structure" title="Permalink to this headline">¶</a></h2>
+<span id="id2"></span><h2>Provisioning Structure<a class="headerlink" href="#provisioning-structure" title="Permalink to this headline">¶</a></h2>
 <p>Provisioning (up until the point where Salt takes over) is within the toplevel directory <code class="docutils literal notranslate"><span class="pre">provision</span></code> and
 is separated into <code class="docutils literal notranslate"><span class="pre">usb</span></code>, <code class="docutils literal notranslate"><span class="pre">vagrant</span></code>, <code class="docutils literal notranslate"><span class="pre">kickstart</span></code> and <code class="docutils literal notranslate"><span class="pre">common</span></code> subdirectories:</p>
 <blockquote>
@@ -55,7 +55,7 @@ is separated into <code class="docutils literal notranslate"><span class="pre">u
 </div></blockquote>
 </div>
 <div class="section" id="saltstack-structure">
-<h2>Saltstack Structure<a class="headerlink" href="#saltstack-structure" title="Permalink to this headline">¶</a></h2>
+<span id="id3"></span><h2>Saltstack Structure<a class="headerlink" href="#saltstack-structure" title="Permalink to this headline">¶</a></h2>
 <p>The salt layer is at this stage quite minimal and consists of areas for:</p>
 <blockquote>
 <div><ul>
@@ -71,7 +71,7 @@ is separated into <code class="docutils literal notranslate"><span class="pre">u
 <li><p>Implementation states (<code class="docutils literal notranslate"><span class="pre">state</span></code> files)</p></li>
 </ul>
 </div></blockquote>
-<p>The <code class="docutils literal notranslate"><span class="pre">state</span></code> area contains subdirectories related to:</p>
+<p id="states-structure">The <code class="docutils literal notranslate"><span class="pre">state</span></code> area contains subdirectories related to:</p>
 <blockquote>
 <div><ul>
 <li><p><code class="docutils literal notranslate"><span class="pre">build</span></code> - Building custom RPM packages from data configured in the pillar area</p></li>

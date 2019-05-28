@@ -1,13 +1,20 @@
+.. _license:
+
 #######
 LICENSE
 #######
 
-
 **SoeStack - a SOE for Linux systems**
+
+.. _copyright:
 
 *Copyright (C) 2018-2019 Chris Sincock*
 
 The license text is included below:
+
+.. _GPL2:
+
+.. _No_Warranty:
 
 .. code-block:: text
 

@@ -1,3 +1,5 @@
+.. _about_soestack:
+
 ##############
 About SoeStack
 ##############
@@ -35,6 +37,7 @@ In its current state, it is primarily designed to support:
 
     - Building nodes via USB, network (PXE) or virtual machines (via Vagrant).
 
+.. _about_getting_started:
 
 Getting Started
 ###############
@@ -61,6 +64,7 @@ Before you can use the files for your own purposes you will need to:
 
         + Alternatively modify the pillar data to match your existing nexus repos
 
+.. _about_deploying_with_usb:
 
 Deploying an infrastructure server via USB
 ##########################################
