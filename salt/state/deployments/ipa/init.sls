@@ -1,4 +1,0 @@
-include:
-    - .master
-    - .client
-    - .backups

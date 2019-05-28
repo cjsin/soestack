@@ -1,5 +1,0 @@
-[bootstrap-elasticco]
-name=bootstrap-elasticco
-baseurl=$bundled/bootstrap-pkgs/elasticco
-enabled=1
-gpgcheck=1

@@ -1,7 +1,0 @@
-# Soestack network configuration 
-NAME={{devname}}
-DEVICE={{devname}}
-{#- note the keys are sorted to produce a stable file #}
-{%- for x in keys|sort %}
-{{x}}={{sysconfig[x]}}
-{%- endfor %}

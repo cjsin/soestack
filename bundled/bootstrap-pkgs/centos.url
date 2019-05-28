@@ -1,4 +1,0 @@
-http://mirror.centos.org/centos/$releasever/os/$basearch
-http://mirror.centos.org/centos/$releasever/updates/$basearch
-http://mirror.centos.org/centos/$releasever/extras/$basearch
-http://mirror.centos.org/centos/$releasever/centosplus/$basearch

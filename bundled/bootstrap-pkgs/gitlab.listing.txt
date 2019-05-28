@@ -1,1 +1,0 @@
-gitlab-runner-11.2.0-1.x86_64.rpm

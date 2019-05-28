@@ -1,5 +1,0 @@
-[bootstrap-dockerce]
-name=bootstrap-dockerce
-baseurl=$bundled/bootstrap-pkgs/dockerce
-enabled=1
-gpgcheck=1

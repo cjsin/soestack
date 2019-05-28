@@ -1,3 +1,0 @@
-include:
-    - .docker-ce
-

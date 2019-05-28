@@ -1,2 +1,0 @@
-include:
-    - server.pxeboot.base

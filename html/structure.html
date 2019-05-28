@@ -1,0 +1,193 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta charset="utf-8" />
+    <title>SoeStack Structure &#8212; SoeStack 2.0 documentation</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/language_data.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Steps to do before generating USB stick" href="before-generating-usb.html" />
+    <link rel="prev" title="TODO" href="TODOS.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="soestack-structure">
+<h1>SoeStack Structure<a class="headerlink" href="#soestack-structure" title="Permalink to this headline">¶</a></h1>
+<p>The SoeStack SOE is designed to be installed on an infrastructure server which will act as a Salt master and PXE boot server for building and controlling other nodes.</p>
+<div class="section" id="toplevel-structure">
+<h2>Toplevel Structure<a class="headerlink" href="#toplevel-structure" title="Permalink to this headline">¶</a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">provision</span></code> - Initial provisioning of nodes is performed utilising the code and configuration within the <code class="docutils literal notranslate"><span class="pre">provision</span></code> subdirectory.</p>
+<p><code class="docutils literal notranslate"><span class="pre">salt</span></code> - After the initial stages of provisioning, SaltStack configuration from within the <code class="docutils literal notranslate"><span class="pre">salt</span></code> subdirectory will be used to complete the provisioning.</p>
+<p><code class="docutils literal notranslate"><span class="pre">bundled</span></code> - Area for placement of binary files required for installation / setup of a standalone server configuration only.  The USB and Vagrant provisioning will look for pre-downloaded files here and copy them if available.</p>
+</div>
+<div class="section" id="provisioning-structure">
+<h2>Provisioning Structure<a class="headerlink" href="#provisioning-structure" title="Permalink to this headline">¶</a></h2>
+<p>Provisioning (up until the point where Salt takes over) is within the toplevel directory <code class="docutils literal notranslate"><span class="pre">provision</span></code> and
+is separated into <code class="docutils literal notranslate"><span class="pre">usb</span></code>, <code class="docutils literal notranslate"><span class="pre">vagrant</span></code>, <code class="docutils literal notranslate"><span class="pre">kickstart</span></code> and <code class="docutils literal notranslate"><span class="pre">common</span></code> subdirectories:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>USB - is for building a USB device or image file (for a virtual machine boot)</p></li>
+<li><p>Vagrant - is for further provisioning a pre-built VM image utilising <code class="docutils literal notranslate"><span class="pre">Vagrant</span></code></p></li>
+<li><p>Kickstart - is for building a node using a network boot (<code class="docutils literal notranslate"><span class="pre">PXE</span></code> booting)</p></li>
+<li><p>Common - shared code used by all the provisioning methods</p></li>
+</ul>
+</div></blockquote>
+</div>
+<div class="section" id="saltstack-structure">
+<h2>Saltstack Structure<a class="headerlink" href="#saltstack-structure" title="Permalink to this headline">¶</a></h2>
+<p>The salt layer is at this stage quite minimal and consists of areas for:</p>
+<blockquote>
+<div><ul>
+<li><p>Configuration data (<code class="docutils literal notranslate"><span class="pre">pillar</span></code> data). A hierarchy of data defined in several layers.</p>
+<blockquote>
+<div><ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">defaults</span></code> - default values or fallbacks</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">layers</span></code> - layers for different LANs, sites, roles, or hosts. NOTE, the SOE is extensible with it being a very simple matter to add extra layers.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">demo</span></code> - a demo / example configuration for a small lan with a single server and multiple workstations</p></li>
+</ul>
+</div></blockquote>
+</li>
+<li><p>Implementation states (<code class="docutils literal notranslate"><span class="pre">state</span></code> files)</p></li>
+</ul>
+</div></blockquote>
+<p>The <code class="docutils literal notranslate"><span class="pre">state</span></code> area contains subdirectories related to:</p>
+<blockquote>
+<div><ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">build</span></code> - Building custom RPM packages from data configured in the pillar area</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">accounts</span></code> - Local system account creation (separate from IPA user account creation)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">cots</span></code> - Installing COTS software (Draw-IO, eDraw, Pencil, StarUML)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">network-init</span></code> - Network configuration</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">deployments</span></code> - Deploying services to individual nodes as specified in pillar:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>Elasticsearch (baremetal or containerized)</p></li>
+<li><p>Gitlab (baremetal)</p></li>
+<li><p>Grafana (baremetal or containerized)</p></li>
+<li><p>IPA server or client</p></li>
+<li><p>Kibana (baremetal or container)</p></li>
+<li><p>Prometheus (container)</p></li>
+<li><p>Node Exporter (baremetal)</p></li>
+<li><p>Nexus (container)</p></li>
+<li><p>Simple http services for network file access</p></li>
+<li><p>PXE (+DHCP, TFTP) support for an infrastructure server</p></li>
+</ul>
+</div></blockquote>
+</li>
+<li><p><code class="docutils literal notranslate"><span class="pre">_states</span></code> - Custom Saltstack state modules</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">server</span></code> - Configuration for servers only</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">workstation</span></code> - Configuration for workstations</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">templates</span></code> - Templates used by various states, primarily by Deployments</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">yum</span></code> - Yum repository management</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">config</span></code> - Deployment of configuration files</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">util</span></code> - utility states for administrative or developer use</p></li>
+</ul>
+</div></blockquote>
+</div>
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">SoeStack</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="LICENSE.html">LICENSE</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ABOUT.html">About SoeStack</a></li>
+<li class="toctree-l1"><a class="reference internal" href="QUICKSTART.html">QUICKSTART</a></li>
+<li class="toctree-l1"><a class="reference internal" href="libvirt-vagrant-preparation.html">Libvirt / Vagrant Preparation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="nexus-quickstart.html">Nexus quickstart</a></li>
+<li class="toctree-l1"><a class="reference internal" href="TODOS.html">TODO</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">SoeStack Structure</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#toplevel-structure">Toplevel Structure</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#provisioning-structure">Provisioning Structure</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#saltstack-structure">Saltstack Structure</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="before-generating-usb.html">Steps to do before generating USB stick</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="TODOS.html" title="previous chapter">TODO</a></li>
+      <li>Next: <a href="before-generating-usb.html" title="next chapter">Steps to do before generating USB stick</a></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2019, Chris Sincock.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.0.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="_sources/structure.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

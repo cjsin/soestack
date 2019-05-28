@@ -1,4 +1,0 @@
-PORTS={{container.ports}}
-VOLUMES={{container.volumes|join(" ")}}
-IMAGE={{pillar['service-reg'].nexus_docker}}/{{container.image}}
-OPTIONS={{container.options or ""}}

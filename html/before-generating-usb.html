@@ -1,0 +1,135 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta charset="utf-8" />
+    <title>Steps to do before generating USB stick &#8212; SoeStack 2.0 documentation</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/language_data.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="prev" title="SoeStack Structure" href="structure.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="steps-to-do-before-generating-usb-stick">
+<h1>Steps to do before generating USB stick<a class="headerlink" href="#steps-to-do-before-generating-usb-stick" title="Permalink to this headline">¶</a></h1>
+<ul>
+<li><p>Generate an encrypted root password with:</p>
+<blockquote>
+<div><p>. code-block:: console</p>
+<blockquote>
+<div><p>&gt; openssl passwd -1</p>
+</div></blockquote>
+</div></blockquote>
+</li>
+<li><p>Generate a grub password with:</p>
+<blockquote>
+<div><div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;</span> grub2-mkpasswd-pbkdf2
+</pre></div>
+</div>
+</div></blockquote>
+</li>
+<li><p>Pass these as ss.ROOT_PW and ss.GRUB_PW on the kernel boot commandline (set in bundler-usb.properties), or alternatively, update the FALLBACK_xxx_PASSWORD variables in the file <code class="docutils literal notranslate"><span class="pre">password-fallbacks.sh</span></code></p></li>
+<li><p>See <code class="docutils literal notranslate"><span class="pre">provision/usb/README.rst</span></code> for further info.</p></li>
+</ul>
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">SoeStack</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="LICENSE.html">LICENSE</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ABOUT.html">About SoeStack</a></li>
+<li class="toctree-l1"><a class="reference internal" href="QUICKSTART.html">QUICKSTART</a></li>
+<li class="toctree-l1"><a class="reference internal" href="libvirt-vagrant-preparation.html">Libvirt / Vagrant Preparation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="nexus-quickstart.html">Nexus quickstart</a></li>
+<li class="toctree-l1"><a class="reference internal" href="TODOS.html">TODO</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="structure.html">SoeStack Structure</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Steps to do before generating USB stick</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="structure.html" title="previous chapter">SoeStack Structure</a></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2019, Chris Sincock.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.0.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="_sources/before-generating-usb.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

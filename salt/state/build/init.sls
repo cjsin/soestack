@@ -1,3 +1,0 @@
-include:
-    - .prep
-    - .build-packages

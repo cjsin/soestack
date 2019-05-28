@@ -1,3 +1,0 @@
-include:
-    - .gitlab
-    - .gitlab-runner

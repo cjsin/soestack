@@ -1,5 +1,0 @@
-[bootstrap-soestack]
-name=bootstrap-soestack
-baseurl=$bundled/bootstrap-pkgs/soestack
-enabled=1
-gpgcheck=0

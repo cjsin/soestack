@@ -1,1 +1,0 @@
-#!stateconf yaml . jinja

@@ -1,5 +1,0 @@
-[bootstrap-centos76]
-name=bootstrap-centos76
-baseurl=$bundled/bootstrap-pkgs/centos76
-enabled=1
-gpgcheck=1

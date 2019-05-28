@@ -1,0 +1,162 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta charset="utf-8" />
+    <title>QUICKSTART &#8212; SoeStack 2.0 documentation</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/language_data.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Libvirt / Vagrant Preparation" href="libvirt-vagrant-preparation.html" />
+    <link rel="prev" title="About SoeStack" href="ABOUT.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="quickstart">
+<span id="id1"></span><h1>QUICKSTART<a class="headerlink" href="#quickstart" title="Permalink to this headline">¶</a></h1>
+<p>This document provides instructions for getting an environment set up
+on your workstation, for trying out SoeStack and quickly seeing if it is
+suitable for your purposes.</p>
+<p>These instructions may be specific for Fedora or other similar RedHat-flavoured distros such as CentOS and RHEL.</p>
+<p>What we are going to do:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>Install libvirt and vagrant</p></li>
+<li><p>Configure a virtual network to match the <code class="docutils literal notranslate"><span class="pre">demo</span></code> configs provided</p></li>
+<li><p>Run the vagrant deployment of the <code class="docutils literal notranslate"><span class="pre">infra</span></code> demo host</p></li>
+<li><p>SSH into the node and have a look around</p></li>
+</ul>
+</div></blockquote>
+<div class="section" id="preparation">
+<h2>Preparation<a class="headerlink" href="#preparation" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="vagrant">
+<h3>Vagrant<a class="headerlink" href="#vagrant" title="Permalink to this headline">¶</a></h3>
+<p>Please see <a class="reference internal" href="libvirt-vagrant-preparation.html#vagrant-prep"><span class="std std-ref">Libvirt / Vagrant Preparation</span></a> for example initial configuration of <code class="docutils literal notranslate"><span class="pre">libvirt</span></code> / <code class="docutils literal notranslate"><span class="pre">vagrant</span></code> .</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">infra</span></code> machine defined in  the demo Vagrantfile (<code class="docutils literal notranslate"><span class="pre">provision/vagrant/Vagrantfile</span></code>) will run and configure a <code class="docutils literal notranslate"><span class="pre">standalone</span></code> machine and configure it to act as an infrastructure node for a demo SOE, with all required services running.</p>
+<p>This <code class="docutils literal notranslate"><span class="pre">standalone</span></code> configuration is intended to be able to be built in a network environment without access to the internet.</p>
+<p>However to do that it requires a backup of a prepackaged Nexus installation, along with various RPM files downloaded first, to the RPM repo directories within the <code class="docutils literal notranslate"><span class="pre">bundled/bootstrap-pkgs/&lt;repo-name&gt;/packages</span></code> subdirectories.</p>
+</div>
+<div class="section" id="bundled-packages">
+<h3>Bundled Packages<a class="headerlink" href="#bundled-packages" title="Permalink to this headline">¶</a></h3>
+<p>Within <code class="docutils literal notranslate"><span class="pre">bundled/bootstrap-pkgs</span></code> there are various subdirectories for RPM files. Each subdirectory is accompanied by a <code class="docutils literal notranslate"><span class="pre">&lt;reponame&gt;.listing.txt</span></code> file and a <code class="docutils literal notranslate"><span class="pre">&lt;reponame&gt;.url</span></code> file. The <code class="docutils literal notranslate"><span class="pre">url</span></code> file contains the URL for the source packages. The <code class="docutils literal notranslate"><span class="pre">listing.txt</span></code> file contains a listing of which RPM files were used in testing.</p>
+</div>
+<div class="section" id="canned-nexus-deployment">
+<h3>Canned Nexus deployment<a class="headerlink" href="#canned-nexus-deployment" title="Permalink to this headline">¶</a></h3>
+<p>See <a class="reference internal" href="nexus-quickstart.html#nexus-quickstart"><span class="std std-ref">Nexus quickstart</span></a> for further info on an initial nexus setup.</p>
+</div>
+</div>
+<div class="section" id="trying-it-out">
+<h2>Trying it out<a class="headerlink" href="#trying-it-out" title="Permalink to this headline">¶</a></h2>
+<p>Once you’re all prepared:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$</span>&gt; <span class="nb">cd</span> /path/to/soestack/
+<span class="gp">$</span>&gt; <span class="nb">cd</span> provision/vagrant
+<span class="gp">$</span>&gt; vagrant up
+</pre></div>
+</div>
+</div>
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">SoeStack</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="LICENSE.html">LICENSE</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ABOUT.html">About SoeStack</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">QUICKSTART</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#preparation">Preparation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#trying-it-out">Trying it out</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="libvirt-vagrant-preparation.html">Libvirt / Vagrant Preparation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="nexus-quickstart.html">Nexus quickstart</a></li>
+<li class="toctree-l1"><a class="reference internal" href="TODOS.html">TODO</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="structure.html">SoeStack Structure</a></li>
+<li class="toctree-l1"><a class="reference internal" href="before-generating-usb.html">Steps to do before generating USB stick</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="ABOUT.html" title="previous chapter">About SoeStack</a></li>
+      <li>Next: <a href="libvirt-vagrant-preparation.html" title="next chapter">Libvirt / Vagrant Preparation</a></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2019, Chris Sincock.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.0.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="_sources/QUICKSTART.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

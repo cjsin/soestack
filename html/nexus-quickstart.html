@@ -1,0 +1,132 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta charset="utf-8" />
+    <title>Nexus quickstart &#8212; SoeStack 2.0 documentation</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/language_data.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="TODO" href="TODOS.html" />
+    <link rel="prev" title="Libvirt / Vagrant Preparation" href="libvirt-vagrant-preparation.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="nexus-quickstart">
+<span id="id1"></span><h1>Nexus quickstart<a class="headerlink" href="#nexus-quickstart" title="Permalink to this headline">¶</a></h1>
+<p>The Nexus repository is utilised within the SOE to avoid the same packages being downloaded again every time.</p>
+<p>Nexus is a package mirror which can act as a pull-through cache.</p>
+<p>This document will not describe how to run and configure Nexus, but simply how it needs to be utilised within the demo SOE.</p>
+<p>You’ll need to configure a Sonatype <code class="docutils literal notranslate"><span class="pre">Nexus</span></code> instance with multiple <code class="docutils literal notranslate"><span class="pre">repository</span></code> instances, with properties as defined within <code class="docutils literal notranslate"><span class="pre">salt/pillar/layers/demo.sls</span></code>.</p>
+<p>To do that, configure Sonatype Nexus as per their documentation, then add instances of <code class="docutils literal notranslate"><span class="pre">blobstore</span></code> and <code class="docutils literal notranslate"><span class="pre">repository</span></code>, using the types and remote URLs shown within <code class="docutils literal notranslate"><span class="pre">salt/pillar/layers/demo.sls</span></code>.</p>
+<p>After that is done, you can:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>use the <code class="docutils literal notranslate"><span class="pre">Tasks</span></code> within Nexus to create a backup of its databases to its <code class="docutils literal notranslate"><span class="pre">backups</span></code> folder</p></li>
+<li><p>create a <code class="docutils literal notranslate"><span class="pre">db-backup.tar</span></code> archive file, containing the database backup files</p></li>
+<li><p>create a <code class="docutils literal notranslate"><span class="pre">blobs.tar</span></code> archive file, containing the <code class="docutils literal notranslate"><span class="pre">blobs</span></code> subdirectory from the nexus installation</p></li>
+<li><p>store <code class="docutils literal notranslate"><span class="pre">db-backup.tar</span></code> and <code class="docutils literal notranslate"><span class="pre">blobs.tar</span></code> within <code class="docutils literal notranslate"><span class="pre">bundled/nexus/</span></code>.</p></li>
+</ul>
+</div></blockquote>
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">SoeStack</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="LICENSE.html">LICENSE</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ABOUT.html">About SoeStack</a></li>
+<li class="toctree-l1"><a class="reference internal" href="QUICKSTART.html">QUICKSTART</a></li>
+<li class="toctree-l1"><a class="reference internal" href="libvirt-vagrant-preparation.html">Libvirt / Vagrant Preparation</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Nexus quickstart</a></li>
+<li class="toctree-l1"><a class="reference internal" href="TODOS.html">TODO</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="structure.html">SoeStack Structure</a></li>
+<li class="toctree-l1"><a class="reference internal" href="before-generating-usb.html">Steps to do before generating USB stick</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="libvirt-vagrant-preparation.html" title="previous chapter">Libvirt / Vagrant Preparation</a></li>
+      <li>Next: <a href="TODOS.html" title="next chapter">TODO</a></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2019, Chris Sincock.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.0.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="_sources/nexus-quickstart.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

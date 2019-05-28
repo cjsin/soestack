@@ -1,5 +1,0 @@
-[bootstrap-rpmfusion]
-name=bootstrap-rpmfusion
-baseurl=$bundled/bootstrap-pkgs/rpmfusion
-enabled=1
-gpgcheck=1

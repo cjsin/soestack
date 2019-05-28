@@ -1,0 +1,220 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta charset="utf-8" />
+    <title>About SoeStack &#8212; SoeStack 2.0 documentation</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/language_data.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="QUICKSTART" href="QUICKSTART.html" />
+    <link rel="prev" title="LICENSE" href="LICENSE.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="about-soestack">
+<h1>About SoeStack<a class="headerlink" href="#about-soestack" title="Permalink to this headline">¶</a></h1>
+<p>SoeStack is a SOE designed to simplify the deployment of a Linux environment.</p>
+<p>It started as a ‘playground’ for me to try out different things with SaltStack, such as:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>different ways of layering configuration data</p></li>
+<li><p>writing custom SaltStack modules</p></li>
+<li><p>possibilities for integrating SaltStack with IPA</p></li>
+</ul>
+</div></blockquote>
+<p>In its current state, it is primarily designed to support:</p>
+<blockquote>
+<div><ul>
+<li><p>CentOS, RedHat, or Fedora based distros (tested only with CentOS, however should be quite compatible with RedHat and Fedora)</p></li>
+<li><p>Deploying various services such as:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>An IPA server for user / identity management</p></li>
+<li><p>Gitlab (Community Edition)</p></li>
+<li><p>A monitoring service and dashboard (Prometheus and Grafana)</p></li>
+<li><p>An ElasticSearch stack (ElasticSearch, LogStash, and Kibana)</p></li>
+<li><p>A small kubernetes cluster</p></li>
+<li><p>A pull-through package repository for caching software from the internet</p></li>
+</ul>
+</div></blockquote>
+</li>
+<li><p>Configuring nodes, users, software selections etc within a SaltStack configuration area</p></li>
+<li><p>Building nodes via USB, network (PXE) or virtual machines (via Vagrant).</p></li>
+</ul>
+</div></blockquote>
+<div class="section" id="getting-started">
+<h2>Getting Started<a class="headerlink" href="#getting-started" title="Permalink to this headline">¶</a></h2>
+<p>To just try it out and see what it does, please see <a class="reference internal" href="QUICKSTART.html#quickstart"><span class="std std-ref">QUICKSTART</span></a>.</p>
+<p>Before you can use the files for your own purposes you will need to:</p>
+<blockquote>
+<div><ul>
+<li><p>Determine your desired network configuration</p></li>
+<li><p>Generate default root and grub passwords</p></li>
+<li><p>Choose a name for your SOE</p></li>
+<li><p>Copy the ‘demo’ layer(s), and rename to use your new SOE name</p></li>
+<li><p>Customise various network settings, domain names, IP addresses, the GATEWAY, etc</p></li>
+<li><p>Download various RPM packages required to ‘bootstrap’ an environment. The binary files required are not included in this SOE.</p></li>
+<li><p>Either configure a Sonatype Nexus instance with various repositories to access files from the internet, and cache them, or else modify the nexus repos predefined within the SOE.</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>If you choose to use the predefined configuration, you will need to create ‘registries’ within your Nexus instance to match the configuration found within the salt pillar key <code class="docutils literal notranslate"><span class="pre">nexus.repos</span></code> and <code class="docutils literal notranslate"><span class="pre">nexus.blobstores</span></code>.</p></li>
+<li><p>Alternatively modify the pillar data to match your existing nexus repos</p></li>
+</ul>
+</div></blockquote>
+</li>
+</ul>
+</div></blockquote>
+</div>
+<div class="section" id="deploying-an-infrastructure-server-via-usb">
+<h2>Deploying an infrastructure server via USB<a class="headerlink" href="#deploying-an-infrastructure-server-via-usb" title="Permalink to this headline">¶</a></h2>
+<p>Once you’ve modified all the configuration variables, you can generate a USB thumb drive that can be used to install a new server.</p>
+<p>You will need to determine the Model name of the USB device and update various files within the <code class="docutils literal notranslate"><span class="pre">provision/usb</span></code> subfolder.</p>
+<p>Make sure to specify the correct block device name so that you do not overwrite the wrong device.</p>
+<p>The included <code class="docutils literal notranslate"><span class="pre">ss-bundler</span></code> tools require <code class="docutils literal notranslate"><span class="pre">python3</span></code> and the <code class="docutils literal notranslate"><span class="pre">guestfs</span></code> python modules, with the system configured with libvirtd support installed and enabled. The <code class="docutils literal notranslate"><span class="pre">guestfs</span></code> software is utilised for formatting a disk image or disk device and adding files to it.</p>
+<p>Binary files will need to be added to the <code class="docutils literal notranslate"><span class="pre">exclude</span></code> subfolder, such as:</p>
+<blockquote>
+<div><ul>
+<li><p>docker image files (primarily Sonatype Nexus OSS version)</p></li>
+<li><p>various RPM files from different online repositories (centos, rpmfusion, epel, docker community edition)</p></li>
+<li><p>(optional, if you will run nexus on this machine):</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>a Nexus <code class="docutils literal notranslate"><span class="pre">blobs</span></code> tarball and <code class="docutils literal notranslate"><span class="pre">db-backup.tar</span></code></p></li>
+<li><p>if present, these will be used to bootstrap a new Nexus instance on the machine</p></li>
+</ul>
+</div></blockquote>
+</li>
+</ul>
+</div></blockquote>
+<p>The USB provisioning, if the ss.STANDALONE=1 flag is set, will set the server up as an infrastructure server which provides:</p>
+<blockquote>
+<div><ul>
+<li><p>an IPA server</p></li>
+<li><p>monitoring and a dashboard</p></li>
+<li><p>a SaltStack master for controlling other nodes</p></li>
+<li><p>a PXEboot service configured for building other nodes from this server, using SoeStack</p></li>
+<li><p>a Kubernetes master deployment, to which other nodes can be added later</p></li>
+<li><p>an ElasticSearch stack, for logging and log inspection</p></li>
+<li><p>The ability to define package sets with lists of different packages to be installed on different node types.</p></li>
+<li><p>IPA integration for SaltStack which is able to maintain DNS addresses configured within the SaltStack <code class="docutils literal notranslate"><span class="pre">pillar</span></code> data.</p></li>
+<li><p>A print server (CUPS)</p></li>
+<li><p>Various development tools:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>python / pip</p></li>
+<li><p>nodesource npm</p></li>
+</ul>
+</div></blockquote>
+</li>
+<li><p>A configured email service</p></li>
+<li><p>Bash / profile settings</p></li>
+</ul>
+</div></blockquote>
+</div>
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">SoeStack</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="LICENSE.html">LICENSE</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">About SoeStack</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#getting-started">Getting Started</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#deploying-an-infrastructure-server-via-usb">Deploying an infrastructure server via USB</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="QUICKSTART.html">QUICKSTART</a></li>
+<li class="toctree-l1"><a class="reference internal" href="libvirt-vagrant-preparation.html">Libvirt / Vagrant Preparation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="nexus-quickstart.html">Nexus quickstart</a></li>
+<li class="toctree-l1"><a class="reference internal" href="TODOS.html">TODO</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="structure.html">SoeStack Structure</a></li>
+<li class="toctree-l1"><a class="reference internal" href="before-generating-usb.html">Steps to do before generating USB stick</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="LICENSE.html" title="previous chapter">LICENSE</a></li>
+      <li>Next: <a href="QUICKSTART.html" title="next chapter">QUICKSTART</a></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2019, Chris Sincock.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.0.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="_sources/ABOUT.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>
