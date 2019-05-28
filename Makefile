@@ -36,7 +36,7 @@ gitlab-pages: venv docs/*.rst
 	. venv/bin/activate && $(SPHINXBUILD) docs public
 
 github-pages: venv docs/*.rst
-	. venv/bin/activate && $(SPHINXBUILD) docs ../soestack-github-pages/html
+	. venv/bin/activate && $(SPHINXBUILD) docs ../soestack-github-pages/
 
 ss-centos-base:
 	buildah bud --layers -t ss-centos-base:latest -f Dockerfile.base . 
