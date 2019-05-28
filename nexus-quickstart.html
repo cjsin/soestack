@@ -48,6 +48,179 @@
 <li><p>store <code class="docutils literal notranslate"><span class="pre">db-backup.tar</span></code> and <code class="docutils literal notranslate"><span class="pre">blobs.tar</span></code> within <code class="docutils literal notranslate"><span class="pre">bundled/nexus/</span></code>.</p></li>
 </ul>
 </div></blockquote>
+<div class="section" id="configuring-a-nexus-instance-on-your-host">
+<h2>Configuring a Nexus instance on your host<a class="headerlink" href="#configuring-a-nexus-instance-on-your-host" title="Permalink to this headline">¶</a></h2>
+<p>First, get docker installed and running (no help here, look elsewhere, a standard install is fine).</p>
+<p>Next, pull the sonatype image:</p>
+<blockquote>
+<div><ul>
+<li><p>look at <a class="reference external" href="https://hub.docker.com/r/sonatype/nexus3/">https://hub.docker.com/r/sonatype/nexus3/</a></p></li>
+<li><p>find the latest sonatype nexus3 version (check the <code class="docutils literal notranslate"><span class="pre">Tags</span></code> tab).</p></li>
+<li><p>for example the current version is 3.16.1, which is used in the following example commands.</p></li>
+<li><p>run:</p>
+<blockquote>
+<div><div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">docker pull sonatype/nexus3:3.16.1</span>
+</pre></div>
+</div>
+</div></blockquote>
+</li>
+<li><p>create a data directory (as root):</p>
+<blockquote>
+<div><div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">mkdir /data/nexus3</span>
+<span class="go">chown 200.200 /data/nexus3</span>
+</pre></div>
+</div>
+</div></blockquote>
+</li>
+<li><p>create a configuration file, <code class="docutils literal notranslate"><span class="pre">/etc/sysconfig/nexus-mirror</span></code>, which will include the path to your data directory.</p>
+<blockquote>
+<div><div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">ENV</span><span class="o">=</span>
+<span class="c1"># Edit the following line to include your timezone</span>
+<span class="c1">#TZ=--env TZ=&lt;insert your timezone here&gt;</span>
+<span class="c1"># NOTE this is configuring the Nexus container to forward traffic for 5 different ports,</span>
+<span class="c1"># which will correspond to different repositories that will be set up in it later.</span>
+<span class="n">PORTS</span><span class="o">=-</span><span class="n">p</span> <span class="mi">7081</span><span class="o">-</span><span class="mi">7085</span><span class="p">:</span><span class="mi">8081</span><span class="o">-</span><span class="mi">8085</span>
+<span class="c1"># If you need to bind on a specific IP address, you can specify that like in the following example:</span>
+<span class="c1">#PORTS=-p IPADDRESS:7081-7085:8081-8085</span>
+<span class="n">VOLUMES</span><span class="o">=-</span><span class="n">v</span> <span class="o">/</span><span class="n">data</span><span class="o">/</span><span class="n">nexus3</span><span class="p">:</span><span class="o">/</span><span class="n">nexus</span><span class="o">-</span><span class="n">data</span>
+<span class="n">DOCKER_OPTIONS</span><span class="o">=</span>
+<span class="n">RM</span><span class="o">=</span>
+<span class="n">ENTRYPOINT</span><span class="o">=--</span><span class="n">entrypoint</span> <span class="o">/</span><span class="nb">bin</span><span class="o">/</span><span class="n">bash</span>
+<span class="c1"># Put the correct nexus version below</span>
+<span class="n">IMAGE</span><span class="o">=</span><span class="n">sonatype</span><span class="o">/</span><span class="n">nexus3</span><span class="p">:</span><span class="mf">3.16</span><span class="o">.</span><span class="mi">1</span>
+<span class="n">OPTIONS</span><span class="o">=-</span><span class="n">c</span> <span class="s2">&quot;/opt/sonatype/start-nexus-repository-manager.sh &gt; /nexus-data/service.log 2&gt;&amp;1&quot;</span>
+</pre></div>
+</div>
+</div></blockquote>
+</li>
+<li><p>create a systemd service unit file <code class="docutils literal notranslate"><span class="pre">/etc/systemd/system/nexus-mirror.service</span></code> for the service:</p>
+<blockquote>
+<div><p>[Unit]
+Description=Sonatype Nexus OSS 3 Pull-through cache
+After=NetworkManager-wait-online.service network.target docker.service</p>
+<p>[Service]
+Environment=DOCKER_OPTIONS=
+Environment=PORTS=
+Environment=VOLUMES=
+Environment=ENTRYPOINT=
+Environment=IMAGE=
+Environment=OPTIONS=
+Environment=ENV=
+Environment=RM=–rm
+EnvironmentFile=-/etc/sysconfig/%p
+ExecStartPre=-/usr/bin/docker stop %p
+ExecStartPre=-/usr/bin/docker rm %p
+ExecStart=/usr/bin/docker run $(RM) –name %p  $TZ $DOCKER_OPTIONS $PORTS $VOLUMES -v /etc/localtime:/etc/localtime $ENTRYPOINT $IMAGE $OPTIONS
+ExecStop=/usr/bin/docker stop %p
+Type=simple
+User=root
+Group=root
+UMask=0007</p>
+<p>[Install]
+WantedBy=multi-user.target</p>
+</div></blockquote>
+</li>
+<li><p>if you use SELinux, make sure the data directory has the correct context to be accessed by a container:</p>
+<blockquote>
+<div><div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">#</span>&gt; chcon -t container_file_t /data/nexus3
+</pre></div>
+</div>
+</div></blockquote>
+</li>
+<li><p>You may at this point need to add some firewall rules to allow access to the service.</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>eg, use iptables, or firewalld, to allow access to ports 7081 through to 7085</p></li>
+</ul>
+</div></blockquote>
+</li>
+<li><p>If you already have existing nexus backup files (<code class="docutils literal notranslate"><span class="pre">db-backup.tar</span></code> and <code class="docutils literal notranslate"><span class="pre">blobs.tar</span></code>):</p>
+<blockquote>
+<div><ul>
+<li><p>Unpack the backup data:</p>
+<blockquote>
+<div><div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">#</span>&gt; <span class="nb">cd</span> /data/nexus3
+<span class="gp">#</span>&gt; mkdir -p restore-from-backup
+<span class="gp">#</span>&gt; <span class="nb">cd</span> restore-from-backup
+<span class="gp">#</span>&gt; tar xvf /path/to/db-backup.tar
+<span class="gp">#</span>&gt; <span class="nb">cd</span> ..
+<span class="gp">#</span>&gt; tar xvf /path/to/blobs.tar
+</pre></div>
+</div>
+</div></blockquote>
+</li>
+<li><p>Configure the SELinux contexts, if you use SELinux (generally not needed if the directory was configured above):</p>
+<blockquote>
+<div><div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">#</span>&gt; <span class="nb">cd</span> /data/nexus3
+<span class="gp">#</span>&gt; chcon -R -t container_file_t blobs restore-from-backup
+</pre></div>
+</div>
+</div></blockquote>
+</li>
+<li><p>Give the files appropriate ownership:</p>
+<blockquote>
+<div><div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">#</span>&gt; chown -R <span class="m">200</span>.200 /data/nexus3
+</pre></div>
+</div>
+</div></blockquote>
+</li>
+</ul>
+</div></blockquote>
+</li>
+<li><p>Start the service</p>
+<blockquote>
+<div><div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">systemctl start nexus-mirror</span>
+</pre></div>
+</div>
+</div></blockquote>
+</li>
+<li><p>Check the service</p>
+<blockquote>
+<div><div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">systemctl status nexus-mirror</span>
+</pre></div>
+</div>
+</div></blockquote>
+</li>
+<li><p>If problems occurred:</p>
+<blockquote>
+<div><ul>
+<li><p>check the log for this systemd service:</p>
+<blockquote>
+<div><div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">journalctl -u nexus-mirror</span>
+</pre></div>
+</div>
+</div></blockquote>
+</li>
+<li><p>check the log created when the service runs (configured in the <code class="docutils literal notranslate"><span class="pre">sysconfig</span></code> file):</p>
+<blockquote>
+<div><p>NOTE the service file configured above tells the container to put its log output to <code class="docutils literal notranslate"><span class="pre">service.log</span></code> within the configured data dir.</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">cat /data/nexus3/service.log</span>
+</pre></div>
+</div>
+</div></blockquote>
+</li>
+<li><p>you’re on your own from here</p></li>
+</ul>
+</div></blockquote>
+</li>
+</ul>
+</div></blockquote>
+</div>
+<div class="section" id="checking-it-out">
+<h2>Checking it out<a class="headerlink" href="#checking-it-out" title="Permalink to this headline">¶</a></h2>
+<p>Once you’ve started the service, if it seems to be running ok, use your web browser
+and try to access it at <a class="reference external" href="http:/">http:/</a>/&lt;your-hostname&gt;:7081/</p>
+<p>Unless you’re using nexus backup files, the username and password for logging in will be the same as that for the released docker sonatype/nexus3 image.</p>
+</div>
+<div class="section" id="using-your-nexus-instance-within-soestack">
+<h2>Using your Nexus instance within SoeStack<a class="headerlink" href="#using-your-nexus-instance-within-soestack" title="Permalink to this headline">¶</a></h2>
+<p>To utilise SoeStack with the <code class="docutils literal notranslate"><span class="pre">demo</span></code> configuration, you’ll need to configure each <code class="docutils literal notranslate"><span class="pre">repository</span></code> in nexus that the demo configuration is expecting.</p>
+<p>I would recommend reviewing the Sonatype Nexus documentation, and then configuring repos according to the settings within the <code class="docutils literal notranslate"><span class="pre">salt/pillar/</span></code>, <code class="docutils literal notranslate"><span class="pre">layers/soe/demo.sls</span></code> file.</p>
+<p>You will see in that file that it is expecting various ‘blobstores’ and ‘repos’ configured. The type of each repository, the associated internet URL, are within that file.</p>
+<p>Configuring these repositories is left as an exercise for the reader, as Nexus automated provisioning was not (at the time of writing) capable enough to facillitate this being automated. Please see the Nexus documentation to configure each required repository.</p>
+<p>Basic html caching repositories should be on port 8081. Docker registries to proxy various different sites should be configured on ports 8081 to 8085.</p>
+<p>The systemd service above is mapping ports &lt;8&gt;08&lt;x&gt; to &lt;7&gt;08&lt;x&gt; because I had some other services running on the 808x range. So the SoeStack demo configurations utilise 708x instead of 808x. If you don’t have the same limitation you can change that with a quick search/replace.</p>
+</div>
 </div>
 
 
@@ -74,7 +247,12 @@
 <li class="toctree-l1"><a class="reference internal" href="ABOUT.html">About SoeStack</a></li>
 <li class="toctree-l1"><a class="reference internal" href="QUICKSTART.html">QUICKSTART</a></li>
 <li class="toctree-l1"><a class="reference internal" href="libvirt-vagrant-preparation.html">Libvirt / Vagrant Preparation</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">Nexus quickstart</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Nexus quickstart</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#configuring-a-nexus-instance-on-your-host">Configuring a Nexus instance on your host</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#checking-it-out">Checking it out</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#using-your-nexus-instance-within-soestack">Using your Nexus instance within SoeStack</a></li>
+</ul>
+</li>
 <li class="toctree-l1"><a class="reference internal" href="TODOS.html">TODO</a></li>
 </ul>
 <p class="caption"><span class="caption-text">Contents:</span></p>
