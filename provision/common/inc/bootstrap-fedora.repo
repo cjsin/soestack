@@ -1,62 +1,62 @@
 [os]
 name=Fedora-$releasever
-baseurl=$NEXUS/repository/fedora/pub/fedora/linux/releases/$releasever/Everything/$basearch/os
+baseurl=http://$NEXUS/repository/fedora/pub/fedora/linux/releases/$releasever/Everything/$basearch/os
 enabled=1
 gpgcheck=1
 gpgkey=file:///etc/pki/rpm-gpg//RPM-GPG-KEY-fedora-$releasever-$basearch
 
 [updates]
 name=Fedora-$releasever - Updates
-baseurl=$NEXUS/repository/fedora/pub/fedora/linux/updates/$releasever/Everything/$basearch
+baseurl=http://$NEXUS/repository/fedora/pub/fedora/linux/updates/$releasever/Everything/$basearch
 enabled=1
 gpgcheck=1
 gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-fedora-$releasever-$basearch
 
 [rpmfusion-free]
 name=RPMFusion free
-baseurl=$NEXUS/repository/rpmfusion/free/fedora/releases/$releasever/Everything/$basearch/os
+baseurl=http://$NEXUS/repository/rpmfusion/free/fedora/releases/$releasever/Everything/$basearch/os
 enabled=1
 gpgcheck=1
 gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-rpmfusion-free-fedora-$releasever
 
 [rpmfusion-free-updates]
 name=RPMFusion free updates
-baseurl=$NEXUS/repository/rpmfusion/free/fedora/updates/$releasever/$basearch
+baseurl=http://$NEXUS/repository/rpmfusion/free/fedora/updates/$releasever/$basearch
 enabled=1
 gpgcheck=1
 gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-rpmfusion-free-fedora-$releasever
 
 [rpmfusion-nonfree]
 name=RPMFusion nonfree
-baseurl=$NEXUS/repository/rpmfusion/nonfree/fedora/releases/$releasever/Everything/$basearch
+baseurl=http://$NEXUS/repository/rpmfusion/nonfree/fedora/releases/$releasever/Everything/$basearch
 enabled=1
 gpgcheck=1
 gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-rpmfusion-nonfree-fedora-$releasever
 
 [rpmfusion-nonfree-updates]
 name=RPMFusion nonfree updates
-baseurl=$NEXUS/repository/rpmfusion/nonfree/fedora/updates/$releasever/$basearch
+baseurl=http://$NEXUS/repository/rpmfusion/nonfree/fedora/updates/$releasever/$basearch
 enabled=1
 gpgcheck=1
 gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-rpmfusion-nonfree-fedora-$releasever
 
 [docker-ce]
 name=Docker Community Edition
-baseurl=$NEXUS/repository/dockerce/linux/fedora/$releasever/$basearch/stable
+baseurl=http://$NEXUS/repository/dockerce/linux/fedora/$releasever/$basearch/stable
 enabled=1
 gpgcheck=1
 gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-DOCKERCE-fedora
 
 [gitlab]
 name=Gitlab Community Edition 
-baseurl=$NEXUS/repository/gitlab/gitlab/gitlab-ce/fedora/$releasever/$basearch
+baseurl=http://$NEXUS/repository/gitlab/gitlab/gitlab-ce/fedora/$releasever/$basearch
 enabled=1
 gpgcheck=1
 gpgkey=file:///etc/pki/rpm-gpg/gitlab-gitlab-ce-3D645A26AB9FBD22.pub.gpg
 
 [nodesource]
 name=Node.js 10.x Packages
-baseurl=$NEXUS/repository/nodesource/pub_10.x/fc/$releasever/$basearch
+baseurl=http://$NEXUS/repository/nodesource/pub_10.x/fc/$releasever/$basearch
 enabled=1
 gpgcheck=1
 gpgkey=file:///etc/pki/rpm-gpg/NODESOURCE-GPG-SIGNING-KEY-EL
@@ -69,14 +69,14 @@ gpgkey=file:///etc/pki/rpm-gpg/NODESOURCE-GPG-SIGNING-KEY-EL
 
 [kubernetes]
 name=Kubernetes
-baseurl=$NEXUS/repository/kubernetes/yum/repos/kubernetes-el7-$basearch
+baseurl=http://$NEXUS/repository/kubernetes/yum/repos/kubernetes-el7-$basearch
 enabled=1
 gpgcheck=1
 gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-GOOGLE-CLOUD-PACKAGES
 
 [vscode]
 name=Microsoft Visual Studio Code
-baseurl=$NEXUS/repository/vscode/yumrepos/vscode/
+baseurl=http://$NEXUS/repository/vscode/yumrepos/vscode/
 enabled=1
 gpgcheck=1
 gpgkey=file:///etc/pki/rpm-gpg/microsoft.asc

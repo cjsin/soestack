@@ -17,7 +17,7 @@
 #
 
 # Make sure SS_DIR is set
-: ${SS_DIR:-${BASH_SOURCE[0]%/provision/*}} ;
+SS_DIR="${SS_DIR:-${BASH_SOURCE[0]%/provision/*}}"
 log_dir="/var/log/provision"
 log_file="${log_dir}/provision-soestack.log"
 record_file="${log_dir}/provision-soestack-record.log"

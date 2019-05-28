@@ -116,11 +116,11 @@ deployments:
                                     INSPECT:           1
                                     SKIP_CONFIRMATION: 0
                                     #BOOTSTRAP_REPOS:   bootstrap-centos.repo
-                                    NEXUS:             http://nexus:7081/repository
+                                    NEXUS:             nexus:7081
                                     TIMEZONE:          UTC
                                 ss_repos:
-                                    os:                '$NEXUS/centos/centos/$releasever/os/$basearch'
-                                    updates:           '$NEXUS/centos/centos/$releasever/updates/$basearch'
+                                    os:                'http://$NEXUS/repository/centos/centos/$releasever/os/$basearch'
+                                    updates:           'http://$NEXUS/repository/centos/centos/$releasever/updates/$basearch'
                                 ss_hosts: {}
                                 #    192.168.121.1:      gateway.default
                                 #    192.168.121.101:    infra.default infra master salt ipa nexus.default nexus

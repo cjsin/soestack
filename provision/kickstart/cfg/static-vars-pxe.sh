@@ -3,11 +3,11 @@ hosts=(
     "10.10.10.101 infra.soestack infra    master"
 )
 
-NEXUS=http://127.0.0.1:7081/repository
+NEXUS=127.0.0.1:7081/
 
 repos=(
-    "repo --name=os      --baseurl=$NEXUS/centos/centos/\$releasever/os/\$basearch"
-    "repo --name=updates --baseurl=$NEXUS/centos/centos/\$releasever/updates/\$basearch"
+    "repo --name=os      --baseurl=http://$NEXUS/repository/centos/centos/\$releasever/os/\$basearch"
+    "repo --name=updates --baseurl=http://$NEXUS/repository/centos/centos/\$releasever/updates/\$basearch"
 )
 
 # These vars are defaults which can be overridden

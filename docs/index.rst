@@ -3,7 +3,7 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to soestack's documentation!
+Welcome to SoeStack's documentation!
 ====================================
 
 Getting started
@@ -31,9 +31,8 @@ Looking further
    structure
    before-generating-usb
 
-Indices and tables
-==================
+Search
+======
 
-* :ref:`genindex`
 * :ref:`search`
 

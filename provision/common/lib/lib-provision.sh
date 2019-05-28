@@ -221,45 +221,6 @@ function import_gpgkeys()
     msg "Done."
 }
 
-function bootstrap_repos()
-{
-    msg "Bootstrap repos."
-
-    import_gpgkeys
-
-    [[ -n "${DISABLE_REPOS}" ]] && disable_repos ${DISABLE_REPOS//,/ }
-
-    if [[ -n "${BOOTSTRAP_REPOS}" ]]
-    then
-
-        local f
-        for f in ${BOOTSTRAP_REPOS//,/ }
-        do
-            local found=""
-            for try in "${SS_DIR}/provision/${PROVISION_TYPE}/cfg/${f}" "${SS_DIR}/provision/common/inc/${f}"
-            do
-                if [[ -f "${try}" ]]
-                then
-                    found="${try}"
-                    break
-                fi
-            done
-            if [[ -n "${found}" ]]
-            then
-                msg "Installing ${found} which provides the following repos:"
-                egrep '^\[' "${found}" | tr '[]' ':' | cut -d: -f2 | indent
-                /bin/cp -f "${found}" /etc/yum.repos.d/
-            else 
-                err "Bootstrap repos file ${f} was not found!"
-            fi 
-        done
-        msg "Refreshing yum repo cache - this may take a while."
-        yum makecache
-    else
-        msg "No BOOTSTRAP_REPOS defined. Preconfigured OS repos will be used."
-    fi
-}
-
 function configure_soestack_provision()
 {
     msg "Configure soestack postinstall provisioning"
@@ -296,7 +257,7 @@ function yum_setting()
 # This is used so that we access RPM packages in a repo by (for example)
 # the 7.6 directory instead of just 7
 # (or in the case of centos, 7.6.1810 instead of just 7).
-function modify_specific_yum_releasever()
+function modify_yum_vars()
 {
     local pkg=$(egrep -i distroverpkg /etc/yum.conf | cut -d= -f2)
     local ver=$(rpm -q --queryformat='%{version}' "${pkg}")
@@ -363,7 +324,7 @@ function configure_yum()
     yum_setting deltarpm 0
     
     configure_yum_bundled_var
-    modify_specific_yum_releasever
+    modify_yum_vars
 
     sed -i '/enabled=/ s/=1/=0/' /etc/yum/pluginconf.d/fastestmirror.conf
 }

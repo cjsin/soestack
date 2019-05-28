@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Set SS_DIR if not set already, using the path of this script
-: ${SS_DIR:-${BASH_SOURCE[0]%/provision/*}} ;
+SS_DIR="${SS_DIR:-${BASH_SOURCE[0]%/provision/*}}"
 
 export PROVISION_DIR="${SS_DIR}/provision"
 export SS_INC="${PROVISION_DIR}/common/inc"
@@ -157,16 +157,22 @@ function is_installed()
 
 function is_docker()
 {
-    # This works for docker
-    if egrep -q '/docker|/lxc' /proc/1/cgroup
+    # The status of this routine is cached and exported in CONTAINER_DETECTED
+    if [[ -z "${CONTAINER_DETECTED}" ]]
     then 
-        return 0
-    elif [[ -n "${PROVISION_TYPE}" && "${PROVISION_TYPE}" =~ docker|vagrant ]]
-    then
-        return 0
-    else
-        return 1
+        # This works for docker
+        if egrep -q '/docker|/lxc' /proc/1/cgroup
+        then 
+            msg "Detected running within docker or lxc container"
+            export CONTAINER_DETECTED=1
+        elif [[ -n "${PROVISION_TYPE}" && "${PROVISION_TYPE}" =~ docker|vagrant ]]
+        then
+            export CONTAINER_DETECTED=1
+        else
+            export CONTAINER_DETECTED=0
+        fi
     fi
+    (( CONTAINER_DETECTED ))
 }
 
 function update_mlocate()
@@ -333,6 +339,10 @@ function process_commandline_vars()
     elif [[ "${1:0:1}" == "/" && -f "${1}" ]]
     then
         readarray -t pairs < "${1}"
+        shift
+    elif [[ "${1:0:1}" == "/" ]]
+    then 
+        err "File ${1} was not found!"
     else
         pairs=("${@}")
     fi
@@ -574,10 +584,12 @@ function load_bootstrap_vars()
 function load_dyn_vars()
 {
     local f
+    set -a
     for f in "${SS_GEN}"/*-vars.sh 
     do 
         . "${f}"
     done
+    set +a
 }
 
 function is_standalone()
@@ -792,6 +804,45 @@ function simulate_wireless()
 function command_is_available()
 {
     command -v "${1}" > /dev/null 2> /dev/null
+}
+
+function bootstrap_repos()
+{
+    msg "Bootstrap repos."
+
+    import_gpgkeys
+
+    [[ -n "${DISABLE_REPOS}" ]] && disable_repos ${DISABLE_REPOS//,/ }
+
+    if [[ -n "${BOOTSTRAP_REPOS}" ]]
+    then
+
+        local f
+        for f in ${BOOTSTRAP_REPOS//,/ }
+        do
+            local found=""
+            for try in "${SS_DIR}/provision/${PROVISION_TYPE}/cfg/${f}" "${SS_DIR}/provision/common/inc/${f}"
+            do
+                if [[ -f "${try}" ]]
+                then
+                    found="${try}"
+                    break
+                fi
+            done
+            if [[ -n "${found}" ]]
+            then
+                msg "Installing ${found} which provides the following repos:"
+                egrep '^\[' "${found}" | tr '[]' ':' | cut -d: -f2 | indent
+                /bin/cp -f "${found}" /etc/yum.repos.d/
+            else 
+                err "Bootstrap repos file ${f} was not found!"
+            fi 
+        done
+        msg "Refreshing yum repo cache - this may take a while."
+        yum makecache
+    else
+        msg "No BOOTSTRAP_REPOS defined. Preconfigured OS repos will be used."
+    fi
 }
 
 export SSL_LOADED_COMMON_LIB=1

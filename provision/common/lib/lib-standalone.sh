@@ -444,18 +444,22 @@ function prepare_network_for_docker()
     then
         msg "No sysctl setup for docker build"
     else
-        sysctl --system
+        sysctl --system 2>&1 | egrep -v '^[*]' | egrep . | column -s ' = ' -t
     fi
 }
 
 function prepare_nexus_service()
 {
     echo_stage 3 "Preparing nexus user and service"
-    cp "${SS_DIR}"/provision/common/inc/nexus-mirror.service /etc/systemd/system/
-    groupadd -g 200 nexus
-    useradd -r -d /d/local/data/nexus -u 200 -g 200 nexus
-    chown -R nexus.nexus /d/local/data/nexus/
-    systemctl enable nexus-mirror.service
+    local unit_name="nexus-mirror"
+    local idnum="200"
+    local idname="nexus"
+    local homedir="/d/local/data/${idname}"
+    cp "${PROVISION_DIR}/provision/common/inc/${unit_name}.service" /etc/systemd/system/
+    groupadd -g "${idnum}" "${idname}"
+    useradd -r -d "${homedir}" -u "${idnum}" -g "${idnum}" "${idname}"
+    chown -R "${idname}.${idname}" "${homedir}"
+    systemctl enable "${unit_name}.service"
     # NOTE the service is not started yet
 }
 
@@ -551,7 +555,7 @@ function configure_standalone_server()
         copy_bundled_files
     fi
 
-    echo_stage 5 "Docker"
+    echo_stage 5 "Docker setup for standalone server"
     {
         prepare_network_for_docker
         prepare_docker_for_nexus

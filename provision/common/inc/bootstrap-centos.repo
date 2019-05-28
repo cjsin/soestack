@@ -1,34 +1,34 @@
 [os]
 name=Centos-$releasever
-baseurl=$NEXUS/repository/centos/centos/$releaselong/os/$basearch
+baseurl=http://$NEXUS/repository/centos/centos/$releaselong/os/$basearch
 enabled=1
 gpgcheck=1
 gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-$releasever
 
 [updates]
 name=Centos-$releasever - Updates
-baseurl=$NEXUS/repository/centos/centos/$releaselong/updates/$basearch
+baseurl=http://$NEXUS/repository/centos/centos/$releaselong/updates/$basearch
 enabled=1
 gpgcheck=1
 gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-$releasever
 
 [centos-extras]
 name=Centos-$releasever - Extras
-baseurl=$NEXUS/repository/centos/centos/$releaselong/extras/$basearch
+baseurl=http://$NEXUS/repository/centos/centos/$releaselong/extras/$basearch
 enabled=1
 gpgcheck=1
 gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-$releasever
 
 [centos-plus]
 name=Centos-$releasever - Plus
-baseurl=$NEXUS/repository/centos/centos/$releaselong/centosplus/$basearch
+baseurl=http://$NEXUS/repository/centos/centos/$releaselong/centosplus/$basearch
 enabled=0
 gpgcheck=1
 gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-$releasever
 
 [epel]
 name=EPEL-$releasever
-baseurl=$NEXUS/repository/epel/pub/epel/$releasever/$basearch
+baseurl=http://$NEXUS/repository/epel/pub/epel/$releasever/$basearch
 enabled=1
 gpgcheck=1
 gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-EPEL-$releasever
@@ -36,63 +36,63 @@ gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-EPEL-$releasever
 # IUS needs to be disabled during IPA server install
 [ius]
 name=IUS for centos
-baseurl=$NEXUS/repository/ius/pub/ius/stable/CentOS/$releasever/$basearch
+baseurl=http://$NEXUS/repository/ius/pub/ius/stable/CentOS/$releasever/$basearch
 enabled=0 
 gpgcheck=1
 gpgkey=file:///etc/pki/rpm-gpg/IUS-COMMUNITY-GPG-KEY
 
 [rpmfusion-free-updates]
 name=RPMFusion free updates
-baseurl=$NEXUS/repository/rpmfusion/free/el/updates/$releasever/$basearch
+baseurl=http://$NEXUS/repository/rpmfusion/free/el/updates/$releasever/$basearch
 enabled=1
 gpgcheck=1
 gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-rpmfusion-free-el-$releasever
 
 [rpmfusion-nonfree-updates]
 name=RPMFusion nonfree updates
-baseurl=$NEXUS/repository/rpmfusion/nonfree/el/updates/$releasever/$basearch
+baseurl=http://$NEXUS/repository/rpmfusion/nonfree/el/updates/$releasever/$basearch
 enabled=1
 gpgcheck=1
 gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-rpmfusion-nonfree-el-$releasever
 
 [kubernetes]
 name=Kubernetes
-baseurl=$NEXUS/repository/kubernetes/yum/repos/kubernetes-el$releasever-$basearch
+baseurl=http://$NEXUS/repository/kubernetes/yum/repos/kubernetes-el$releasever-$basearch
 enabled=1
 gpgcheck=1
 gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-GOOGLE-CLOUD-PACKAGES
 
 [dockerce]
 name=Docker Community Edition
-baseurl=$NEXUS/repository/dockerce/linux/centos/$releasever/$basearch/stable
+baseurl=http://$NEXUS/repository/dockerce/linux/centos/$releasever/$basearch/stable
 enabled=1
 gpgcheck=1
 gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-DOCKERCE-centos
 
 [gitlab]
 name=Gitlab Community Edition 
-baseurl=$NEXUS/repository/gitlab/gitlab/gitlab-ce/el/$releasever/$basearch
+baseurl=http://$NEXUS/repository/gitlab/gitlab/gitlab-ce/el/$releasever/$basearch
 enabled=1
 gpgcheck=1
 gpgkey=file:///etc/pki/rpm-gpg/gitlab-gitlab-ce-3D645A26AB9FBD22.pub.gpg
 
 [nodesource]
 name=Node.js 10.x Packages
-baseurl=$NEXUS/repository/nodesource/pub_10.x/el/$releasever/$basearch
+baseurl=http://$NEXUS/repository/nodesource/pub_10.x/el/$releasever/$basearch
 enabled=1
 gpgcheck=1
 gpgkey=file:///etc/pki/rpm-gpg/NODESOURCE-GPG-SIGNING-KEY-EL
 
 [saltstack]
 name=Saltstack for el$releasever
-baseurl=$NEXUS/repository/saltstack/yum/redhat/$releasever/$basearch/latest
+baseurl=http://$NEXUS/repository/saltstack/yum/redhat/$releasever/$basearch/latest
 enabled=1
 gpgcheck=1
 gpgkey=file:///etc/pki/rpm-gpg/saltstack-signing-key
 
 [vscode]
 name=Microsoft Visual Studio Code
-baseurl=$NEXUS/repository/vscode/yumrepos/vscode/
+baseurl=http://$NEXUS/repository/vscode/yumrepos/vscode/
 enabled=1
 gpgcheck=1
 gpgkey=file:///etc/pki/rpm-gpg/microsoft.asc

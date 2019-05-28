@@ -1,6 +1,6 @@
 #!/bin/bash
 
-. "${SS_DIR:-${BASH_SOURCE[0]%/provision/*}}"/provision/common/lib/lib-provision.sh
+. "${SS_DIR:=${BASH_SOURCE[0]%/provision/*}}"/provision/common/lib/lib-provision.sh
 
 VAGRANT_VARS="${SS_GEN}/1-vagrant-vars.sh"
 
@@ -89,14 +89,13 @@ function update_yum_repos()
     msg "Disable existing yum repos."
 
     # Disable bundled repos
-    mkdir -p /etc/yum.repos.d/disable
-
-    ls /etc/yum.repos.d/ | egrep -q '[.]repo' && mv -f /etc/yum.repos.d/*.repo /etc/yum.repos.d/disable/
+    [[ -n "${DISABLE_REPOS}" ]] && disable_repos ${DISABLE_REPOS//,/ }
 
     # Add our own repos
     msg "Install bootstrap repos."
-    cp -f "${SS_DIR}/provision/common/inc/bootstrap-${OS_NAME}.repo" /etc/yum.repos.d/
+    #cp -f "${SS_DIR}/provision/common/inc/bootstrap-${OS_NAME}.repo" /etc/yum.repos.d/
     # grep '^\[' /etc/yum.repos.d/bootstrap-*repo
+    bootstrap_repos
 }
 
 function find_bad_packages()
@@ -272,16 +271,30 @@ function vagrant_provision()
     local provisioning_commandline=()
     local item 
     local cfg_suffix='[.]cfg$'
-    
-    echo_stage 2 "Create ${SS_GEN}/vagrant-commandline"
+
     mkdir -p "${SS_GEN}"
+    
     for item in "${@}"
     do 
-        if [[ "${item}" =~ ${cfg_suffix} ]]
+        if [[ "${item}" == "--clean" ]]
+        then
+            msg "Clean ${SS_GEN} for regeneration"
+            rm -f "${SS_GEN}"/*
+        fi
+    done 
+
+    echo_stage 2 "Create ${SS_GEN}/vagrant-commandline"
+    for item in "${@}"
+    do 
+        if [[ "${item}" == "--clean" ]]
+        then
+            : ignore - this has already been processed ;
+        elif [[ "${item}" =~ ${cfg_suffix} ]]
         then 
             local try_file="${SS_DIR}/provision/vagrant/cfg/${item}"
             if [[ -f "${try_file}" ]]
             then
+                echo "Using ${try_file}" 1>&2
                 egrep -i '^ss[.]' < "${try_file}" | cut -c4-
             fi
         else
@@ -295,17 +308,21 @@ function vagrant_provision()
     # This will generate the vars first, which will utilise the vagrant-commandline file 
     # that was just created above
     load_vagrant_vars
+    load_dyn_vars
 
     display_build_configuration
 
     vagrant_provision_common
 
-    if ! is_standalone
-    then
-        update_yum_repos
-    else 
-        notice "Standalone server - bootstrap packages will be used."
-    fi
+    #if ! is_standalone
+    #then
+    #    notice "Non-standalone server - updating yum repos"
+    #    update_yum_repos
+    #else 
+    #    notice "Standalone server - bootstrap packages will be used."
+    #    update_yum_repos
+    #fi
+    update_yum_repos
 
     configure_soestack_provision
 

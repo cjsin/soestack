@@ -15,5 +15,5 @@ SoeStack - a SOE for Linux systems
 Please read the license before using the software and please take 
 special note of the section labelled NO WARRANTY.
 
-See the docs folder for further documentation, also available at https://cjsin.github.io/soestack/index.html
+See the docs folder for further documentation.
 

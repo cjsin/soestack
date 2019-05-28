@@ -2,7 +2,7 @@
 
 echo "Primary provisioning - Docker-specific" 1>&2
 
-. "${SS_DIR:-${BASH_SOURCE[0]%/provision/*}}"/provision/docker/lib/lib.sh
+. "${SS_DIR:=${BASH_SOURCE[0]%/provision/*}}"/provision/docker/lib/lib.sh
 
 docker_provision "${@}"
 
