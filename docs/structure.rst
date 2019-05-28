@@ -1,8 +1,12 @@
+.. _soestack_structure:
+
 ##################
 SoeStack Structure
 ##################
 
 The SoeStack SOE is designed to be installed on an infrastructure server which will act as a Salt master and PXE boot server for building and controlling other nodes.
+
+.. _structure_toplevel:
 
 Toplevel Structure
 ##################
@@ -12,6 +16,8 @@ Toplevel Structure
 ``salt`` - After the initial stages of provisioning, SaltStack configuration from within the ``salt`` subdirectory will be used to complete the provisioning. 
 
 ``bundled`` - Area for placement of binary files required for installation / setup of a standalone server configuration only.  The USB and Vagrant provisioning will look for pre-downloaded files here and copy them if available.
+
+.. _provisioning_structure:
 
 Provisioning Structure
 ######################
@@ -27,6 +33,8 @@ is separated into ``usb``, ``vagrant``, ``kickstart`` and ``common`` subdirector
 
     - Common - shared code used by all the provisioning methods
 
+.. _saltstack_structure:
+
 Saltstack Structure
 ###################
 
@@ -41,6 +49,8 @@ The salt layer is at this stage quite minimal and consists of areas for:
         + ``demo`` - a demo / example configuration for a small lan with a single server and multiple workstations
 
     - Implementation states (``state`` files)
+
+.. _states_structure:
 
 The ``state`` area contains subdirectories related to:
 

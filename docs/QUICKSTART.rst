@@ -20,6 +20,8 @@ What we are going to do:
 
     - SSH into the node and have a look around
 
+.. _quickstart_prep:
+
 Preparation
 ===========
 
@@ -34,6 +36,8 @@ This ``standalone`` configuration is intended to be able to be built in a networ
 
 However to do that it requires a backup of a prepackaged Nexus installation, along with various RPM files downloaded first, to the RPM repo directories within the ``bundled/bootstrap-pkgs/<repo-name>/packages`` subdirectories.
 
+.. _bundled_packages:
+
 Bundled Packages 
 ----------------
 
@@ -43,6 +47,8 @@ Canned Nexus deployment
 -----------------------
 
 See :ref:`nexus_quickstart` for further info on an initial nexus setup.
+
+.. _trying it out:
 
 Trying it out
 =============
