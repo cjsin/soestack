@@ -47,7 +47,7 @@ Create this xml file somewhere then run:
 
 Alternatively you can use an existing libvirt network, and search/replace 192.168.121 within the demo files.
 
-.. _configuring_storage_pools
+.. _configuring_storage_pools:
 
 Configuring a storage pool
 ==========================
