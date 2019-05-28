@@ -32,8 +32,11 @@ sphinx-help: venv
 
 # Catch-all target: route all unknown targets to Sphinx using the new
 # "make mode" option.  $(O) is meant as a shortcut for $(SPHINXOPTS).
-html: venv docs/*.rst
+gitlab-pages: venv docs/*.rst
 	. venv/bin/activate && $(SPHINXBUILD) docs public
+
+github-pages: venv docs/*.rst
+	. venv/bin/activate && $(SPHINXBUILD) docs ../soestack-github-pages/html
 
 ss-centos-base:
 	buildah bud --layers -t ss-centos-base:latest -f Dockerfile.base . 

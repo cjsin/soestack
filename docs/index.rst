@@ -13,6 +13,7 @@ Getting started
    :maxdepth: 2
    :caption: Contents:
 
+   includeme
    LICENSE
    ABOUT
    QUICKSTART
