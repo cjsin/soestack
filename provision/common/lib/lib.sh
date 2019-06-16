@@ -94,14 +94,14 @@ function echo_stage()
 # Echo some text as an explicit return value within the calling function
 function echo_return()
 {
-    echo "${*}"
+    echo "${@}"
 }
 
 # Echo some text, but explicitly with it being as returned data from a function
 # or being prodocued / generated into a file or other artifact
 function echo_data()
 {
-    echo "${*}"
+    echo "${@}"
 }
 
 function echo_progress()
@@ -658,7 +658,7 @@ function array_to_json()
     do 
         s+="\"${i}\", "
     done
-    echo_return -n "[ ${s%, } ]" # NOTE the final comma is stripped off
+    echo_return "[ ${s%, } ]" # NOTE the final comma is stripped off
 }
 
 function pairs_to_json()
@@ -681,19 +681,21 @@ function interactive_prompt()
     
     while [ 1 ] 
     do 
-        # notice "${prompt}" 
-        read -p "Hit enter to continue, skip to skip this step, shell for a shell: " answer
+        spam notice "${prompt}" 
+        spam notice "Hit enter to continue, skip to skip this step, shell for a shell: "
+        read answer
         case "${answer,,}" in 
             skip)
-                msg "OK - skipping this step"
+                spam notice "OK - skipping this step"
                 return 1
                 ;;
             shell)
-                msg "OK - dropping into a shell. Use 'exit 1' to skip the step, and 'exit 0' to continue."
-                bash -i
+                spam notice "OK - dropping into a shell. Use 'exit 1' to skip the step, and 'exit 0' to continue."
+                spam_notice "Shell will be on TTY1."
+                bash -i < /dev/tty1 > /dev/tty1 2> /dev/tty1
                 ;;
             "")
-                msg "OK - continuing with [${prompt}]"
+                spam notice "OK - continuing with [${prompt}]"
                 return 0
                 ;;
             *)
@@ -707,7 +709,7 @@ function step()
 {
     if is_interactive
     then
-        msg "Interactive prompt enabled - enter response on TTY1."
+        spam notice "Interactive prompt enabled - enter response on TTY1."
         if ! interactive_prompt "STEP: ${*}"
         then
             # The user chose to skip

@@ -1241,7 +1241,7 @@ class ImageAccess(VerboseBase):
 
         partitions = g.list_partitions()
         if self.verbose:
-            self.msg("Partitions are "+" ".join(partitions))
+            self.msg("(internal Guestfs) Partitions are "+" ".join(partitions))
         self.end()
         
         usbpart = partitions[0]

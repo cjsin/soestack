@@ -397,7 +397,7 @@ function provision_standalone()
     add_hosts
     add_nameserver # nameserver needs to be configured before docker is installed and started
     
-    if [[ "${BUNDLED_SRC}" ]]
+    if [[ -n "${BUNDLED_SRC}" ]]
     then
         disable_repos CentOS
     else 

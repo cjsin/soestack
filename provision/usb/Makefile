@@ -42,6 +42,9 @@ bundle: $(IMAGE)
 update: $(IMAGE) 
 	$(BUNDLER) update
 
+kickstarts: $(IMAGE)
+	$(BUNDLER) kickstarts
+
 #help:isos      : copy isos
 isos: $(IMAGE) 
 	$(BUNDLER) isos

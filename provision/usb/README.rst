@@ -52,7 +52,7 @@ If using usb:
 
                 .. code-block:: console
 
-                    lsusb -v 2> /dev/null  | egrep 'idVendor|idProduct|Serial' | egrep -A2 SanDisk
+                    lsusb -v 2> /dev/null  | egrep 'idVendor|iProduct|Serial' | egrep -A2 SanDisk
 
             * alternatively you can run, as root, ``udevadm monitor --property`` and then insert the drive, and look at the generated output.
 

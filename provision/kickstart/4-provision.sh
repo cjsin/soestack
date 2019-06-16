@@ -37,7 +37,12 @@ then
     do
         msg "finishing in $m minutes"
         msg "Create the file /tmp/end-WAIT (/mnt/sysimage/tmp/end-WAIT) to abort the wait."
-        sleep 60
+        for s in $(seq 60 -1 0)
+        do
+            sleep 1
+            spam notice "$(printf "\rContinuing in %2d:%02d " "${m}" "${s}")"
+            [[ -f /tmp/end-WAIT ]] && break
+        done 
         [[ -f /tmp/end-WAIT ]] && break
     done
 fi > /dev/tty1 2>&1

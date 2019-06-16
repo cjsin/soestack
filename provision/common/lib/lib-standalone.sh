@@ -129,7 +129,7 @@ function copy_bundled_files()
             nsg "Copy bundled SOE to /e/soestack"
             rsync -av /e/bundled/soe/salt/ "${SS_DIR}/salt/"
         else 
-            notice "No SOE copy is availble for pre-configuration"
+            notice "No SOE copy is available for pre-configuration"
         fi
     fi
 
@@ -267,7 +267,7 @@ function unpack_tar()
     if [[ "${src}" =~ ^http ]]
     then
         curl "${src}${path}" | tar x -C "${dst}"
-    elif [[ -f "${src}" ]]
+    elif [[ -f "${src}${path}" ]]
     then
         tar x -C "${dst}" -f "${src}${path}"
     else
@@ -455,7 +455,7 @@ function prepare_nexus_service()
     local idnum="200"
     local idname="nexus"
     local homedir="/d/local/data/${idname}"
-    cp "${PROVISION_DIR}/provision/common/inc/${unit_name}.service" /etc/systemd/system/
+    cp "${PROVISION_DIR}/common/inc/${unit_name}.service" /etc/systemd/system/
     groupadd -g "${idnum}" "${idname}"
     useradd -r -d "${homedir}" -u "${idnum}" -g "${idnum}" "${idname}"
     chown -R "${idname}.${idname}" "${homedir}"

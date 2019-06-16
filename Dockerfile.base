@@ -1,8 +1,9 @@
 FROM centos:7.6.1810
 
 # ENV clear_yum_cache="rm -rf /var/cache/yum"
-ENV clear_yum_cache="echo yum cache is being kept in the image 1>&2" \
-    SS_DIR=/soestack \
+ENV clear_yum_cache="echo yum cache is being kept in the image 1>&2"
+
+ENV SS_DIR=/soestack \
     PROVISION_DIR=/soestack/provision
 
 RUN echo "7.6.1810" > /etc/yum/vars/releaselong \
