@@ -33,10 +33,10 @@ if is_wait
 then
     msg "Big sleep for (${WAIT} minutes)"
 
-    for n in $(seq ${WAIT} -1 0)
+    for m in $(seq ${WAIT} -1 0)
     do
-        msg "finishing in $n minutes"
-        msg "Create the file /tmp/end-WAIT to abort the wait."
+        msg "finishing in $m minutes"
+        msg "Create the file /tmp/end-WAIT (/mnt/sysimage/tmp/end-WAIT) to abort the wait."
         sleep 60
         [[ -f /tmp/end-WAIT ]] && break
     done

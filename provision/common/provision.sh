@@ -94,7 +94,7 @@ function common_provision_main()
     then
         "${routine}" "${remaining[@]}"
     else
-        "${routine}"  "${remaining[@]}" > "${logfile}" 2>&1
+        "${routine}"  "${remaining[@]}" > "${log_file}" 2>&1
     fi
 }
 

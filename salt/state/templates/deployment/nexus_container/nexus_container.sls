@@ -4,5 +4,7 @@
 #   - deployment_name
 #   - deployment
 #}
-{%  include('templates/containerized_service/containerized_service.sls') with context %}
+{%- if 'roles' in grains and 'nexus-server' in grains.roles %}
+{%    include('templates/containerized_service/containerized_service.sls') with context %}
+{%- endif %}
 

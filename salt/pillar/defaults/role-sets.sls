@@ -20,6 +20,25 @@ role-sets:
             - service-node
             - login-processor-node
             - workstation-node
+            - nexus-node
+
+    quickstart-infra-server-node:
+        purpose: |
+            an infrastructure server with a connection to the internet - uses regular repos
+            instead of a configuring a nexus server
+        combine:
+            - primary-server-node
+            - kubernetes-node
+            - docker-node
+            - email-server-node
+            - homedir-server-node
+            - processor-node
+            - software-development-node
+            - login-node
+            - jumpserver-node
+            - service-node
+            - login-processor-node
+            - workstation-node
 
     login-processor-node:
         purpose: |

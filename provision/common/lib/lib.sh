@@ -66,6 +66,18 @@ function info()
     colored ${COLOR_INFO} INFO: "${@}"
 }
 
+# Spam a message to standard output as well as various TTYs, to
+# make sure that it can be seen even when output is redirected to a log file.
+# WARNING: This will execute the parameters twice so should be used just
+# with functions that produce echoe'd output.
+function spam()
+{
+    "${@}" 
+    "${@}" > /dev/tty1 2>&1
+    "${@}" > /dev/tty2 2>&1
+    "${@}" > /dev/tty3 2>&1
+}
+
 function echo_stage()
 {
     local level="${1:-0}"
@@ -669,7 +681,7 @@ function interactive_prompt()
     
     while [ 1 ] 
     do 
-        msg "${prompt}"
+        # notice "${prompt}" 
         read -p "Hit enter to continue, skip to skip this step, shell for a shell: " answer
         case "${answer,,}" in 
             skip)
@@ -695,6 +707,7 @@ function step()
 {
     if is_interactive
     then
+        msg "Interactive prompt enabled - enter response on TTY1."
         if ! interactive_prompt "STEP: ${*}"
         then
             # The user chose to skip

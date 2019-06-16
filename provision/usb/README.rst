@@ -10,10 +10,13 @@ Before the bundler will work, you'll need to do the following
 ISOs
 ====
 
-- First create a symlink 'isos' within this directory, to a directory
-  which contains the ISO files.
+- Edit the path to the ISO which is going to be used, within the bundler properties files.
 
-- Edit the name of the ISO which is going to be used, within the bundler properties files.
+- For example, edit ``bundler-dev.properties`` and update the following line:
+
+    .. code-block:: console
+
+        iso      ../../bundled/iso/CentOS-7-x86_64-Everything-1810.iso
 
 
 VM image files
@@ -36,6 +39,26 @@ If using usb:
         + you can use a block device, but should use the ``check-device <devicename> "<device model>"`` directive as an extra check
 
             * You must take responsibility yourself for choosing the correct output device and not overwriting your system disk!
+
+        + determining a USB device model (for updating the ``check-device`` directive):
+
+            * the simplest way to do this is use ``lsusb -v`` and search for the USB device vendor (``idVendor``) and product (``idProduct``):
+
+                .. code-block:: console
+
+                    lsusb -v
+
+              or, to look for a 'SanDisk' device:
+
+                .. code-block:: console
+
+                    lsusb -v 2> /dev/null  | egrep 'idVendor|idProduct|Serial' | egrep -A2 SanDisk
+
+            * alternatively you can run, as root, ``udevadm monitor --property`` and then insert the drive, and look at the generated output.
+
+                .. code-block:: console
+
+                    udevadm monitor --property | egrep 'SERIAL|MODEL'
 
     - Within the Makefile:
     

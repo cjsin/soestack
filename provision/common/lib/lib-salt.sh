@@ -58,7 +58,7 @@ function write_role_grains()
         else
             echo_data "roles: []" >> /etc/salt/grains
         fi
-    fi 
+    fi
 }
 
 function write_layer_grains()
@@ -201,6 +201,9 @@ function salt_state_provision()
 {
     local preconfigured_roles="${1}"
     local fail_fast="${2:-0}"
+
+    # Sync custom modules to the minion ('uuid','noop', and 'saltipa')
+    salt-step saltutil.sync_all
 
     # Setting host grain to match short hostname
     # The 'host' grain is otherwise dynamically calculated and is affected by the installed hosts file,

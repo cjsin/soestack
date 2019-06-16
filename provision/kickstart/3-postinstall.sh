@@ -18,7 +18,7 @@ step copy_ss_provisioning
 
 if is_standalone
 then
-    echo_sage 3 "Copying files needed for standalone install"
+    echo_stage 3 "Copying files needed for standalone install"
     step copy_isopackages
     step copy_isos
     step copy_bundled_data

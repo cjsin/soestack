@@ -22,15 +22,13 @@ import traceback
 import subprocess
 import tempfile
 import itertools
+import pprint
+import shlex
+import traceback
 from collections import OrderedDict
 from attrdict import AttrDict
 from pprint import pprint 
 
-import sys
-import argparse
-import pprint
-import shlex
-import traceback
 
 class Defaults:
     IMAGE_SIZE = 12*1024
@@ -517,9 +515,9 @@ class ArgParsing(ArgParsingBase):
             if x == 'search':
                 a.add_argument('--search', dest='search',  type=str, help='The text which will be replaced (within a line), use ~ prefix for a regex')
             if x == 'text':
-                a.add_argument('--text', dest='text',     type=str, help='The new line or replacement text. ignored for insert-line,delete-line')
+                a.add_argument('--text',   dest='text',     type=str, help='The new line or replacement text. ignored for insert-line,delete-line')
             if x == 'location':
-                a.add_argument('--line', dest='location', type=int, default=0, help='A line offset (delete or insert in a different position)')
+                a.add_argument('--line',   dest='location', type=int, default=0, help='A line offset (delete or insert in a different position)')
         return a 
 
     def setup_ls(self,a):
@@ -689,7 +687,7 @@ class Edit:
         
         # new data for the file. a list of items for each line.
         # deletions will be performed by setting an empty array
-        # insertions will be performed by addign an item for a row
+        # insertions will be performed by adding an item for a row
         new_data=[ 
                     [
                         [],  #insertions before the line
@@ -768,6 +766,7 @@ class Edit:
         return matched, (changes+deletions+insertions), out, diff
 
 
+# Global builder object which will be cleaned up if execution is aborted
 builder = None 
 
 def die(msg):
@@ -781,7 +780,9 @@ def msg(strmsg):
     print(strmsg,file=sys.stderr)
 
 class Syslinux:
-
+    """
+    Assists in locating syslinux files
+    """
     def __init__(self,rootpath=Defaults.SYSLINUX_PATH,menufiles=Defaults.SYSLINUX_MENU_FILES,mbrfile=Defaults.SYSLINUX_MBR_FILE):
         self.rootpath = rootpath
         self.menufiles = menufiles.split(',') if menufiles and isinstance(menufiles,str) else menufiles if menufiles else []
@@ -877,7 +878,7 @@ class EditFileAction(Action):
         return "Patch file {} with edit {}".format(self.path,self.edit)
 
 class BaseCopyAction(Action):
-    FALLBACK = AttrDict({'src':[], 'dstdir': '', 'dstname': '', 'exclude': [], 'overwrite': False})
+    FALLBACK = AttrDict({'src': [], 'dstdir': '', 'dstname': '', 'exclude': [], 'overwrite': False})
     
     def __init__(self,*src,args=None,defaults=None, dstname="",dstdir="",overwrite=False, exclude=None):
         """ 
@@ -1064,8 +1065,10 @@ class VerboseBase:
                 raise ValueError("Something failed")
 
 class ImageAccess(VerboseBase):
-    """ Automate creation or access of image file and ISO to
-    prepare for further operations """
+    """ 
+    Automate creation or access of image file and ISO to
+    prepare for further operations 
+    """
 
     def __init__(self,
                  isofile=None,
@@ -1847,7 +1850,7 @@ class ImageBuilderBase(ImageAccess):
         """
 
         if not dstdir:
-               dstdir=""
+            dstdir=""
         
         dstdir=path_join("/usb",dstdir)
         # TODO: vscode has deleted code here
@@ -1865,7 +1868,7 @@ class ImageBuilderBase(ImageAccess):
         any_existing = self._check_folders(dstdir=dstpath,checkfolders=checkfolders,overwrite=overwrite)
 
         if extdir.endswith("/..") or extdir.endswith("/../"):
-            self.msg("Warning: -it is better to use a path with a directory at the end if you want to be sure of the name")
+            self.msg("Warning: It is better to use a path with a named directory at the end if you want to be sure of the name")
             self.msg("Converting {} to {}".format(extdir,os.path.realpath(extdir)))
             real_extdir=os.path.realpath(extdir)
             if not real_extdir or not os.path.exists(real_extdir):
@@ -1876,9 +1879,9 @@ class ImageBuilderBase(ImageAccess):
         exclude_flags=[]
         for item in exclude:
             if item[0] == ':':
-                if item[1:] in ['vcs-ignores','vcs','caches-all','caches-under','caches','backups']:
+                if item[1:] in [ 'vcs-ignores', 'vcs', 'caches-all', 'caches-under', 'caches', 'backups' ]:
                     exclude_flags.append('--exclude-'+item[1:])
-                elif item[1:].split('=')[0] in ['tag-under','tag-all','tag','ignore-recursive','ignore']:
+                elif item[1:].split('=')[0] in [ 'tag-under', 'tag-all', 'tag', 'ignore-recursive', 'ignore' ]:
                     exclude_flags.append('--exclude-'+item[1:])
                 else:
                     msg("ERROR: Unsupported exclude tag {} will be ignored".format(item))
@@ -1914,7 +1917,7 @@ class ImageBuilderBase(ImageAccess):
         from the ISO.
         If you want to copy a file from the USB then, use the :usb: prefix.
         You can also be explicit about the ISO files by using the :iso: prefix,
-        or the host by usign the :host: prefix
+        or the host by using the :host: prefix
         """
 
         self.begin("Copying files from iso to {} - {}".format(dstpath,items))
@@ -1937,6 +1940,7 @@ class ImageBuilderBase(ImageAccess):
                 elif item == ":isofile":
                     self.copy_iso_file(dstdir=dstdir,dstpath=dstpath,overwrite=overwrite)
             
+            # Determine a reasonable default for the origin if it was not specified
             if not origin:
                 if item.startswith('/') or item.startswith('./') or item.startswith('../'):
                     origin = 'host'

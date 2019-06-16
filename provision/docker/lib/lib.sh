@@ -125,8 +125,8 @@ function generate_docker_vars()
         fi
     fi
 
-    [[ -n "${GATEWAY}" ]] && echo_return "GATEWAY=${GATEWAY}"
-    [[ -n "${IPADDR}" ]] && echo_return "IPADDR=${IPADDR}"
+    [[ -n "${GATEWAY}"  ]] && echo_return "GATEWAY=${GATEWAY}"
+    [[ -n "${IPADDR}"   ]] && echo_return "IPADDR=${IPADDR}"
     [[ -n "${IPPREFIX}" ]] && echo_return "IPPREFIX=${IPPREFIX}"
 
     echo_return "NETDEV=${NETDEV}"

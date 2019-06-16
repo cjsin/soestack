@@ -8,7 +8,7 @@ import os
 import subprocess
 import argparse
 import re
-from pprint import pprint
+from pprint import pprint, pformat
 from attrdict import AttrDict, AttrMap
 import itertools
 from collections import Iterable
@@ -166,10 +166,11 @@ def do_copy(src,dst):
     else:
         copies.extend(["--copy",src])
 
-    copies.extend([
-        "--dstdir",  dst_parent,
-        "--dstname", dst_basename,
-    ])
+    if dst_parent:
+        copies.extend(["--dstdir",  dst_parent])
+
+    if dst_basename:
+        copies.extend(["--dstname", dst_basename])
 
     G.ACTIONS = G.ACTIONS + [copies]
     return True
@@ -316,7 +317,6 @@ def replace_vars(items):
             regex = '%'+var_name+'%'
             changed = re.sub(regex,repl, x)
             if changed != x:
-                verbmsg(f"**Substituted %{var_name}% in {x} ==> {changed}")
                 x = changed 
         ret.append(x)
     return ret 
@@ -423,8 +423,12 @@ def process_line(line):
         G.MODES = remainder
         return True
     elif action == Directives.EXCLUDES:
-        G.EXCLUDES = remainder
-        G.ACTIONS = G.ACTIONS+[ ["--copydef","--exclude"] + remainder]
+        if remainder[0] == '--clear':
+            G.EXCLUDES = remainder[1:]
+        else:
+            G.EXCLUDES.append(remainder)
+
+        G.ACTIONS = G.ACTIONS+[ ["--copydef","--exclude"] + G.EXCLUDES ]
         return True
     elif action == Directives.BUILDER:
         G.BUILDER = remainder
@@ -531,7 +535,7 @@ def process_copy_action(line):
         return False
 
     how = line.pop(0).upper() if line else C.INTO
-    where = line.pop(0) if line else '/'
+    where = line.pop(0) if line else ''
 
     if action not in [ C.COPY, C.TAR ]:
         msg(f"Invalid action {action} - expected {C.COPY} or {C.TAR} [{line}]")
@@ -548,9 +552,9 @@ def process_copy_action(line):
     if how not in [ C.INTO, C.AS ]:
         msg(f"Invalid 'how' {how} - expected '{C.INTO}' or '{C.AS}' [{line}]")
 
-    if how and not where:
-        msg(f"You didn't specify the destination after '{how}' - ignoring line '{line}'")
-        return False
+    #if how and not where:
+    #    msg(f"You didn't specify the destination after '{how}' - ignoring line '{line}'")
+    #    return False
 
     if style == C.CONTENTS and action != C.TAR:
         msg(f"Style '{C.CONTENTS}' is only supported with action '{C.TAR}' - ignoring '{line}'")

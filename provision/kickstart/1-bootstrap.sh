@@ -4,7 +4,7 @@
 # because if a problem happens then it may have happened
 # before the user confirmation has occurred.
 
-"${SS_DIR:=${BASH_SOURCE[0]%/provision/*}}"/provision/kickstart/lib/lib-bootstrap.sh
+. "${SS_DIR:=${BASH_SOURCE[0]%/provision/*}}"/provision/kickstart/lib/lib-bootstrap.sh
 
 function completed_bootstrap()
 {

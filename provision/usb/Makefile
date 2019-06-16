@@ -34,9 +34,17 @@ full: $(IMAGE)
 create: $(IMAGE)
 	$(BUNDLER) full
 
+#help:bundle      : update bundled files
+bundle: $(IMAGE) 
+	$(BUNDLER) bundle
+
 #help:update      : update image
 update: $(IMAGE) 
 	$(BUNDLER) update
+
+#help:isos      : copy isos
+isos: $(IMAGE) 
+	$(BUNDLER) isos
 
 #help:check       : print boot labels from the image
 check: 
