@@ -455,7 +455,7 @@ function prepare_nexus_service()
     local idnum="200"
     local idname="nexus"
     local homedir="/d/local/data/${idname}"
-    cp "${PROVISION_DIR}/common/inc/${unit_name}.service" /etc/systemd/system/
+    /bin/cp "${PROVISION_DIR}/common/inc/${unit_name}.service" /etc/systemd/system/
     groupadd -g "${idnum}" "${idname}"
     useradd -r -d "${homedir}" -u "${idnum}" -g "${idnum}" "${idname}"
     chown -R "${idname}.${idname}" "${homedir}"
