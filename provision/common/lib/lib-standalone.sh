@@ -21,6 +21,8 @@ function import_gpgkeys()
 
 function create_installmedia_repo()
 {
+    msg "create_installmedia_repo from lib-standalone"
+    
     local pkg_dst="/e/yum-repos/installmedia"
     local repos_dir="${ANA_INSTALL_PATH}/etc/yum.repos.d"
     {
@@ -112,10 +114,41 @@ function copy_bundled_files()
     # NOTE these still use /e/bundled, for accessing the bundled repo files and soe copy.
     # However BUNDLED_SRC should be set to specify the downloading large bundled files,
     # and can also be set to /e/bundled if all the files were included.
-    if [[ -d "/e/bundled/bootstrap-pkgs" ]]
+    local bundled_pkgs="/e/bundled/bootstrap-pkgs"
+
+    if [[ -d "${bundled_pkgs}" ]]
     then
-        /bin/cp -f /e/bundled/bootstrap-pkgs/*repo /etc/yum.repos.d/
-        yum makecache
+        local repos=( $( cd "${bundled_pkgs}" && ls | egrep '[.]repo$' ) )
+
+        local updated=0
+        if (( "${#repos[@]}" ))
+        then
+            local n
+            for n in "${repos[@]}"
+            do
+                if [[ -f "/etc/yum.repos.d/disable/${n}" ]]
+                then
+                    msg "bootstrap repo ${n} seems to have been enabled prior and subsequently disabled - will not restore it"
+                elif [[ -f "/etc/yum.repos.d/${n}" ]]
+                then 
+                    msg "boostrap repo ${n} is already installed"
+                    ls -l /etc/yum.repos.d
+                else
+                    /bin/cp -f "${bundled_pkgs}/${n}" /etc/yum.repos.d/
+                    ((updated++))
+                fi
+            done
+        else
+            msg "No repos were found in ${bundled_pkgs}"
+        fi
+
+        if (( updated ))
+        then 
+            msg "Updating yum cache"
+            yum makecache
+        else 
+            msg "No repos were updated"
+        fi
     else
         notice "No bootstrap repos for bundled rpms found."
     fi 
@@ -126,33 +159,48 @@ function copy_bundled_files()
     then 
         if [[ -d /e/bundled/soe ]]
         then 
-            nsg "Copy bundled SOE to /e/soestack"
+            msg "Copy bundled SOE to /e/soestack"
             rsync -av /e/bundled/soe/salt/ "${SS_DIR}/salt/"
         else 
             notice "No SOE copy is available for pre-configuration"
         fi
     fi
 
+    # Set up installmedia repo - this may have been done already if performing a USB build,
+    # since the USB build can include the files. 
+    # But in other types of builds, these files may be copied now from ${BUNDLED_SRC}.
+
     local pkg_dir="/e/yum-repos/installmedia"
-    local result selected_iso
-    selected_iso=$(obtain_isos)
-    result=$?
-    if [[ -n "${selected_iso}" ]]
+
+    if [[ -d "${pkg_dir}/repodata" ]]
     then
-        local fstab_line="${selected_iso} ${pkg_dir} auto defaults,ro,loop,auto,nofail 0 0 "
-        if ! grep -F -q "${fstab_line}" /etc/fstab 
+        notice "installmedia files appears to have already been copied"
+        return 0
+    elif [[ -d "${pkg_dir}" ]] && grep -q -F "${pkg_dir}" /etc/fstab 
+    then
+        notice "installmedia iso appears to have already been set up"
+        return 0
+    else 
+        local result selected_iso
+        selected_iso=$(obtain_isos)
+        result=$?
+        if [[ -n "${selected_iso}" ]]
         then
-            echo_data "${fstab_line}" >> "/etc/fstab"
+            local fstab_line="${selected_iso} ${pkg_dir} auto defaults,ro,loop,auto,nofail 0 0 "
+            if ! grep -F -q "${fstab_line}" /etc/fstab 
+            then
+                echo_data "${fstab_line}" >> "/etc/fstab"
+            fi
+            mkdir -p "${pkg_dir}"
+            if ! grep -q "${pkg_dir}" /proc/mounts 
+            then
+                mount "${pkg_dir}"
+                create_installmedia_repo
+            fi
+        else
+            notice "Could not mount ${pkg_dir} (no iso available)"
+            return 1
         fi
-        mkdir -p "${pkg_dir}"
-        if ! grep -q "${pkg_dir}" /proc/mounts 
-        then
-            mount "${pkg_dir}"
-            create_installmedia_repo
-        fi
-    else
-        notice "Could not mount ${pkg_dir} (no iso available)"
-        return 1
     fi
 }
 
@@ -237,7 +285,7 @@ function obtain_isos()
                 msg "Downloading ${selected}"
                 if curl -o "./${filename}" "${selected}" 
                 then
-                    nsg "Successfully downloaded ${selected}"
+                    msg "Successfully downloaded ${selected}"
                     echo_return "${dst_dir}/${filename}"
                 else
                     err "Failed downloading ${selected}"
@@ -263,13 +311,23 @@ function unpack_tar()
     local src="${1}"
     local path="${2}"
     local dst="${3}"
+    local delete_after="${4}"
+
     mkdir -p "${dst}"
     if [[ "${src}" =~ ^http ]]
     then
         curl "${src}${path}" | tar x -C "${dst}"
     elif [[ -f "${src}${path}" ]]
     then
+        local result 
         tar x -C "${dst}" -f "${src}${path}"
+        result=$?
+        if [[ -n "${delete_after}" ]] && (( delete_after ))
+        then
+            msg "Deleting source archive '${src}${path}' after successful extraction"
+            rm -f "${src}${path}"
+        fi 
+        return ${result}
     else
         err "No tar archive available for ${src}${path}"
     fi
@@ -297,7 +355,8 @@ function restore_nexus_data()
     if [[ ! -d "${datadir}/blobs" ]]
     then
         notice "Install Nexus Blobs backup. This may take a while."
-        unpack_tar "${BUNDLED_SRC}" "/nexus/blobs.tar" "${datadir}"
+        local minimal_installation_footprint=1
+        unpack_tar "${BUNDLED_SRC}" "/nexus/blobs.tar" "${datadir}" ${minimal_installation_footprint}
         ((problems+=$?))
     else
         notice "Nexus Blobs appear to have been unpacked already"

@@ -19,8 +19,11 @@ step copy_ss_provisioning
 if is_standalone
 then
     echo_stage 3 "Copying files needed for standalone install"
-    step copy_isopackages
-    step copy_isos
+    if ! step copy_isos
+    then
+        notice "Failed copying ISO file - copying installer packages instead."
+        step copy_isopackages
+    fi
     step copy_bundled_data
     step create_installmedia_repo
 fi

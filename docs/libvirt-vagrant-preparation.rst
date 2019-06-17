@@ -13,7 +13,7 @@ You will need libvirt and vagrant installed. We will also install the vagrant-li
 
 .. code-block:: console 
 
-    sudo yum -y install vagrant libvirtd virt-manager vagrant-libvirt
+    $> sudo yum -y install vagrant libvirtd virt-manager vagrant-libvirt
 
 .. _libvirt_networking:
 
@@ -34,7 +34,7 @@ The following file can be used to configure libvirt to provide this network, if 
         <bridge stp='on' delay='0'/>
         <ip address='192.168.121.1' netmask='255.255.255.0'>
             <dhcp>
-            <range start='192.168.121.1' end='192.168.121.254'/>
+                <range start='192.168.121.1' end='192.168.121.254'/>
             </dhcp>
         </ip>
     </network>
@@ -43,7 +43,7 @@ Create this xml file somewhere then run:
 
 .. code-block:: console
 
-    $> virsh net-define /path/to/vagrant-libvirt-network.xml
+    #> virsh net-define /path/to/vagrant-libvirt-network.xml
 
 Alternatively you can use an existing libvirt network, and search/replace 192.168.121 within the demo files.
 
@@ -60,16 +60,16 @@ Example commands for creating a storage pool are as follows:
 
 .. code-block:: console 
 
-    dir=/var/lib/libvirt/images/vagrant
+    #> dir=/var/lib/libvirt/images/vagrant
 
-    mkdir -p "$dir"
+    #> mkdir -p "$dir"
 
-    chown qemu.qemu "$dir"
+    #> chown qemu.qemu "$dir"
 
-    # If you do not use SELinux, you can skip the following chcon command
-    chcon -t virt_content_t "$dir"
+    ## If you do not use SELinux, you can skip the following chcon command
+    #> chcon -t virt_content_t "$dir"
 
-    virsh pool-create-as vagrant dir --target "$dir"
+    #> virsh pool-create-as vagrant dir --target "$dir"
 
 Configuring a user account to allow vagrant usage
 =================================================
@@ -78,7 +78,7 @@ In Fedora, this is done by adding the user to the ``qemu`` group:
 
 .. code-block:: console
 
-    $> usermod -a -G qemu <username>
+    #> usermod -a -G qemu <username>
 
 After adding the user to the group you may need to either log out entirely and then back in again, or else within an existing shell, use the following command to start a new shell with the new ``qemu`` group permissions activated:
 

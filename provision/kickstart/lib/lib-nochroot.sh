@@ -118,6 +118,7 @@ function configure_hostname()
 
 function create_installmedia_repo()
 {
+    msg "create_installmedia_repo from lib-nochroot"
     local pkg_dst="/e/yum-repos/installmedia"
     local pkg_dir="${ANA_INSTALL_PATH}${pkg_dst}"
     local iso_dir="${ANA_INSTALL_PATH}${iso_dst}"
@@ -134,7 +135,12 @@ function create_installmedia_repo()
     } > "${repos_dir}/installmedia.repo"
 
     mkdir -p "${disable_dir}"
-    [[ -f "${bootstrap_repo}" ]] && mv -f "${bootstrap_repo}" "${disable_dir}/"
+
+    if [[ -f "${bootstrap_repo}" ]]
+    then 
+        spam msg "bootstrap repo ${bootstrap_repo} is being disabled in favour of installmedia repo."
+        mv -f "${bootstrap_repo}" "${disable_dir}/"
+    fi
 
     if [[ -z "${ANA_INSTALL_PATH}" ]]
     then
@@ -152,13 +158,13 @@ function copy_isopackages()
         cd /run/install/repo
         # TODO - update for RHEL8 which has Base and AppStream subdirs with a repodata in each
         [[ -d "Packages" && -d "repodata" ]] && cp -a {Packages,repodata} "${pkg_dst}/"
-    ) 
+    )
 
 }
 
 function copy_isos()
 {
-    local iso_dir="/e/isos"
+    local iso_dir="/e/iso"
     local pkg_dir="/e/yum-repos/installmedia"
     local iso_src="/run/install/repo/isos"
     local pkg_dst="${ANA_INSTALL_PATH}${pkg_dir}"
@@ -206,6 +212,8 @@ function copy_isos()
     if [[ -n "${selected_iso}" ]]
     then
         notice "Found ${selected_iso} - configuring mount."
+        # Make sure the directory exists, if it doesn't already
+        mkdir -p "${pkg_dst}"
         echo_data "${iso_dir}/${selected_iso##*/} ${pkg_dir} auto defaults,ro,loop,auto,nofail 0 0 " >> "${ANA_INSTALL_PATH}/etc/fstab"
     else
         warn "Could not find a recognised iso file. Packages will need to be copied instead."
@@ -222,11 +230,15 @@ function copy_bundled_data()
     local bundled_dir="/e/bundled"
     local bundled_dst="${ANA_INSTALL_PATH}${bundled_dir}"
     
-    # NOTE this is copying the entire bundled dir
+    # NOTE this is copying the entire contents of the bundled dir,
+    # so as not to delete files already copied in there
     if [[ -d "${bundled_src}" ]]
     then
-        cp -a "${bundled_src}" "${bundled_dst}"
+        mkdir -p "${bundled_dst}"
+
+        cp -a "${bundled_src}"/* "${bundled_dst}/"
         msg "Done copying bundled data from '${bundled_src}' to '${bundled_dst}'"
+        ls -l "${bundled_dst}"
     else
         notice "No bundled data dir was found."
         notice "Looked for it at ${bundled_src}:"

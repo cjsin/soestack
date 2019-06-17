@@ -10,22 +10,6 @@ cups:
     management_hosts:
         - 192.168.121.*
 
-network:
-    # demo virtual network
-    subnet:  192.168.121/24
-    netmask: 255.255.255.0
-    prefix:  24
-    gateway: 192.168.188.1
-    system_domain: demo
-
-    hostfile-additions:
-        # For now use the nexus on my host box to avoid re-downloading anything
-        192.168.121.1:   wired-gateway
-        192.168.188.1:   gateway.demo gateway modem
-        192.168.121.101: infra.demo infra ipa.demo ipa salt.demo salt ldap.demo ldap
-        192.168.121.103: nexus.demo nexus
-        10.0.2.15:       client.demo client
-
 dns:
     # if is_server is set, the server will have a customised dns configuration
     server:      infra.demo
@@ -124,6 +108,21 @@ managed-hosts:
                 - '.*'
 
 network:
+    # demo virtual network
+    subnet:  192.168.121/24
+    netmask: 255.255.255.0
+    prefix:  24
+    gateway: 192.168.188.1
+    system_domain: demo
+
+    hostfile-additions:
+        # For now use the nexus on my host box to avoid re-downloading anything
+        192.168.121.1:   wired-gateway
+        192.168.188.1:   gateway.demo gateway modem
+        192.168.121.101: infra.demo infra ipa.demo ipa salt.demo salt ldap.demo ldap
+        192.168.121.103: nexus.demo nexus
+        10.0.2.15:       client.demo client
+
     classes:
         gateway:
             sysconfig:

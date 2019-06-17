@@ -88,17 +88,20 @@ network:
                 - infra-server
                 - lan-wired-gateway
                 - infra-dns
-        wlan0:
-            inherit:
-                - defaults
-                - wireless
-                - enabled
-                - gateway
-                - defroute
-                - home-test-environment
-                - infra-dns
+        #wlan0:
+        #    inherit:
+        #        - defaults
+        #        - wireless
+        #        - enabled
+        #        - gateway
+        #        - defroute
+        #        # - home-test-environment
+        #        - infra-dns
 
-include:
-    - layers.private.gitlab
-    - layers.private.wpa
-    - layers.private.timezone
+# For now the private layer files are not included, as 
+# the USB provisioning has no way currently to include them
+
+#include:
+#    - layers.private.gitlab
+#    - layers.private.wpa
+#    - layers.private.timezone

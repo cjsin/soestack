@@ -6,27 +6,35 @@
 Welcome to SoeStack's documentation!
 ====================================
 
+Conventions used in this documentation
+--------------------------------------
+
+Please see :ref:`docs_conventions`.
+
 Getting started
 ---------------
 
 .. toctree::
    :maxdepth: 2
-   :caption: Contents:
+   :caption: Getting Started:
 
    includeme
    LICENSE
+   conventions
    ABOUT
    QUICKSTART
    libvirt-vagrant-preparation
    nexus-quickstart
+   USB-quickstart
    TODOS
+
 
 Looking further
 ---------------
 
 .. toctree::
    :maxdepth: 2
-   :caption: Contents:
+   :caption: Looking further:
 
    structure
    before-generating-usb

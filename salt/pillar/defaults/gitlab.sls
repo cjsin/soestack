@@ -13,7 +13,7 @@ firewall:
             gitlab-registry:
                 5005: ACCEPT
             
-deployment:
+deployments:
     gitlab_baremetal:
         gitlab:
             config:

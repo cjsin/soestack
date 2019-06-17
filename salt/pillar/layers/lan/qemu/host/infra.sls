@@ -105,6 +105,10 @@ network:
 
 layer-host-loaded: {{sls}}
 
-include:
-    - layers.private.gitlab
-    - layers.private.timezone
+
+# For now the private layer files are not included, as 
+# the USB provisioning has no way currently to include them
+
+#include:
+#    - layers.private.gitlab
+#    - layers.private.timezone

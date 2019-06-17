@@ -12,7 +12,7 @@
 # data for this device itself
 {%- set processed_devices = {} %}
 {%- for devname, cfg in devices.iteritems() %}
-{%-     set defaults = { 'ignore': False, 'delete': False, 'sysconfig': {}, 'wpa': {} } %}
+{%-     set defaults = { 'ignore': False, 'delete': False, 'sysconfig': {}, 'wpaconfig': {} } %}
 {%-     set merged = {} %}
 {%-     do  merged.update(defaults) %}
 {%-     set inherit = cfg.inherit if 'inherit' in cfg else [] %}

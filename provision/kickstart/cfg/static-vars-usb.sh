@@ -1,12 +1,12 @@
 hosts=(
-    "192.168.188.1   gateway.demo gateway"
+    "192.168.121.1   gateway.demo gateway"
     "192.168.121.103 nexus.soestack nexus.demo nexus"
     "192.168.121.101 infra.soestack infra.demo infra    master"
 )
 
 # A standalone USB build will set up its own nexus repo
 
-NEXUS=http://nexus:7081/
+NEXUS=nexus:7081
 
 repos=(
 )

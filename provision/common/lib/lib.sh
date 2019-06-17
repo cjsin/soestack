@@ -114,14 +114,14 @@ export auto_level
 
 function echo_start()
 {
-    echo_stage "${auto_level}" "$(date) Start ${FUNCNAME[1]} ${*}"
+    spam echo_stage "${auto_level}" "$(date) Start ${FUNCNAME[1]} ${*}"
     ((auto_level++))
 }
 
 function echo_done()
 {
     ((auto_level--))
-    echo_stage "${auto_level}" "$(date) Done ${FUNCNAME[1]} ${*}"
+    spam echo_stage "${auto_level}" "$(date) Done ${FUNCNAME[1]} ${*}"
 }
 
 function die()

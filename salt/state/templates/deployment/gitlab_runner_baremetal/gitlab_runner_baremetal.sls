@@ -2,7 +2,14 @@
 {%- set deployment_name    = args.deployment_name %}
 {%- set deployment_type    = args.deployment_type %}
 {%- set deployment         = args.deployment %}
-{%- set config             = args.deployment.config %}
+{%- set config             = args.deployment.config if config in deployment else {} %}
+{%- if not config %} 
+
+{{sls}}.{{prefix}}gitlab-runner-config-missing{{suffix}}:
+    noop.notice:
+        - text: 'No configuration available for gitlab-runner-baremetal deployment!'
+
+{%- else %}
 {%- set action             = args.action if 'action' in args else 'all' %}
 {%- set service_name       = deployment_name %}
 {%- set prefix             = deployment_type ~ '-' ~ deployment_name ~ '-' ~ action %}
@@ -71,4 +78,5 @@
         - name:   {{service_name}} 
         - enable: {{activated}} 
 
+{%- endif %}
 {%- endif %}
