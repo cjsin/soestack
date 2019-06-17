@@ -161,7 +161,7 @@ Updating the Makefile:
 
         * You must take responsibility yourself for choosing the correct output device and not overwriting your system disks!
 
-.. _bundled_packages:
+.. _usb_bundled_packages:
 
 Bundled Packages 
 ----------------

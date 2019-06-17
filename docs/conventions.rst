@@ -18,7 +18,7 @@ Code blocks showing commands which can probably be executed with regular user pr
 
     $> example-regular-user-command
 
-Commentary within a code block may be displayed with a ``\#\# `` prefix, for example:
+Commentary within a code block may be displayed with a **\#\#** prefix, for example:
 
 .. code-block:: console
 
