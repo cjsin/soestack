@@ -1,0 +1,539 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta charset="utf-8" />
+    <title>USB QUICKSTART &#8212; SoeStack 2.0 documentation</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/language_data.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="TODO" href="TODOS.html" />
+    <link rel="prev" title="Nexus quickstart" href="nexus-quickstart.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="usb-quickstart">
+<span id="id1"></span><h1>USB QUICKSTART<a class="headerlink" href="#usb-quickstart" title="Permalink to this headline">¶</a></h1>
+<p>This document provides instructions for performing the USB provisioning
+(installing the SOE onto a USB key ready to build an infrastructure server)
+and testing it using a virtual machine.</p>
+<p>These instructions may be specific for Fedora, at this time the <code class="docutils literal notranslate"><span class="pre">guestfs</span></code> versions used to build the USB key are only known to work in Fedora (have not been tested on CentOS or RedHat).</p>
+<p>What we are going to do:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>Install python3 and python3 requirements</p></li>
+<li><p>Configure systemd udev to grant group ownership for your user account, to USB storage devices with a specified vendor name (such as “SanDisk”)</p></li>
+<li><p>Configure a virtual network to match the <code class="docutils literal notranslate"><span class="pre">demo</span></code> configs provided</p></li>
+<li><p>Generate an installer filesystem onto a USB drive</p></li>
+<li><p>Create a virtual machine to test using the USB drive to install onto a virtual machine disk image</p></li>
+</ul>
+</div></blockquote>
+<div class="section" id="preparation">
+<span id="usb-quickstart-prep"></span><h2>Preparation<a class="headerlink" href="#preparation" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="python3">
+<h3>Python3<a class="headerlink" href="#python3" title="Permalink to this headline">¶</a></h3>
+<p>Install python3:</p>
+<blockquote>
+<div><div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$</span>&gt; sudo yum install python3
+</pre></div>
+</div>
+</div></blockquote>
+<p>Install python3 guestfs:</p>
+<blockquote>
+<div><div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$</span>&gt; sudo yum install python3-libguestfs
+</pre></div>
+</div>
+</div></blockquote>
+<p>Install python3 attrdict package:</p>
+<blockquote>
+<div><div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$</span>&gt; sudo pip install attrdict
+</pre></div>
+</div>
+</div></blockquote>
+</div>
+<div class="section" id="other-requirements">
+<h3>Other requirements<a class="headerlink" href="#other-requirements" title="Permalink to this headline">¶</a></h3>
+<p>Certain files are needed which will be copied onto the USB image to make it bootable.</p>
+<p>You’ll need a few extra packages installed, such as <code class="docutils literal notranslate"><span class="pre">syslinux</span></code> and <code class="docutils literal notranslate"><span class="pre">syslinux-extlinux</span></code>:</p>
+<blockquote>
+<div><div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$</span>&gt; sudo yum install syslinux syslinux-extlinux
+</pre></div>
+</div>
+</div></blockquote>
+</div>
+<div class="section" id="libvirt-configuration-for-user-access">
+<h3>Libvirt configuration for user access<a class="headerlink" href="#libvirt-configuration-for-user-access" title="Permalink to this headline">¶</a></h3>
+<p>It is assumed you have configured libvirt on your system to allow a user account to run virtual machines. This will allow the user account to use the guestfs libraries to modify disk images (or devices). In my personal opinion this is safer than running the tools as root, because then you are able to run the tools with block device access granted to only specified disks. Whereas if you need to run the tools as root then they will have access to overwrite any of your system disks.</p>
+<p>You can use the <code class="docutils literal notranslate"><span class="pre">libvirt</span></code> or <code class="docutils literal notranslate"><span class="pre">qemu</span></code> documentation to configure those to allow your user account access. In my system, I believe all that was required was to add my user account to the <code class="docutils literal notranslate"><span class="pre">qemu</span></code> group (and potentially log out / in, or use <code class="docutils literal notranslate"><span class="pre">newgrp</span> <span class="pre">qemu</span></code>).</p>
+</div>
+<div class="section" id="libvirt-network-configuration">
+<h3>Libvirt network configuration<a class="headerlink" href="#libvirt-network-configuration" title="Permalink to this headline">¶</a></h3>
+<p>Please see <a class="reference internal" href="libvirt-vagrant-preparation.html#vagrant-networking"><span class="std std-ref">Configuring the virtual network for vagrant</span></a> to configure a libvirt network with appropriate network configuration for the demo USB configs.</p>
+</div>
+<div class="section" id="systemd-udev-configuration">
+<h3>Systemd udev configuration<a class="headerlink" href="#systemd-udev-configuration" title="Permalink to this headline">¶</a></h3>
+<p>To allow a user <code class="docutils literal notranslate"><span class="pre">example</span></code> to write to USB drives with manufacturer <code class="docutils literal notranslate"><span class="pre">SanDisk</span></code>, you can:</p>
+<blockquote>
+<div><ul>
+<li><p>create a file such as /etc/udev/rules.d/99-usb-storage-group.rules:</p>
+<blockquote>
+<div><div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">ENV{MAJOR}==&quot;8&quot;, SUBSYSTEM==&quot;block&quot;, ACTION==&quot;add&quot;, ENV{ID_USB_DRIVER}==&quot;usb-storage&quot;, ENV{ID_VENDOR}==&quot;SanDisk&quot;, GROUP=&quot;example&quot;</span>
+</pre></div>
+</div>
+</div></blockquote>
+</li>
+<li><p>This will modify the group ownership of SanDisk USB storage devices, to be owned by group <code class="docutils literal notranslate"><span class="pre">example</span></code>, when they are inserted (any stick that is already connected will need to be reinserted).</p></li>
+<li><p>Additionally, the device ownership may be changed after using it with libvirt to test using a virtual machine, so the stick may need to be reinserted to restore the ownership after performing such a test.</p></li>
+</ul>
+</div></blockquote>
+</div>
+<div class="section" id="choosing-a-network-configuration">
+<h3>Choosing a network configuration<a class="headerlink" href="#choosing-a-network-configuration" title="Permalink to this headline">¶</a></h3>
+<p>Especially if you want the installed system to have access to the internet (for example to download missing packages),
+you’ll need to either select a network configuration (lan layer) that gives access to the internet, or create your own.</p>
+<p>If you are using a virtual machine, with a libvirt network as configured above, you can select the predefined <code class="docutils literal notranslate"><span class="pre">qemu</span></code> lan, by setting <code class="docutils literal notranslate"><span class="pre">lan:qemu</span></code> within the value for <code class="docutils literal notranslate"><span class="pre">ss.LAYERS</span></code>.</p>
+</div>
+<div class="section" id="updating-the-demo-configs-to-use-your-usb-stick">
+<h3>Updating the demo configs to use your USB stick<a class="headerlink" href="#updating-the-demo-configs-to-use-your-usb-stick" title="Permalink to this headline">¶</a></h3>
+<p>The example configuration provided here assumes you have a stable disk environment, where device names to not change much.</p>
+<p>For the purposes of this example, the USB stick is assumed to be detected as /dev/sdc each and every time. However device names can change, so you should be very careful to use the correct device name for your USB stick and keep it up to date, so that you do not overwrite a system disk. This is especially important if you are running the provisioning as the <code class="docutils literal notranslate"><span class="pre">root</span></code> user. Preferably, you should run it as a regular user account, and should <strong>only</strong> allow access to the block device for your single USB key/stick, using something such as the udev rules shown in the example above.</p>
+<p>As outlined in the LICENSE, no responsibility is taken by the author for any damage caused by this software. You must take responsibility yourself for the potential that it could overwrite the wrong device.</p>
+<p>For this example we are going to do two things:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>Determine the “Model” of the USB stick</p></li>
+<li><p>Determine the linux block device for the USB stick</p></li>
+<li><p>Update the <code class="docutils literal notranslate"><span class="pre">bundler-usb.properties</span></code> file</p></li>
+<li><p>Update the <code class="docutils literal notranslate"><span class="pre">Makefile</span></code></p></li>
+</ul>
+</div></blockquote>
+<p>Determine the USB device model:</p>
+<blockquote>
+<div><ul>
+<li><p>the simplest way to do this is use <code class="docutils literal notranslate"><span class="pre">lsusb</span> <span class="pre">-v</span></code> and search for the USB device vendor (<code class="docutils literal notranslate"><span class="pre">idVendor</span></code>) and product (<code class="docutils literal notranslate"><span class="pre">idProduct</span></code>):</p>
+<blockquote>
+<div><div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">#</span>&gt; lsusb -v
+</pre></div>
+</div>
+<p>or, to look for a ‘SanDisk’ device:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">#</span>&gt; lsusb -v <span class="m">2</span>&gt; /dev/null  <span class="p">|</span> egrep <span class="s1">&#39;idVendor|iProduct|Serial&#39;</span> <span class="p">|</span> egrep -A2 SanDisk
+</pre></div>
+</div>
+</div></blockquote>
+</li>
+<li><p>alternatively you can run, as root, <code class="docutils literal notranslate"><span class="pre">udevadm</span> <span class="pre">monitor</span> <span class="pre">--property</span></code> and then insert the drive, and look at the generated output.</p>
+<blockquote>
+<div><div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">#</span>&gt; udevadm monitor --property <span class="p">|</span> egrep <span class="s1">&#39;SERIAL|MODEL&#39;</span>
+</pre></div>
+</div>
+</div></blockquote>
+</li>
+</ul>
+</div></blockquote>
+<p>Determine the USB block device:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>It is assumed you are competent enough with Linux systems to determine this yourself, at your own risk. I would simply use the <code class="docutils literal notranslate"><span class="pre">lsblk</span></code> or <code class="docutils literal notranslate"><span class="pre">blkid</span></code> tools. The USB device model can be used to perform a sanity check on the specified device, using the <code class="docutils literal notranslate"><span class="pre">check-device</span></code> directive in the bundler properties file, however <strong>you should not rely on this</strong> - it is a simple check only and may not be reliable - <strong>you should check that the device is correct each and every time before running the tool(s)!</strong></p></li>
+</ul>
+</div></blockquote>
+<p>Updating <code class="docutils literal notranslate"><span class="pre">bundler-usb.properties</span></code>:</p>
+<blockquote>
+<div><ul>
+<li><p>Look at <code class="docutils literal notranslate"><span class="pre">bundler-usb.properties</span></code> and find the lines containing the directives <code class="docutils literal notranslate"><span class="pre">image</span></code> and <code class="docutils literal notranslate"><span class="pre">check-device</span></code>. Example lines for a system with the USB stick attached as <code class="docutils literal notranslate"><span class="pre">/dev/sdc</span></code>, with a device <code class="docutils literal notranslate"><span class="pre">Model</span></code> of <code class="docutils literal notranslate"><span class="pre">USB</span> <span class="pre">Device</span> <span class="pre">Model</span></code> are shown here:</p>
+<blockquote>
+<div><div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">image         /dev/sdc</span>
+<span class="go">check-device  sdc &quot;USB Device Model&quot;</span>
+</pre></div>
+</div>
+</div></blockquote>
+</li>
+<li><p>Modify the <code class="docutils literal notranslate"><span class="pre">image</span></code> and <code class="docutils literal notranslate"><span class="pre">check-device</span></code>, updating the device name (<code class="docutils literal notranslate"><span class="pre">sdc</span></code>) and USB device model (<code class="docutils literal notranslate"><span class="pre">&quot;USB</span> <span class="pre">Device</span> <span class="pre">Model&quot;</span></code>) as appropriate for the values you have determined above.</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>You must take responsibility yourself for choosing the correct output device and not overwriting your system disks!</p></li>
+</ul>
+</div></blockquote>
+</li>
+</ul>
+</div></blockquote>
+<p>Updating the Makefile:</p>
+<blockquote>
+<div><ul>
+<li><p>Modify the <code class="docutils literal notranslate"><span class="pre">CONFIG</span> <span class="pre">=</span></code> line, to specify <code class="docutils literal notranslate"><span class="pre">bundler-usb.properties</span></code></p></li>
+<li><p>Modify the <code class="docutils literal notranslate"><span class="pre">IMAGE</span> <span class="pre">=</span></code> line, to specify the USB block device that you determined above (for example, <code class="docutils literal notranslate"><span class="pre">/dev/sdc</span></code>).</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>You must take responsibility yourself for choosing the correct output device and not overwriting your system disks!</p></li>
+</ul>
+</div></blockquote>
+</li>
+</ul>
+</div></blockquote>
+</div>
+<div class="section" id="bundled-packages">
+<span id="usb-bundled-packages"></span><h3>Bundled Packages<a class="headerlink" href="#bundled-packages" title="Permalink to this headline">¶</a></h3>
+<p>Within <code class="docutils literal notranslate"><span class="pre">bundled/bootstrap-pkgs</span></code> there are various subdirectories for RPM files. Each subdirectory is accompanied by a <code class="docutils literal notranslate"><span class="pre">&lt;reponame&gt;.listing.txt</span></code> file and a <code class="docutils literal notranslate"><span class="pre">&lt;reponame&gt;.url</span></code> file. The <code class="docutils literal notranslate"><span class="pre">url</span></code> file contains the URL for the source packages. The <code class="docutils literal notranslate"><span class="pre">listing.txt</span></code> file contains a listing of which RPM files were used in testing.</p>
+<p>Generally you will need to download these packages into each <code class="docutils literal notranslate"><span class="pre">packages</span></code> subdirectory, and then run <code class="docutils literal notranslate"><span class="pre">createrepo</span></code>.</p>
+<p>For example, with the <code class="docutils literal notranslate"><span class="pre">dockerce</span></code> repo:</p>
+<blockquote>
+<div><ul>
+<li><p>Determine the URL(s) of the source files (stored within <code class="docutils literal notranslate"><span class="pre">bundled/bootstrap-pkgs/dockerce.url</span></code>)</p></li>
+<li><p>Download the RPM files into <code class="docutils literal notranslate"><span class="pre">bundled/bootstrap-pkgs/dockerce/packages</span></code></p>
+<blockquote>
+<div><div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$</span>&gt; <span class="nb">cd</span> /path/to/soestack/bundled/boostrap-pkgs/dockerce/packages
+<span class="gp">#</span><span class="c1"># (download the files here)</span>
+</pre></div>
+</div>
+</div></blockquote>
+</li>
+<li><p>Run <code class="docutils literal notranslate"><span class="pre">createrepo</span></code> within the <code class="docutils literal notranslate"><span class="pre">dockerce</span></code> directory</p>
+<blockquote>
+<div><div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$</span>&gt; <span class="nb">cd</span> /path/to/soestack/bundled/boostrap-pkgs/dockerce
+<span class="gp">$</span>&gt; createrepo .
+</pre></div>
+</div>
+</div></blockquote>
+</li>
+</ul>
+</div></blockquote>
+</div>
+<div class="section" id="canned-nexus-deployment">
+<h3>Canned Nexus deployment<a class="headerlink" href="#canned-nexus-deployment" title="Permalink to this headline">¶</a></h3>
+<p>See <a class="reference internal" href="nexus-quickstart.html#nexus-quickstart"><span class="std std-ref">Nexus quickstart</span></a> for further info on an initial nexus setup.</p>
+<p>To build the demo standalone infrastructure server, you’ll need a nexus <code class="docutils literal notranslate"><span class="pre">blobs.tar</span></code> and <code class="docutils literal notranslate"><span class="pre">db-backup.tar</span></code>,
+which will be stored within <code class="docutils literal notranslate"><span class="pre">bundled/nexus</span></code>.</p>
+</div>
+<div class="section" id="root-passwords">
+<h3>Root passwords<a class="headerlink" href="#root-passwords" title="Permalink to this headline">¶</a></h3>
+<p>If you are using this for a real deployment, not just testing it out, you will want to update the default root passwords and grub passwords. See <a class="reference internal" href="before-generating-usb.html#modifying-default-passwords"><span class="std std-ref">Modifying default passwords</span></a> for more information.</p>
+</div>
+</div>
+<div class="section" id="trying-it-out">
+<span id="trying-out-usb"></span><h2>Trying it out<a class="headerlink" href="#trying-it-out" title="Permalink to this headline">¶</a></h2>
+<p>Once you’re all prepared, and sure you have specified all the right devices and won’t be overwriting any system disk:</p>
+<blockquote>
+<div><div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$</span>&gt; <span class="nb">cd</span> /path/to/soestack/
+<span class="gp">$</span>&gt; <span class="nb">cd</span> provision/usb
+<span class="gp">$</span>&gt; make full
+</pre></div>
+</div>
+</div></blockquote>
+<p>If this works, you can later update the stick with various subsets of the full update, using such as <code class="docutils literal notranslate"><span class="pre">make</span> <span class="pre">update</span></code> and <code class="docutils literal notranslate"><span class="pre">make</span> <span class="pre">kickstarts</span></code>.</p>
+<p>Example output is shown below:</p>
+<blockquote>
+<div><div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$</span>&gt; <span class="nb">cd</span> /path/to/soestack/
+<span class="gp">$</span>&gt; <span class="nb">cd</span> provision/usb
+<span class="gp">$</span>&gt; make kickstarts
+<span class="go">./ss-bundler.py bundler-usb.properties  --mode  kickstarts</span>
+<span class="go">Preprocess LOAD: [&#39;bundler-dev.properties&#39;, &#39;ignoring&#39;, &#39;verbose&#39;, &#39;image&#39;, &#39;format&#39;, &#39;dry_run&#39;]</span>
+<span class="go">Ignoring VERBOSE directive while processing bundler-dev.properties as instructed</span>
+<span class="go">Ignoring IMAGE directive while processing bundler-dev.properties as instructed</span>
+<span class="go">Ignoring FORMAT directive while processing bundler-dev.properties as instructed</span>
+<span class="go">!!Default mode found - full</span>
+<span class="go">!!Mode KICKSTARTS accepted</span>
+<span class="go">!!Default mode found - full</span>
+<span class="go">!!Mode KICKSTARTS accepted</span>
+<span class="go">!!Processing 131 accepted lines</span>
+<span class="go">* CHECK_DEVICE sdc Example</span>
+<span class="go">Device sdc has the expected model: &#39;Example&#39;</span>
+<span class="go">* IMAGE /dev/sdc</span>
+<span class="go">* FORMAT raw</span>
+<span class="go">* VERBOSE 1</span>
+<span class="go">* STRICT 1</span>
+<span class="go">* DRY_RUN 0</span>
+<span class="go">@@ Available modes:</span>
+<span class="go">@@ Full - Build a new image (overwriting) and copy all files (including bundled files)</span>
+<span class="go">@@ Create - Build a new image (overwriting) and copy all files required for installation</span>
+<span class="go">@@ (excludes large bundled data)</span>
+<span class="go">@@ Update - Update an already-built image, update boot files</span>
+<span class="go">@@ (excludes large bundled data)</span>
+<span class="go">@@ Quick - Update kickstarts, provisioning, boot label etc</span>
+<span class="go">@@ (excludes ISO, non-critical ISO content, and large bundled data)</span>
+<span class="go">@@ Bundle - Update the large data bundles (nexus repository backup, gitlab backup, etc)</span>
+<span class="go">@@ Isos - Copy the isos on as files</span>
+<span class="go">@@</span>
+<span class="go">@@ Example session:</span>
+<span class="go">@@</span>
+<span class="go">@@ Getting started:</span>
+<span class="go">@@</span>
+<span class="go">@@ ss-bundler --mode=create</span>
+<span class="go">@@ (you may then test that the USB stick works to build the server)</span>
+<span class="go">@@</span>
+<span class="go">@@ When it is working fine, or after your backups have run, you might</span>
+<span class="go">@@ update with the backup data</span>
+<span class="go">@@ ss-bundler --mode=bundle</span>
+<span class="go">@@</span>
+<span class="go">@@ NOTE:</span>
+<span class="go">@@</span>
+<span class="go">@@ The way this works, is lines are processed from the top down,</span>
+<span class="go">@@ reading an ACTION from each line -- however with a line being</span>
+<span class="go">@@ ignored if in a section that specifies it is ONLY for a mode</span>
+<span class="go">@@ that does not match the current selected mode (--mode commandline option).</span>
+<span class="go">@@ After reaching the end of the file, the BUILDER command is invoked with a</span>
+<span class="go">@@ set of arguments that have been built up by the actions that were processed</span>
+<span class="go">@@ above.</span>
+<span class="go">@@</span>
+<span class="go">@@ Use the DRY_RUN 1 action to view the command without execution.</span>
+<span class="go">@@</span>
+<span class="go">@@ Good luck.</span>
+<span class="go">* BUILDER ./build-boot-image.py</span>
+<span class="go">* ISO ../../bundled/iso/CentOS-7-x86_64-Everything-1810.iso</span>
+<span class="go">* LABEL SSBOOT</span>
+<span class="go">* VAR cmdline</span>
+<span class="go">* APPEND cmdline</span>
+<span class="go">* APPEND cmdline inst.kexec inst.kdump_addon=off</span>
+<span class="go">* APPEND cmdline inst.ks=hd:LABEL=SSBOOT:/ks.cfg</span>
+<span class="go">* EDIT syslinux/syslinux.cfg</span>
+<span class="gp">#</span><span class="o">==============================================</span>
+<span class="gp">#</span> Quick update mode <span class="o">(</span>kickstarts, soestack provisioning<span class="o">)</span>
+<span class="gp">#</span><span class="o">==============================================</span>
+<span class="go">* BUILD --verbose modify --ext4 --overwrite --clear</span>
+<span class="gp">#</span><span class="o">==============================================</span>
+<span class="gp">#</span> Copy <span class="nv">kickstarts</span>
+<span class="gp">#</span><span class="o">==============================================</span>
+<span class="go">* TOPDIR /</span>
+<span class="go">* COPY entire dir ../ as provision</span>
+<span class="go">* COPY single file ../kickstart/kickstart.cfg as ks.cfg</span>
+<span class="go">* APPEND cmdline net.ifnames=0</span>
+<span class="go">* APPEND cmdline biosdevname=0</span>
+<span class="go">* APPEND cmdline ss.ROOT_PW=$1$NxR2J0fM$QS2U2lrQxpDAlb9JPWB2v/</span>
+<span class="go">* APPEND cmdline ss.STANDALONE=1</span>
+<span class="go">* APPEND cmdline ss.ADD_HOST=192.168.121.1,gateway</span>
+<span class="go">* APPEND cmdline ss.ADD_HOST=192.168.121.101,infra.demo,infra,master,salt,ipa</span>
+<span class="go">* APPEND cmdline ss.ADD_HOST=192.168.121.103,nexus.demo,nexus</span>
+<span class="go">* APPEND cmdline ss.NAMESERVER=192.168.121.1</span>
+<span class="go">* APPEND cmdline ss.NETDEV=eth0</span>
+<span class="go">* APPEND cmdline ss.GATEWAY=192.168.121.1</span>
+<span class="go">* APPEND cmdline ss.IPADDR=192.168.121.101</span>
+<span class="go">* APPEND cmdline ss.IPADDRS=192.168.121.101/24,192.168.121.103/24</span>
+<span class="go">* APPEND cmdline ss.IPPREFIX=24</span>
+<span class="go">* APPEND cmdline ss.TIMEZONE=UTC</span>
+<span class="go">* APPEND cmdline ss.BUNDLED_SRC=/e/bundled</span>
+<span class="go">* APPEND cmdline ss.DEVELOPMENT=1 ss.INTERACTIVE=0 ss.WAIT=0 ss.INSPECT=0 ss.VERBOSE=1</span>
+<span class="go">* APPEND cmdline ss.DOMAIN=demo</span>
+<span class="go">* APPEND cmdline ss.LAYERS=soe:demo,site:demo,lan:qemu</span>
+<span class="go">* APPEND cmdline ss.NEXUS=nexus.demo:7081</span>
+<span class="go">* APPEND cmdline ss.ROLES=all-in-one-sde-server-node</span>
+<span class="go">* APPEND cmdline ss.SALT_MASTER=infra.demo</span>
+<span class="go">* APPEND cmdline ss.SALT_TYPE=master</span>
+<span class="go">* APPEND cmdline ss.SKIP_CONFIRMATION=0</span>
+<span class="go">* APPEND cmdline ss.HOSTNAME=infra.demo</span>
+<span class="go">* APPEND cmdline rd.shell noquiet</span>
+<span class="go">127 actions of 127</span>
+<span class="go">./build-boot-image.py</span>
+<span class="go">    --iso ../../bundled/iso/CentOS-7-x86_64-Everything-1810.iso</span>
+<span class="go">    --img /dev/sdc</span>
+<span class="go">    --imgformat raw</span>
+<span class="go">    --verbose</span>
+<span class="go">    modify --ext4 --overwrite</span>
+<span class="go">            --clear</span>
+<span class="go">            --label SSBOOT</span>
+<span class="go">            --editdef syslinux/syslinux.cfg</span>
+<span class="go">            --copydef --dstdir /</span>
+<span class="go">                --copydir ../ --dstname provision</span>
+<span class="go">                --copy ../kickstart/kickstart.cfg --dstname ks.cfg</span>
+<span class="go">Creating 5 extra actions.</span>
+<span class="go">UPDATE</span>
+<span class="go">    Prepare for Update</span>
+<span class="go">        Startup guestfs</span>
+<span class="go">        OK</span>
+<span class="go">        Access images</span>
+<span class="go">            Checking image file /dev/sdc against imgformat raw</span>
+<span class="go">        OK</span>
+<span class="go">        Determine partitioning</span>
+<span class="go">            Found USB/image partition /dev/sdb1</span>
+<span class="go">        OK</span>
+<span class="go">        Mount</span>
+<span class="go">            Create mountpoint /usb</span>
+<span class="go">            OK</span>
+<span class="go">            Mount /usb</span>
+<span class="go">            OK</span>
+<span class="go">            Create mountpoint /iso</span>
+<span class="go">            OK</span>
+<span class="go">            Mount /iso</span>
+<span class="go">            OK</span>
+<span class="go">        OK</span>
+<span class="go">    OK</span>
+<span class="go">    Mount</span>
+<span class="go">    OK</span>
+<span class="go">OK</span>
+<span class="go">Running 3 extra actions:</span>
+<span class="go">- UpdateLabelAction</span>
+<span class="go">- CopyDirAction</span>
+<span class="go">- CopyAction</span>
+<span class="go">.</span>
+<span class="go">Update label</span>
+<span class="go">    Update image filesystem label</span>
+<span class="go">    OK</span>
+<span class="go">OK</span>
+<span class="go">Spawning tar : [&#39;tar&#39;, &#39;cf&#39;, &#39;-&#39;, &#39;--checkpoint=1000&#39;, &#39;-C&#39;, &#39;../&#39;, &#39;.&#39;]</span>
+<span class="go">Waiting for tar process to finish</span>
+<span class="go">OK</span>
+<span class="go">Copying files from iso to ks.cfg - [&#39;../kickstart/kickstart.cfg&#39;]</span>
+<span class="go">    Upload ../kickstart/kickstart.cfg to /usb/ks.cfg</span>
+<span class="go">        Overwriting /usb/ks.cfg</span>
+<span class="go">    OK</span>
+<span class="go">OK</span>
+<span class="go">Cleanup</span>
+<span class="go">    Umount /usb</span>
+<span class="go">    OK</span>
+<span class="go">    Umount /iso</span>
+<span class="go">    OK</span>
+<span class="go">OK</span>
+<span class="go">Done.</span>
+</pre></div>
+</div>
+</div></blockquote>
+</div>
+<div class="section" id="testing-the-usb-using-libvirt">
+<h2>Testing the USB using libvirt<a class="headerlink" href="#testing-the-usb-using-libvirt" title="Permalink to this headline">¶</a></h2>
+<p>If you don’t have physical hardware to test the USB device, you can use a virtual machine to test it.</p>
+<p>An example libvirt domain file is shown, and some commands for creating a test disk image file.</p>
+<p>Creating a system disk image:</p>
+<blockquote>
+<div><div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">#</span>&gt; qemu-img create  -f qcow2 /var/lib/libvirt/images/test-soestack-system-disk.qcow2 80G
+</pre></div>
+</div>
+</div></blockquote>
+<p>Creating a virtual machine domain:</p>
+<blockquote>
+<div><ul>
+<li><p>Generate a new <code class="docutils literal notranslate"><span class="pre">UUID</span></code>:</p>
+<blockquote>
+<div><div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$</span>&gt; uuidgen
+<span class="go">26bf3871-a1c6-4b35-9505-dad194dc6715</span>
+</pre></div>
+</div>
+</div></blockquote>
+</li>
+<li><p>Create a virtual machine</p>
+<blockquote>
+<div><ul>
+<li><p>Use the <code class="docutils literal notranslate"><span class="pre">virt-manager</span></code> GUI to create the virtual machine.</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>Add the disk image /var/lib/libvirt/images/test-soestack-system-disk.qcow2 as a disk device</p></li>
+<li><p>Add your USB block device, as a disk devices</p></li>
+<li><p>Choose <code class="docutils literal notranslate"><span class="pre">customise</span> <span class="pre">the</span> <span class="pre">configuration</span> <span class="pre">before</span> <span class="pre">booting</span></code>.</p></li>
+<li><p>Enable the boot menu</p></li>
+<li><p>Select the virtual disk device associated with the real USB device, as the boot device</p></li>
+<li><p>Start the virtual machine</p></li>
+</ul>
+</div></blockquote>
+</li>
+</ul>
+</div></blockquote>
+</li>
+</ul>
+</div></blockquote>
+</div>
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">SoeStack</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption"><span class="caption-text">Getting Started:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="includeme.html">SoeStack - a SOE for Linux systems</a></li>
+<li class="toctree-l1"><a class="reference internal" href="LICENSE.html">LICENSE</a></li>
+<li class="toctree-l1"><a class="reference internal" href="conventions.html">Conventions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ABOUT.html">About SoeStack</a></li>
+<li class="toctree-l1"><a class="reference internal" href="QUICKSTART.html">QUICKSTART</a></li>
+<li class="toctree-l1"><a class="reference internal" href="libvirt-vagrant-preparation.html">Libvirt / Vagrant Preparation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="nexus-quickstart.html">Nexus quickstart</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">USB QUICKSTART</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#preparation">Preparation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#trying-it-out">Trying it out</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#testing-the-usb-using-libvirt">Testing the USB using libvirt</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="TODOS.html">TODO</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Looking further:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="structure.html">SoeStack Structure</a></li>
+<li class="toctree-l1"><a class="reference internal" href="before-generating-usb.html">Steps to do before generating USB stick</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="nexus-quickstart.html" title="previous chapter">Nexus quickstart</a></li>
+      <li>Next: <a href="TODOS.html" title="next chapter">TODO</a></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2019, Chris Sincock.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.0.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="_sources/USB-quickstart.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

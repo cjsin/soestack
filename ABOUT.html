@@ -15,7 +15,7 @@
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="QUICKSTART" href="QUICKSTART.html" />
-    <link rel="prev" title="LICENSE" href="LICENSE.html" />
+    <link rel="prev" title="Conventions" href="conventions.html" />
    
   <link rel="stylesheet" href="_static/custom.css" type="text/css" />
   
@@ -43,6 +43,8 @@
 <li><p>possibilities for integrating SaltStack with IPA</p></li>
 </ul>
 </div></blockquote>
+<p>It does not intend to be a SOE that does everything, but simply a base from which a SOE can quickly be built. To that end it supports initial building of an infrastructure server, followed by deployment of other node types by various methods (PXE, vagrant) with a demo configuration which can be customised or used as a basis for a new SOE, which can then further be extended.</p>
+<p>It may not be entirely in a working state, I only work on the parts I’m interested in, in my free time and I may have break the older parts at any time. For example I’ve recently refactored the vagrant provisioning but may have broken the USB provisioning. Good luck, feel free to file a bug report or request help.</p>
 <p>In its current state, it is primarily designed to support:</p>
 <blockquote>
 <div><ul>
@@ -70,9 +72,28 @@
 <blockquote>
 <div><ul>
 <li><p>Determine your desired network configuration</p></li>
-<li><p>Generate default root and grub passwords</p></li>
-<li><p>Choose a name for your SOE</p></li>
-<li><p>Copy the ‘demo’ layer(s), and rename to use your new SOE name</p></li>
+<li><p>Generate default root and grub passwords (see <a class="reference internal" href="before-generating-usb.html#modifying-default-passwords"><span class="std std-ref">Modifying default passwords</span></a>)</p></li>
+<li><p>Choose a name for your SOE, and a name for your local network (LAN)</p></li>
+<li><p>Copy the ‘demo’ layer(s) within the pillar area and rename to use your new SOE name or LAN name</p></li>
+<li><p>in various places, you will then need to change <code class="docutils literal notranslate"><span class="pre">demo</span></code> to your new SOE name or layer name, for example:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>the variable <code class="docutils literal notranslate"><span class="pre">ss.LAYERS</span></code>, which is by default set to <code class="docutils literal notranslate"><span class="pre">soe:demo,site:demo,lan:demo</span></code></p></li>
+</ul>
+</div></blockquote>
+</li>
+<li><p>for example:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>copy <code class="docutils literal notranslate"><span class="pre">salt/pillar/demo</span></code> to <code class="docutils literal notranslate"><span class="pre">salt/pillar/example</span></code></p></li>
+<li><p>copy <code class="docutils literal notranslate"><span class="pre">salt/pillar/layers/soe/demo.sls</span></code> to <code class="docutils literal notranslate"><span class="pre">salt/pillar/layers/soe/example.sls</span></code></p></li>
+<li><p>copy <code class="docutils literal notranslate"><span class="pre">salt/pillar/layers/lan/demo*</span></code> to <code class="docutils literal notranslate"><span class="pre">salt/pillar/layers/lan/testlan*</span></code></p></li>
+<li><p>copy <code class="docutils literal notranslate"><span class="pre">salt/pillar/layers/site/demo.sls</span></code> to <code class="docutils literal notranslate"><span class="pre">salt/pillar/layers/site/testsite.sls</span></code></p></li>
+<li><p>change <code class="docutils literal notranslate"><span class="pre">ss.LAYERS</span></code> to <code class="docutils literal notranslate"><span class="pre">soe:example,site:testsite,lan:testlan</span></code></p></li>
+</ul>
+</div></blockquote>
+</li>
+<li><p>In general, the layers defined with ss.LAYERS are used to select the salt configuration files used for any node</p></li>
 <li><p>Customise various network settings, domain names, IP addresses, the GATEWAY, etc</p></li>
 <li><p>Download various RPM packages required to ‘bootstrap’ an environment. The binary files required are not included in this SOE.</p></li>
 <li><p>Either configure a Sonatype Nexus instance with various repositories to access files from the internet, and cache them, or else modify the nexus repos predefined within the SOE.</p>
@@ -92,7 +113,7 @@
 <p>You will need to determine the Model name of the USB device and update various files within the <code class="docutils literal notranslate"><span class="pre">provision/usb</span></code> subfolder.</p>
 <p>Make sure to specify the correct block device name so that you do not overwrite the wrong device.</p>
 <p>The included <code class="docutils literal notranslate"><span class="pre">ss-bundler</span></code> tools require <code class="docutils literal notranslate"><span class="pre">python3</span></code> and the <code class="docutils literal notranslate"><span class="pre">guestfs</span></code> python modules, with the system configured with libvirtd support installed and enabled. The <code class="docutils literal notranslate"><span class="pre">guestfs</span></code> software is utilised for formatting a disk image or disk device and adding files to it.</p>
-<p>Binary files will need to be added to the <code class="docutils literal notranslate"><span class="pre">exclude</span></code> subfolder, such as:</p>
+<p>Binary files will need to be added to the <code class="docutils literal notranslate"><span class="pre">bundled</span></code> subfolder, such as:</p>
 <blockquote>
 <div><ul>
 <li><p>docker image files (primarily Sonatype Nexus OSS version)</p></li>
@@ -151,10 +172,11 @@
 
 
 <h3>Navigation</h3>
-<p class="caption"><span class="caption-text">Contents:</span></p>
+<p class="caption"><span class="caption-text">Getting Started:</span></p>
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="includeme.html">SoeStack - a SOE for Linux systems</a></li>
 <li class="toctree-l1"><a class="reference internal" href="LICENSE.html">LICENSE</a></li>
+<li class="toctree-l1"><a class="reference internal" href="conventions.html">Conventions</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">About SoeStack</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#getting-started">Getting Started</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#deploying-an-infrastructure-server-via-usb">Deploying an infrastructure server via USB</a></li>
@@ -163,9 +185,10 @@
 <li class="toctree-l1"><a class="reference internal" href="QUICKSTART.html">QUICKSTART</a></li>
 <li class="toctree-l1"><a class="reference internal" href="libvirt-vagrant-preparation.html">Libvirt / Vagrant Preparation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="nexus-quickstart.html">Nexus quickstart</a></li>
+<li class="toctree-l1"><a class="reference internal" href="USB-quickstart.html">USB QUICKSTART</a></li>
 <li class="toctree-l1"><a class="reference internal" href="TODOS.html">TODO</a></li>
 </ul>
-<p class="caption"><span class="caption-text">Contents:</span></p>
+<p class="caption"><span class="caption-text">Looking further:</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="structure.html">SoeStack Structure</a></li>
 <li class="toctree-l1"><a class="reference internal" href="before-generating-usb.html">Steps to do before generating USB stick</a></li>
@@ -175,7 +198,7 @@
 <h3>Related Topics</h3>
 <ul>
   <li><a href="index.html">Documentation overview</a><ul>
-      <li>Previous: <a href="LICENSE.html" title="previous chapter">LICENSE</a></li>
+      <li>Previous: <a href="conventions.html" title="previous chapter">Conventions</a></li>
       <li>Next: <a href="QUICKSTART.html" title="next chapter">QUICKSTART</a></li>
   </ul></li>
 </ul>

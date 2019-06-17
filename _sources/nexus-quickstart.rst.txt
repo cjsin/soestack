@@ -42,14 +42,14 @@ Next, pull the sonatype image:
 
         .. code-block:: console
 
-            docker pull sonatype/nexus3:3.16.1
+            #> docker pull sonatype/nexus3:3.16.1
 
     - create a data directory (as root):
 
         .. code-block:: console
 
-            mkdir /data/nexus3
-            chown 200.200 /data/nexus3
+            #> mkdir /data/nexus3
+            #> chown 200.200 /data/nexus3
     
     - create a configuration file, ``/etc/sysconfig/nexus-mirror``, which will include the path to your data directory.
 
@@ -74,31 +74,33 @@ Next, pull the sonatype image:
 
     - create a systemd service unit file ``/etc/systemd/system/nexus-mirror.service`` for the service:
 
-        [Unit]
-        Description=Sonatype Nexus OSS 3 Pull-through cache
-        After=NetworkManager-wait-online.service network.target docker.service
+        .. code-block::
 
-        [Service]
-        Environment=DOCKER_OPTIONS=
-        Environment=PORTS=
-        Environment=VOLUMES=
-        Environment=ENTRYPOINT=
-        Environment=IMAGE=
-        Environment=OPTIONS=
-        Environment=ENV=
-        Environment=RM=--rm
-        EnvironmentFile=-/etc/sysconfig/%p
-        ExecStartPre=-/usr/bin/docker stop %p
-        ExecStartPre=-/usr/bin/docker rm %p
-        ExecStart=/usr/bin/docker run $(RM) --name %p  $TZ $DOCKER_OPTIONS $PORTS $VOLUMES -v /etc/localtime:/etc/localtime $ENTRYPOINT $IMAGE $OPTIONS
-        ExecStop=/usr/bin/docker stop %p
-        Type=simple
-        User=root
-        Group=root
-        UMask=0007
+            [Unit]
+            Description=Sonatype Nexus OSS 3 Pull-through cache
+            After=NetworkManager-wait-online.service network.target docker.service
 
-        [Install]
-        WantedBy=multi-user.target
+            [Service]
+            Environment=DOCKER_OPTIONS=
+            Environment=PORTS=
+            Environment=VOLUMES=
+            Environment=ENTRYPOINT=
+            Environment=IMAGE=
+            Environment=OPTIONS=
+            Environment=ENV=
+            Environment=RM=--rm
+            EnvironmentFile=-/etc/sysconfig/%p
+            ExecStartPre=-/usr/bin/docker stop %p
+            ExecStartPre=-/usr/bin/docker rm %p
+            ExecStart=/usr/bin/docker run $(RM) --name %p  $TZ $DOCKER_OPTIONS $PORTS $VOLUMES -v /etc/localtime:/etc/localtime $ENTRYPOINT $IMAGE $OPTIONS
+            ExecStop=/usr/bin/docker stop %p
+            Type=simple
+            User=root
+            Group=root
+            UMask=0007
+
+            [Install]
+            WantedBy=multi-user.target
 
     - if you use SELinux, make sure the data directory has the correct context to be accessed by a container:
 
@@ -142,14 +144,14 @@ Next, pull the sonatype image:
 
         .. code-block:: console 
 
-            systemctl start nexus-mirror
+            #> systemctl start nexus-mirror
 
 
     - Check the service
 
         .. code-block:: console 
 
-            systemctl status nexus-mirror
+            #> systemctl status nexus-mirror
 
     - If problems occurred:
 
@@ -157,7 +159,7 @@ Next, pull the sonatype image:
 
             .. code-block:: console 
 
-                journalctl -u nexus-mirror 
+                #> journalctl -u nexus-mirror 
 
         + check the log created when the service runs (configured in the ``sysconfig`` file):
 
@@ -165,7 +167,7 @@ Next, pull the sonatype image:
 
             .. code-block:: console 
 
-                cat /data/nexus3/service.log
+                #> cat /data/nexus3/service.log
 
         + you're on your own from here
 
@@ -173,7 +175,7 @@ Checking it out
 ===============
 
 Once you've started the service, if it seems to be running ok, use your web browser 
-and try to access it at http://<your-hostname>:7081/
+and try to access it at ``http://<your-hostname>:7081/``
 
 Unless you're using nexus backup files, the username and password for logging in will be the same as that for the released docker sonatype/nexus3 image.
 

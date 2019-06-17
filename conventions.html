@@ -4,7 +4,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
     <meta charset="utf-8" />
-    <title>TODO &#8212; SoeStack 2.0 documentation</title>
+    <title>Conventions &#8212; SoeStack 2.0 documentation</title>
     <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
@@ -14,8 +14,8 @@
     <script type="text/javascript" src="_static/language_data.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="SoeStack Structure" href="structure.html" />
-    <link rel="prev" title="USB QUICKSTART" href="USB-quickstart.html" />
+    <link rel="next" title="About SoeStack" href="ABOUT.html" />
+    <link rel="prev" title="LICENSE" href="LICENSE.html" />
    
   <link rel="stylesheet" href="_static/custom.css" type="text/css" />
   
@@ -32,19 +32,32 @@
 
           <div class="body" role="main">
             
-  <div class="section" id="todo">
-<span id="todos"></span><h1>TODO<a class="headerlink" href="#todo" title="Permalink to this headline">¶</a></h1>
-<ul class="simple">
-<li><p>Email delivery</p></li>
-<li><p>Email clients</p></li>
-<li><p>Display / desktop config for workstations</p></li>
-<li><p>Network configuration</p></li>
-<li><p>Backups</p></li>
-<li><p>need to do NFS selinux ports and IPA firewall ports</p></li>
-<li><p>user account created with ipa has ‘sh’ as shell by default.</p></li>
-<li><p>user account creation had non-working default email address style.</p></li>
-<li><p>add a root password update script for monthly password updates</p></li>
-</ul>
+  <div class="section" id="conventions">
+<span id="docs-conventions"></span><h1>Conventions<a class="headerlink" href="#conventions" title="Permalink to this headline">¶</a></h1>
+<p>The following conventions are used within this documentation.</p>
+<p>Code blocks showing commands which may need to be executed with some sort of elevated privileges (such as, by the <code class="docutils literal notranslate"><span class="pre">root</span></code> user), are displayed with the <code class="docutils literal notranslate"><span class="pre">#&gt;</span></code> prefix, for example:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">#</span>&gt; example-root-command
+</pre></div>
+</div>
+<p>Code blocks showing commands which can probably be executed with regular user privileges are displayed with the <code class="docutils literal notranslate"><span class="pre">$&gt;</span></code> prefix, for example:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$</span>&gt; example-regular-user-command
+</pre></div>
+</div>
+<p>Commentary within a code block may be displayed with a <strong>##</strong> prefix, for example:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$</span>&gt; this-is-a-command
+<span class="gp">#</span><span class="c1"># this is some commentary about the command,</span>
+<span class="gp">#</span><span class="c1"># for example this might be used to inform you that you&#39;ll need to type something.</span>
+<span class="gp">#</span><span class="c1"># Or it might be used to indicate a step that can be skipped in some situations.</span>
+<span class="go">This is some example output from the command</span>
+</pre></div>
+</div>
+<p>In code blocks that show example output, the token <code class="docutils literal notranslate"><span class="pre">&lt;snip&gt;</span></code> may be used to indicate that some text was cut out for brevity:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$</span>&gt; a-command-that-produces-a-lot-of-output
+<span class="go">some example relevant output</span>
+<span class="go">&lt;snip&gt;</span>
+<span class="go">more example relevant output</span>
+</pre></div>
+</div>
 </div>
 
 
@@ -68,13 +81,13 @@
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="includeme.html">SoeStack - a SOE for Linux systems</a></li>
 <li class="toctree-l1"><a class="reference internal" href="LICENSE.html">LICENSE</a></li>
-<li class="toctree-l1"><a class="reference internal" href="conventions.html">Conventions</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Conventions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="ABOUT.html">About SoeStack</a></li>
 <li class="toctree-l1"><a class="reference internal" href="QUICKSTART.html">QUICKSTART</a></li>
 <li class="toctree-l1"><a class="reference internal" href="libvirt-vagrant-preparation.html">Libvirt / Vagrant Preparation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="nexus-quickstart.html">Nexus quickstart</a></li>
 <li class="toctree-l1"><a class="reference internal" href="USB-quickstart.html">USB QUICKSTART</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">TODO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="TODOS.html">TODO</a></li>
 </ul>
 <p class="caption"><span class="caption-text">Looking further:</span></p>
 <ul>
@@ -86,8 +99,8 @@
 <h3>Related Topics</h3>
 <ul>
   <li><a href="index.html">Documentation overview</a><ul>
-      <li>Previous: <a href="USB-quickstart.html" title="previous chapter">USB QUICKSTART</a></li>
-      <li>Next: <a href="structure.html" title="next chapter">SoeStack Structure</a></li>
+      <li>Previous: <a href="LICENSE.html" title="previous chapter">LICENSE</a></li>
+      <li>Next: <a href="ABOUT.html" title="next chapter">About SoeStack</a></li>
   </ul></li>
 </ul>
 </div>
@@ -121,7 +134,7 @@
       &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
       
       |
-      <a href="_sources/TODOS.rst.txt"
+      <a href="_sources/conventions.rst.txt"
           rel="nofollow">Page source</a>
     </div>
 

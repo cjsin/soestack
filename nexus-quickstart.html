@@ -14,7 +14,7 @@
     <script type="text/javascript" src="_static/language_data.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="TODO" href="TODOS.html" />
+    <link rel="next" title="USB QUICKSTART" href="USB-quickstart.html" />
     <link rel="prev" title="Libvirt / Vagrant Preparation" href="libvirt-vagrant-preparation.html" />
    
   <link rel="stylesheet" href="_static/custom.css" type="text/css" />
@@ -59,15 +59,15 @@
 <li><p>for example the current version is 3.16.1, which is used in the following example commands.</p></li>
 <li><p>run:</p>
 <blockquote>
-<div><div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">docker pull sonatype/nexus3:3.16.1</span>
+<div><div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">#</span>&gt; docker pull sonatype/nexus3:3.16.1
 </pre></div>
 </div>
 </div></blockquote>
 </li>
 <li><p>create a data directory (as root):</p>
 <blockquote>
-<div><div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">mkdir /data/nexus3</span>
-<span class="go">chown 200.200 /data/nexus3</span>
+<div><div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">#</span>&gt; mkdir /data/nexus3
+<span class="gp">#</span>&gt; chown <span class="m">200</span>.200 /data/nexus3
 </pre></div>
 </div>
 </div></blockquote>
@@ -95,10 +95,11 @@
 </li>
 <li><p>create a systemd service unit file <code class="docutils literal notranslate"><span class="pre">/etc/systemd/system/nexus-mirror.service</span></code> for the service:</p>
 <blockquote>
-<div><p>[Unit]
+<div><div class="highlight-default notranslate"><div class="highlight"><pre><span></span>[Unit]
 Description=Sonatype Nexus OSS 3 Pull-through cache
-After=NetworkManager-wait-online.service network.target docker.service</p>
-<p>[Service]
+After=NetworkManager-wait-online.service network.target docker.service
+
+[Service]
 Environment=DOCKER_OPTIONS=
 Environment=PORTS=
 Environment=VOLUMES=
@@ -106,18 +107,21 @@ Environment=ENTRYPOINT=
 Environment=IMAGE=
 Environment=OPTIONS=
 Environment=ENV=
-Environment=RM=–rm
+Environment=RM=--rm
 EnvironmentFile=-/etc/sysconfig/%p
 ExecStartPre=-/usr/bin/docker stop %p
 ExecStartPre=-/usr/bin/docker rm %p
-ExecStart=/usr/bin/docker run $(RM) –name %p  $TZ $DOCKER_OPTIONS $PORTS $VOLUMES -v /etc/localtime:/etc/localtime $ENTRYPOINT $IMAGE $OPTIONS
+ExecStart=/usr/bin/docker run $(RM) --name %p  $TZ $DOCKER_OPTIONS $PORTS $VOLUMES -v /etc/localtime:/etc/localtime $ENTRYPOINT $IMAGE $OPTIONS
 ExecStop=/usr/bin/docker stop %p
 Type=simple
 User=root
 Group=root
-UMask=0007</p>
-<p>[Install]
-WantedBy=multi-user.target</p>
+UMask=0007
+
+[Install]
+WantedBy=multi-user.target
+</pre></div>
+</div>
 </div></blockquote>
 </li>
 <li><p>if you use SELinux, make sure the data directory has the correct context to be accessed by a container:</p>
@@ -169,14 +173,14 @@ WantedBy=multi-user.target</p>
 </li>
 <li><p>Start the service</p>
 <blockquote>
-<div><div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">systemctl start nexus-mirror</span>
+<div><div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">#</span>&gt; systemctl start nexus-mirror
 </pre></div>
 </div>
 </div></blockquote>
 </li>
 <li><p>Check the service</p>
 <blockquote>
-<div><div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">systemctl status nexus-mirror</span>
+<div><div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">#</span>&gt; systemctl status nexus-mirror
 </pre></div>
 </div>
 </div></blockquote>
@@ -186,7 +190,7 @@ WantedBy=multi-user.target</p>
 <div><ul>
 <li><p>check the log for this systemd service:</p>
 <blockquote>
-<div><div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">journalctl -u nexus-mirror</span>
+<div><div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">#</span>&gt; journalctl -u nexus-mirror
 </pre></div>
 </div>
 </div></blockquote>
@@ -194,7 +198,7 @@ WantedBy=multi-user.target</p>
 <li><p>check the log created when the service runs (configured in the <code class="docutils literal notranslate"><span class="pre">sysconfig</span></code> file):</p>
 <blockquote>
 <div><p>NOTE the service file configured above tells the container to put its log output to <code class="docutils literal notranslate"><span class="pre">service.log</span></code> within the configured data dir.</p>
-<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">cat /data/nexus3/service.log</span>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">#</span>&gt; cat /data/nexus3/service.log
 </pre></div>
 </div>
 </div></blockquote>
@@ -209,7 +213,7 @@ WantedBy=multi-user.target</p>
 <div class="section" id="checking-it-out">
 <h2>Checking it out<a class="headerlink" href="#checking-it-out" title="Permalink to this headline">¶</a></h2>
 <p>Once you’ve started the service, if it seems to be running ok, use your web browser
-and try to access it at <a class="reference external" href="http:/">http:/</a>/&lt;your-hostname&gt;:7081/</p>
+and try to access it at <code class="docutils literal notranslate"><span class="pre">http://&lt;your-hostname&gt;:7081/</span></code></p>
 <p>Unless you’re using nexus backup files, the username and password for logging in will be the same as that for the released docker sonatype/nexus3 image.</p>
 </div>
 <div class="section" id="using-your-nexus-instance-within-soestack">
@@ -240,10 +244,11 @@ and try to access it at <a class="reference external" href="http:/">http:/</a>/&
 
 
 <h3>Navigation</h3>
-<p class="caption"><span class="caption-text">Contents:</span></p>
+<p class="caption"><span class="caption-text">Getting Started:</span></p>
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="includeme.html">SoeStack - a SOE for Linux systems</a></li>
 <li class="toctree-l1"><a class="reference internal" href="LICENSE.html">LICENSE</a></li>
+<li class="toctree-l1"><a class="reference internal" href="conventions.html">Conventions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="ABOUT.html">About SoeStack</a></li>
 <li class="toctree-l1"><a class="reference internal" href="QUICKSTART.html">QUICKSTART</a></li>
 <li class="toctree-l1"><a class="reference internal" href="libvirt-vagrant-preparation.html">Libvirt / Vagrant Preparation</a></li>
@@ -253,9 +258,10 @@ and try to access it at <a class="reference external" href="http:/">http:/</a>/&
 <li class="toctree-l2"><a class="reference internal" href="#using-your-nexus-instance-within-soestack">Using your Nexus instance within SoeStack</a></li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="USB-quickstart.html">USB QUICKSTART</a></li>
 <li class="toctree-l1"><a class="reference internal" href="TODOS.html">TODO</a></li>
 </ul>
-<p class="caption"><span class="caption-text">Contents:</span></p>
+<p class="caption"><span class="caption-text">Looking further:</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="structure.html">SoeStack Structure</a></li>
 <li class="toctree-l1"><a class="reference internal" href="before-generating-usb.html">Steps to do before generating USB stick</a></li>
@@ -266,7 +272,7 @@ and try to access it at <a class="reference external" href="http:/">http:/</a>/&
 <ul>
   <li><a href="index.html">Documentation overview</a><ul>
       <li>Previous: <a href="libvirt-vagrant-preparation.html" title="previous chapter">Libvirt / Vagrant Preparation</a></li>
-      <li>Next: <a href="TODOS.html" title="next chapter">TODO</a></li>
+      <li>Next: <a href="USB-quickstart.html" title="next chapter">USB QUICKSTART</a></li>
   </ul></li>
 </ul>
 </div>
