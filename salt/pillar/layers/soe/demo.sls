@@ -392,6 +392,10 @@ nexus:
                             #downloads/elasticsearch/elasticsearch-6.4.0.rpm
 
 
+        # The online EPEL repos switched to using 'zchunk' metadata, and nexus
+        # currently does not support that, so nexus is incapable of proxying for EPEL now.
+        # see Sonatype issue tracker bug url: https://issues.sonatype.org/browse/NEXUS-20078
+        #
         #epel:
         #    type:           proxy
         #    format:         yum

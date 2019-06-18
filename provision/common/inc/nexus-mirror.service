@@ -4,7 +4,7 @@ After=syslog.target network.target NetworkManager-wait-online.service docker.ser
 
 [Service]
 Type=simple
-ExecStart=/bin/docker run --rm --name nexus-mirror -p 0.0.0.0:7081-7085:8081-8085 -v /d/local/data/nexus:/nexus-data sonatype/nexus3:3.13.0
+ExecStart=/bin/docker run --rm --name nexus-mirror -p 0.0.0.0:7081-7085:8081-8085 -v /d/local/data/nexus:/nexus-data sonatype/nexus3:3.16.2
 User=root
 
 [Install]

@@ -482,7 +482,7 @@ function load_container_file()
 
 function load_nexus_container()
 {
-    sonatype_version="3.13.0"
+    sonatype_version="3.16.2"
     if [[ -n "${BUNDLED_SRC}" ]]
     then 
         load_container_file "sonatype_nexus3__${sonatype_version}.tar"

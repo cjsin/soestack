@@ -9,7 +9,7 @@
 {%- set pillar_location  = ':'.join(['deployments',deployment_type,deployment_name]) %}
 {%- set state_tag        = deployment_type ~ '-' ~ deployment_name %}
 {%- set action           = args.action if 'action' in args else 'all' %}
-{%- set account_defaults = { 'user': 'logstash', 'group': 'logstsash', 'extra_groups': [] } %}
+{%- set account_defaults = { 'user': 'logstash', 'group': 'logstash', 'extra_groups': [] } %}
 {%- set account_info     = deployment.account if 'account' in deployment and deployment.account else account_defaults %}
 {%- set user             = account_info.user if 'user' in account_info and account_info.user else 'logstash' %}
 {%- set group            = account_info.group if 'group' in account_info and account_info.group else user %}

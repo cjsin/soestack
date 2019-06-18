@@ -42,10 +42,15 @@ bundle: $(IMAGE)
 update: $(IMAGE) 
 	$(BUNDLER) update
 
+#help:kickstarts  : update kickstart provisioning
 kickstarts: $(IMAGE)
 	$(BUNDLER) kickstarts
 
-#help:isos      : copy isos
+#help:menus       : update syslinux menus
+menus: $(IMAGE)
+	$(BUNDLER) menus
+
+#help:isos        : copy isos
 isos: $(IMAGE) 
 	$(BUNDLER) isos
 

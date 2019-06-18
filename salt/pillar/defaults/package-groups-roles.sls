@@ -41,7 +41,7 @@ package-groups:
             - development-editors-group
         package-sets:
             - diff-tools-console
-            - diff-tools-gui
+            #- diff-tools-gui
             - development-base
             - python-development
             - git-standard-uninstall

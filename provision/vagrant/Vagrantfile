@@ -8,7 +8,7 @@ Vagrant.configure("2") do |config|
 
     config.vm.provider "libvirt" do |lv, override|
         lv.driver = "kvm"
-        lv.memory = 10240
+        lv.memory = 8192
         lv.cpus = 2
         lv.storage_pool_name = 'linux'
         lv.input :type => "tablet", :bus => "usb"

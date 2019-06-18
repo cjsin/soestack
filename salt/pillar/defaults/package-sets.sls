@@ -245,7 +245,6 @@ package-sets:
             vscode:
                 - code
  
-
     gnome-desktop:
         purpose: |
             provide the gnome desktop
@@ -258,9 +257,9 @@ package-sets:
             provide the kde desktop
         centos,redhat,fedora:
             - '@KDE Plasma Workspaces'
-            - '@KDE Desktop'
+            # - '@KDE Desktop'
             - '@General Purpose Desktop'
-            - openbox-kde
+            # - openbox-kde
     
     git-standard-uninstall:
         purpose: |
@@ -294,7 +293,8 @@ package-sets:
     xfce-desktop:
         purpose: |
             provide the XFCE desktop 
-        centos,redhat,fedora:
-            - '@Xfce'
-            - '@General Purpose Desktop'
+        # Xfce and General Purpose Desktop groups no longer seem to be provided
+        centos,redhat,fedora: []
+        #    - '@Xfce'
+        #    - '@General Purpose Desktop'
 

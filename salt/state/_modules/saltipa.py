@@ -76,7 +76,7 @@ def server_unavailable():
             else:
                 return True, "Problems contacting the IPA service."
         except:
-            return True, "Cannot contact IPA service."
+            return True, "Cannot contact IPA service at {}".format(check_server)
     else:
         # Not configured with a check, so assume it's available
         return None, "SaltIPA check_server not configured."

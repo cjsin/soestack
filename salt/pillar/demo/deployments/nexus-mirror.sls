@@ -23,7 +23,7 @@ deployments:
                                     registry4: 7085
             container:
                 description: Sonatype Nexus OSS 3 Pull-through cache
-                image:       sonatype/nexus3:3.13.0
+                image:       sonatype/nexus3:3.16.2
                 local_image: True
                 volumes:
                     - -v /d/local/data/nexus:/nexus-data
