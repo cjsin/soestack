@@ -84,16 +84,16 @@ network:
         # to stop stupid NetworkManager overwriting the resolv.conf
         #eth0:
         #    ignore: True 
-        eth0:
-            inherit:
-                - no-peerdns
-                - ethernet
-                - enabled
-                - no-defroute
-                - dhcp
-                - no-nm-controlled
+        # eth0:
+        #     inherit:
+        #         - no-peerdns
+        #         - ethernet
+        #         - enabled
+        #         - no-defroute
+        #         - dhcp
+        #         - no-nm-controlled
 
-        eth1:
+        eth0:
             inherit:
                 - defaults
                 - ethernet
