@@ -216,7 +216,7 @@ function salt_state_provision()
         salt-step grains.set vagrant True
     fi
 
-    if [[ "${preconfigured_roles}" =~ ^role-set ]]
+    if [[ "${preconfigured_roles}" =~ ^role-set: ]]
     then 
         salt-step grains.set role-set "${preconfigured_roles#role-set:}" force=True
         salt-step state.sls common.role-sets.apply

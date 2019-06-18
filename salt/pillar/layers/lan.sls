@@ -1,5 +1,5 @@
 _loaded_layers:
-    {%- if 'lan' in grains.layers and grains.layers.lan is mapping %}
+    {%- if 'layers' in grains and grains.layers is mapping and 'lan' in grains.layers %}
     {{sls}}: {{grains.layers.lan|json}}
     {%- else %}
     {{sls}}: 'no lan layer set yet, or not a mapping'
@@ -13,8 +13,8 @@ _loaded_layers:
 
 lan_layer_is: {{grains.layers.lan}}
 
-# attempted_load:
-#     {{slspath ~ '/lan/' ~ grains.layers.lan ~ '.sls'}}: 
+attempted_load:
+    {{slspath ~ '/lan/' ~ grains.layers.lan ~ '.sls'}}: 
 
 {%     include(slspath ~ prefix ~ 'lan/' ~ grains.layers.lan ~ '.sls') ignore missing %}
 

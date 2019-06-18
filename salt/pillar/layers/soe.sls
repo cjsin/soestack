@@ -1,5 +1,5 @@
 _loaded_layers:
-    {%- if 'layers' in grains and grains.layers is mapping and 'site' in grains.layers %}
+    {%- if 'layers' in grains and grains.layers is mapping and 'soe' in grains.layers %}
     {{sls}}: {{grains.layers.soe|json}}
     {%- else %}
     {{sls}}: 'no layers soe grain set yet, or not a mapping' 

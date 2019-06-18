@@ -392,21 +392,21 @@ nexus:
                             #downloads/elasticsearch/elasticsearch-6.4.0.rpm
 
 
-        epel:
-            type:           proxy
-            format:         yum
-            blobstore:      epel
-            remote_url:     https://dl.fedoraproject.org/
-            yum:
-                centos:
-                    enabled:     1
-                    gpgcheck:    1
-                    gpgkey_url:  https://dl.fedoraproject.org/pub/epel/RPM-GPG-KEY-EPEL-$releasever
-                    gpgkey:      RPM-GPG-KEY-EPEL-7
-                    repos:
-                        epel:
-                            description: EPEL for Centos $releasever
-                            path:        pub/epel/$releasever/$basearch
+        #epel:
+        #    type:           proxy
+        #    format:         yum
+        #    blobstore:      epel
+        #    remote_url:     https://dl.fedoraproject.org/
+        #    yum:
+        #        centos:
+        #            enabled:     1
+        #            gpgcheck:    1
+        #            gpgkey_url:  https://dl.fedoraproject.org/pub/epel/RPM-GPG-KEY-EPEL-$releasever
+        #            gpgkey:      RPM-GPG-KEY-EPEL-7
+        #            repos:
+        #                epel:
+        #                    description: EPEL for Centos $releasever
+        #                    path:        pub/epel/$releasever/$basearch
 
         github:
             type:                proxy
@@ -740,7 +740,6 @@ service-status:
             - tuned
             - lsmd
             - kdump
-            
 
 service-reg:
     nexus_http:       nexus:7081

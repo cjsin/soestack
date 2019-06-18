@@ -1,6 +1,13 @@
 {% macro image_present(image,image_prefix='') -%}
 
-{%- set prefix, suffix  = salt.uuid.ids() %}
+{%- if not image %}
+
+{{prefix}}docker-image-no-image-specified-present{{suffix}}:
+    noop.notice
+
+{%- else %}
+
+{%-   set prefix, suffix  = salt.uuid.ids() %}
 
 {{prefix}}docker-image-{{image}}-present{{suffix}}:
     # This doesn't work because the python modules for the docker support
@@ -11,6 +18,6 @@
         - name:   docker pull '{{image_prefix}}{{image}}'
         - unless: docker images --format '{%raw%}{{.Repository}}:{{.Tag}}{%endraw%}' | grep '{{image_prefix}}{{image}}'
 
-{# This line is required to fix a salt bug which appends stray 'f' characters to macros #}
+{%- endif %}
 
 {%- endmacro %}
