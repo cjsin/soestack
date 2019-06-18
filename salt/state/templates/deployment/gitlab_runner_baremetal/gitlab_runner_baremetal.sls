@@ -2,7 +2,7 @@
 {%- set deployment_name    = args.deployment_name %}
 {%- set deployment_type    = args.deployment_type %}
 {%- set deployment         = args.deployment %}
-{%- set config             = args.deployment.config if config in deployment else {} %}
+{%- set config             = args.deployment.config if 'config' in deployment else {} %}
 {%- if not config %} 
 
 {{sls}}.{{prefix}}gitlab-runner-config-missing{{suffix}}:

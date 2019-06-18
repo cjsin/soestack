@@ -67,7 +67,7 @@ package-groups:
             - gnome-desktop
             - kde-desktop
             - alternative-desktop
-            - xfce-desktop
+            #- xfce-desktop
 
     developer-workstation-node:
         package-groups:

@@ -250,7 +250,7 @@ package-sets:
             provide the gnome desktop
         centos,redhat,fedora:
             - '@GNOME Desktop'
-            - '@General Purpose Desktop'
+            #- '@General Purpose Desktop'
 
     kde-desktop:
         purpose: |
@@ -258,7 +258,7 @@ package-sets:
         centos,redhat,fedora:
             - '@KDE Plasma Workspaces'
             # - '@KDE Desktop'
-            - '@General Purpose Desktop'
+            #- '@General Purpose Desktop'
             # - openbox-kde
     
     git-standard-uninstall:
@@ -286,7 +286,7 @@ package-sets:
         centos,redhat,fedora:
             - '@MATE Desktop'
             #- '@Cinnamon Desktop'
-            - '@General Purpose Desktop'
+            #- '@General Purpose Desktop'
             - openbox
             - fluxbox
             
