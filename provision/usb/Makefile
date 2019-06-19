@@ -23,8 +23,8 @@ all: check
 #help:########################
 #help:## USB
 #help:########################
-#help:#boot-sector:          # 
-#help:#files:                #
+#help:#boot-sector           # 
+#help:#files                 #
 #help:# |                    #
 #help:# |syslinux            # - make menus
 #help:# |   +syslinux.cfg    #
