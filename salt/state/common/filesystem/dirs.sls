@@ -90,6 +90,12 @@
         {%- endfor %}
 
 
+{%- else %}
+.exports-dirs-{{grouping}}-{{key}}-{{item_name}}:
+    noop.notice:
+        - text: |
+            apparently, there is no 'export' in {{props|json}}
+
 {%-                                 endif %}
 {%-                             endif %}
 

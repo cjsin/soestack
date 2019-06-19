@@ -59,7 +59,7 @@ Before you can use the files for your own purposes you will need to:
 
     - in various places, you will then need to change ``demo`` to your new SOE name or layer name, for example:
 
-        + the variable ``ss.LAYERS``, which is by default set to ``soe:demo,site:demo,lan:demo``
+        + the variable ``ss.LAYERS``, which is by default set to ``soe:demo,site:testing,lan:demo``
 
     - for example:
     

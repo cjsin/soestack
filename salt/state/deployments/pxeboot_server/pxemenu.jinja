@@ -42,7 +42,7 @@ MENU TITLE SoeStack
 {#- #}
 {%-     if type == 'soestack' %}
 {#-     # do a boot using soestack kickstarts and boot commandline host configuration #}
-{%-         set ss_array_types=['host','repo'] %}
+{%-         set ss_array_types=[ 'host', 'repo' ] %}
 {%-         for arrtype in ss_array_types %}
 {%-             set key = ('ss_'~arrtype~'s') %}
 {%-             set addvar = ('ss.add_' ~ arrtype ~ '=').upper() %}

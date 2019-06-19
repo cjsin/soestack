@@ -24,8 +24,13 @@ deployments:
         soestack_demo:
             config:
                 lans:
+                    # defaults:
+                    #     kernel:        os/everything/images/pxeboot/vmlinuz
+                    #     initrd:        os/everything/images/pxeboot/initrd.img
                     qemu:
-                        iface:                 eth1
+                        kernel:                os/everything/images/pxeboot/vmlinuz
+                        initrd:                os/everything/images/pxeboot/initrd.img
+                        iface:                 eth0
                         static:                True
                         subnet:                192.168.121
                         entries:
@@ -34,7 +39,7 @@ deployments:
                                 ss_settings:
                                     DOMAIN:            qemu
                                     ROLES:             developer-workstation
-                                    LAYERS:            soe:demo,site:demo,lan:qemu
+                                    LAYERS:            soe:demo,site:testing,lan:usb-vm
                                 ss_hosts:
                                     # To nodes booting within the libvirt/qemu/vagrant test network the nexus server and gateway are 10.0.2.2
                                     192.168.121.1:     gateway gateway.qemu

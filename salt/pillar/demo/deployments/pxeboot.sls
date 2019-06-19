@@ -109,7 +109,7 @@ deployments:
                                     SALT_TYPE:         minion
                                     NAMESERVER:        gateway
                                     ROLES:             basic-node
-                                    LAYERS:            soe:demo,site:demo,lan:default
+                                    LAYERS:            soe:demo,site:testing,lan:default
                                     DEVELOPMENT:       1
                                     INTERACTIVE:       1
                                     WAIT:              5
@@ -119,8 +119,8 @@ deployments:
                                     NEXUS:             nexus:7081
                                     TIMEZONE:          UTC
                                 ss_repos:
-                                    os:                'http://$NEXUS/repository/centos/centos/$releasever/os/$basearch'
-                                    updates:           'http://$NEXUS/repository/centos/centos/$releasever/updates/$basearch'
+                                    os:                'http://$NEXUS/repository/centos/centos/$releaselong/os/$basearch'
+                                    updates:           'http://$NEXUS/repository/centos/centos/$releaselong/updates/$basearch'
                                 ss_hosts: {}
                                 #    192.168.121.1:      gateway.default
                                 #    192.168.121.101:    infra.default infra master salt ipa nexus.default nexus

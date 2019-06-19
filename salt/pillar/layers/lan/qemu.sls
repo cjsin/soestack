@@ -33,7 +33,7 @@ deployments:
                                 ss_settings:
                                     DOMAIN:            qemu
                                     ROLES:             developer-workstation
-                                    LAYERS:            soe:demo,site:demo,lan:qemu
+                                    LAYERS:            soe:demo,site:testing,lan:qemu
                                 ss_hosts:
                                     # To nodes booting within the libvirt/qemu/vagrant test network the nexus server and gateway are 10.0.2.2
                                     192.168.121.1:     gateway gateway.qemu

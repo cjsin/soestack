@@ -310,7 +310,7 @@ Example output is shown below:
         * APPEND cmdline ss.BUNDLED_SRC=/e/bundled
         * APPEND cmdline ss.DEVELOPMENT=1 ss.INTERACTIVE=0 ss.WAIT=0 ss.INSPECT=0 ss.VERBOSE=1
         * APPEND cmdline ss.DOMAIN=demo
-        * APPEND cmdline ss.LAYERS=soe:demo,site:demo,lan:qemu
+        * APPEND cmdline ss.LAYERS=soe:demo,site:testing,lan:qemu
         * APPEND cmdline ss.NEXUS=nexus.demo:7081
         * APPEND cmdline ss.ROLES=all-in-one-sde-server-node
         * APPEND cmdline ss.SALT_MASTER=infra.demo
