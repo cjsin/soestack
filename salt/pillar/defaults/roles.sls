@@ -54,6 +54,10 @@ roles:
             a service node is a node which runs some services that are
             required on the network
 
+    elasticsearch-node:
+        purpose: |
+            a server node which runs elasticsearch services and/or frontend
+
     processor-node:
         purpose: |
             A processor node is a workhorse node which may or may not allow logins. 

@@ -31,17 +31,17 @@ include:
     - .gitlab_baremetal
 
     # Logging server
-    - .elasticsearch_container
+    ## - .elasticsearch_container
 
     # Logging frontend dashboard
     # kibana is failing to pull docker image from elastic.co
-    - .kibana_container
+    ## - .kibana_container
     # - .kibana_baremetal
 
     # Logging client support
     # logstash is failing to pull docker image from useless elastic.co
-    - .logstash_container
-    - .logstash_baremetal
+    ## - .logstash_container
+    ## - .logstash_baremetal
 
     # Kubernetes cluster
-    - .kube_master
+    ## - .kube_master

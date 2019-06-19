@@ -9,7 +9,7 @@ role-sets:
             of a software development environment in one node
         combine:
             - primary-server-node
-            - kubernetes-node
+            ## - kubernetes-node
             - docker-node
             - email-server-node
             - homedir-server-node
@@ -17,6 +17,7 @@ role-sets:
             - software-development-node
             - login-node
             - jumpserver-node
+            ## - elasticsearch-node
             - service-node
             - login-processor-node
             - workstation-node

@@ -18,9 +18,13 @@
 # without the right sysctl values, so make sure sysctls are reloaded prior to activation
 {%- if action in [ 'all', 'configure' ] %}
 
+{%- if 'activated' in deployment and deployment.activated %}
+
 {{sls}}.{{action}}.reload-sysctls:
     cmd.run:
         - name: sysctl --system
+
+{%- endif %}
 
 {%- endif %}
 

@@ -16,7 +16,10 @@ svd:
             hash:    sha256=
         
         gitlab:
-            version: 11.2.3
+            version: 11.11.3-ce.0.el7
+
+        gitlab-runner:
+            version: 11.11.2-1
 
         grafana:
             # Grafana dashboard provisioning is USELESS since v 5.1 due to a senseless change

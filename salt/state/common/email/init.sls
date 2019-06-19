@@ -4,5 +4,6 @@ include:
     - .mutt
     - .postfix
     - .clients
-    - .mh
+    # no nmh available without working epel repos (disabled till nexus bugfix)
+    # - .mh
     

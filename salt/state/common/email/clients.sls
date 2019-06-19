@@ -1,20 +1,20 @@
 #!stateconf yaml . jinja
 
-.sylpheed:
-    pkg.installed:
-        - pkgs:
-            - sylpheed
+#.sylpheed:
+#    pkg.installed:
+#        - pkgs:
+#            - sylpheed
 
 .thunderbird:
     pkg.installed:
         - pkgs:
             - thunderbird
-            - thunderbird-enigmail
+            # - thunderbird-enigmail
 
 .utils:
     pkg.installed:
         - pkgs:
-            - xfce4-mailwatch-plugin
+            # - xfce4-mailwatch-plugin
             - procmail
             - mailx
-            - mail-notification
+            # - mail-notification

@@ -18,7 +18,7 @@
 .install-drawio:
     pkg.installed:
         - sources: 
-            - draw.io: {{baseurl}}/jgraph/drawio-desktop/releases/download/v{{version}}/draw.io-x86_64-{{version}}.rpm
+            - draw.io: '{{baseurl}}/jgraph/drawio-desktop/releases/download/v{{version}}/draw.io-x86_64-{{version}}.rpm'
 
 {%-     endif %}
 {%- endif %}

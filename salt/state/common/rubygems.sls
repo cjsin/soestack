@@ -23,8 +23,9 @@
             gem sources | grep -q rubygems.org && gem sources --remove https://rubygems.org/
             {%- endif %}
 
-            # Bundler released version 2.0 and decided to break compatibility entirely
-            gem list | egrep -q '^bundler[[:space:]]' || gem install -v bundle "< 2.0"
+            # # Bundler released version 2.0 and decided to break compatibility entirely
+            # gem list | egrep -q '^bundler[[:space:]]' || gem install bundle -v "< 1.16.4"
+            yum -y install rubygem-bundler
 
             {%- if mirror %}
             if ! bundle config | grep "{{mirror}}"

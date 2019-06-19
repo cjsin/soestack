@@ -669,13 +669,32 @@ function switchover_to_nexus()
     if start_nexus 
     then 
         msg "Disabling old yum repos and switching over to nexus bootstrap repos"
-        mv -f /etc/yum.repos.d/*repo /etc/yum.repos.d/disable/
-        /bin/cp -f "${SS_DIR}"/provision/common/inc/bootstrap-centos.repo /etc/yum.repos.d/
+        local repos_to_disable=( $(cd /etc/yum.repos.d; ls |egrep '[.]repo$' | egrep -v installmedia.repo ) )
+
+        local repo
+
+        local disable_other_repos=0
+
+        if (( disable_other_repos ))
+        then
+            for repo in "${repos_to_disable[@]}"
+            do
+                msg "Disable repo ${repo}"
+                mv -f "/etc/yum.repos.d/${repo}" /etc/yum.repos.d/disable/
+            done
+        fi 
+
+        local bootstrap_repo_name="${BOOTSTRAP_REPOS%%,*}"
+        bootstrap_repo_name="${bootstrap_repo_name:-bootstrap-centos.repo}"
+
+        local nexus_bootstrap="provision/common/inc/${bootstrap_repo_name}"
+        msg "Enable nexus bootstrap repos (${nexus_bootstrap})"
+        /bin/cp -f "${SS_DIR}/${nexus_bootstrap}" /etc/yum.repos.d/
 
         # Crappy yum doesn't seem to support variable use within the baseurl
         # at the start of it (ie the hostname / port part).
         local NEXUS=$(cat /etc/yum/vars/NEXUS)
-        sed -r -i 's%\$NEXUS%'"${NEXUS}"'%' /etc/yum.repos.d/*.repo
+        sed -r -i 's%\$NEXUS%'"${NEXUS}"'%' "/etc/yum.repos.d/${bootstrap_repo_name}"
         yum makecache
     else 
         notice "Skipping yum repo switchover because nexus is not available"

@@ -1,4 +1,4 @@
-# Overrides for the demo test soe site
+# Overrides for the testing site
 
 _loaded:
     {{sls}}:
