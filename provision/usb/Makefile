@@ -2,8 +2,13 @@
 IMAGE        = /dev/sdc
 DEBUG        = 
 VERBOSE      = 
+
 #CONFIG       = bundler-dev.properties
-CONFIG       = bundler-usb.properties
+#CONFIG       = bundler-usb.properties
+CONFIG       = bundler-ultra-fit.properties
+#CONFIG       = bundler-ultra-flair.properties
+#CONFIG       = bundler-cruzer.properties
+
 BUNDLER_HELP = ./ss-bundler.py $(CONFIG) --mode help
 BUNDLER      = ./ss-bundler.py $(CONFIG) $(VERBOSE) --mode 
 INSPECT      = ./build-boot-image.py --img $(IMAGE) inspect
@@ -13,6 +18,30 @@ KS_FILES     = $(shell find ../kickstart -type f)
 all: check
 
 .phony: update check help
+
+
+#help:########################
+#help:## USB
+#help:########################
+#help:#boot-sector:          # 
+#help:#files:                #
+#help:# |                    #
+#help:# |syslinux            # - make menus
+#help:# |   +syslinux.cfg    #
+#help:# |                    #
+#help:# |provision           # - make kickstarts
+#help:#                      #
+#help:# |bundled             #               \
+#help:# |   +soe             #               |
+#help:# |   +bootstrap-pkgs  #               |-- make bundle
+#help:# |   +docker          #               |
+#help:# |   +nexus           # - make nexus  /
+#help:# |                    #
+#help:# |iso                 # - make isos
+#help:# |                    #
+#help:# |Packages            # - make full
+#help:# |                    #
+#help:########################
 
 #help:help        : display this help
 help:
@@ -45,6 +74,10 @@ update: $(IMAGE)
 #help:kickstarts  : update kickstart provisioning
 kickstarts: $(IMAGE)
 	$(BUNDLER) kickstarts
+
+#help:nexus       : update nexus files
+nexus: $(IMAGE)
+	$(BUNDLER) nexus
 
 #help:menus       : update syslinux menus
 menus: $(IMAGE)
