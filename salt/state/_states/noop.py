@@ -52,7 +52,7 @@ def _noop(name,prefix=None,changed=False,result=None,text=None,changes=None,comm
         #    result = True
         #if not changes:
         #    LOG.info("fix for saltstack shitty API change")
-        #    changes['fuckoff'] = { 'old': 'fuckoff', 'new': 'getfucked'}
+        #    changes['x'] = { 'old': 'x', 'new': 'y' }
         ret= {
             'name':     name,
             'result':   result,
