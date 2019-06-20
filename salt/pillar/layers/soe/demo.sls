@@ -58,7 +58,7 @@ filesystem:
 
         # TODO - move this instead into a role layer
         by-role:
-            primary-server:
+            primary-server-node:
                 /e:
                     description: Top directory for nfs exports
                     export:
@@ -69,9 +69,9 @@ filesystem:
                             # shifted up above 1024. This results in the NFS server denying
                             # access, unless this opt is added. This won't be needed when
                             # deployed on real hardware.
-                            '*':              ro,async,root_squash,insecure
-                            '192.168.121.*':  rw,async,insecure
-                            '10.0.2.*':       rw,async,insecure
+                            '*':              ro,async,root_squash,insecure,fsid=0
+                            '192.168.121.*':  rw,async,insecure,fsid=0
+                            '10.0.2.*':       rw,async,insecure,fsid=0
 
                 /e/home:
                     user: root
@@ -85,6 +85,27 @@ filesystem:
                     bind:
                         dev:       /home
                         readwrite: True
+
+                /e/pxe:
+                    user: root
+                    group: root
+                    mode: '0755'
+                    mkdirs: True
+                    description: Exports for pxe booting
+                    export:
+                        1-pxe:
+                            - '*':       ro,async,insecure,root_squash,nohide,no_subtree_check
+
+
+                /e/pxe/os/dvd:
+                    user:  root
+                    group: root
+                    mode: '0775'
+                    mkdirs: True
+                    description: Exports for installing pxe clients from dvd image
+                    export:
+                        1-pxe-dvd:
+                            - '*':       ro,async,insecure,root_squash,nohide,no_subtree_check
 
                 /home:
                     description: Home directories

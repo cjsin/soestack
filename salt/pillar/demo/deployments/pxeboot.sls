@@ -35,8 +35,8 @@ deployments:
                 isos:
                     #netinstall: CentOS-7-x86_64-NetInstall-1810.iso
                     #minimal:     CentOS-7-x86_64-Minimal-1810.iso
-                    everything:  CentOS-7-x86_64-Everything-1810.iso
-                    #dvd:         CentOS-7-x86_64-DVD-1810.iso
+                    #everything:  CentOS-7-x86_64-Everything-1810.iso
+                    dvd:         CentOS-7-x86_64-DVD-1810.iso
 
                 paths:                
                     tftp:  /e/pxe
@@ -107,13 +107,13 @@ deployments:
                                     DOMAIN:            default
                                     SALT_MASTER:       infra.default
                                     SALT_TYPE:         minion
-                                    NAMESERVER:        gateway
+                                    NAMESERVER:        infra.default
                                     ROLES:             basic-node
                                     LAYERS:            soe:demo,site:testing,lan:default
-                                    DEVELOPMENT:       1
-                                    INTERACTIVE:       1
-                                    WAIT:              5
-                                    INSPECT:           1
+                                    DEVELOPMENT:       0
+                                    INTERACTIVE:       0
+                                    WAIT:              0
+                                    INSPECT:           0
                                     SKIP_CONFIRMATION: 0
                                     #BOOTSTRAP_REPOS:   bootstrap-centos.repo
                                     NEXUS:             nexus:7081
@@ -124,6 +124,6 @@ deployments:
                                 ss_hosts: {}
                                 #    192.168.121.1:      gateway.default
                                 #    192.168.121.101:    infra.default infra master salt ipa nexus.default nexus
-                                kickstart: http://%http_server%/os/minimal/provision/kickstart/kickstart.cfg
-                                stage2:    nfs:%nfs_server%:/e/pxe/os/minimal/
+                                kickstart: http://%http_server%/os/dvd/provision/kickstart/kickstart.cfg
+                                stage2:    nfs:%nfs_server%:/e/pxe/os/dvd/
 

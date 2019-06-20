@@ -5,7 +5,10 @@ deployments:
     gitlab_baremetal:
         gitlab:
             config:
-                hostname: gitlab.qemu
+                hostname:     gitlab.qemu
+                # In my demo VM's I have very limited ram available, so need to set this down low
+                # The default is that it will use 1/4 of total RAM or so
+                postgres_ram: 128MB
 
 # Override DNS on the infra server
 dns:

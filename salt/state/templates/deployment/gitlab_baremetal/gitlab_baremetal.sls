@@ -53,27 +53,27 @@
 
 {%     if 'mattermost' in config and 'app_id' in config.mattermost and 'token' in config.mattermost %}
 
-{{sls}}.gitlab-mattermost-integration-appid:
-    file.managed:
-        - name: /var/opt/gitlab/mattermost/env/MM_GITLABSETTINGS_ID
-        - contents: |
-            {{config.mattermost.app_id}} 
+# {{sls}}.gitlab-mattermost-integration-appid:
+#     file.managed:
+#         - name: /var/opt/gitlab/mattermost/env/MM_GITLABSETTINGS_ID
+#         - contents: |
+#             {{config.mattermost.app_id}} 
 
-{{sls}}.gitlab-mattermost-integration-token:
-    file.managed:
-        - name: /var/opt/gitlab/mattermost/env/MM_GITLABSETTINGS_SECRET
-        - contents: |
-            {{config.mattermost.token}}
+# {{sls}}.gitlab-mattermost-integration-token:
+#     file.managed:
+#         - name: /var/opt/gitlab/mattermost/env/MM_GITLABSETTINGS_SECRET
+#         - contents: |
+#             {{config.mattermost.token}}
 
-{{sls}}.gitlab-mattermost-restarted:
-    cmd.run:
-        - name: |
-            gitlab-ctl stop mattermost
-            sleep 10
-            gitlab-ctl start mattermost
-        - onchanges:
-            - file: {{sls}}.gitlab-mattermost-integration-token
-            - file: {{sls}}.gitlab-mattermost-integration-appid
+# {{sls}}.gitlab-mattermost-restarted:
+#     cmd.run:
+#         - name: |
+#             gitlab-ctl stop mattermost
+#             sleep 10
+#             gitlab-ctl start mattermost
+#         - onchanges:
+#             - file: {{sls}}.gitlab-mattermost-integration-token
+#             - file: {{sls}}.gitlab-mattermost-integration-appid
             
 {%     endif %}
 {% endif %}
@@ -82,9 +82,30 @@
 
 {%-     set activated = 'activated' in deployment and deployment.activated %}
 
-{{sls}}.gitlab-service:
-    service.{{'running' if activated else 'dead'}}:
+{%-     if not activated %}
+
+{{sls}}.gitlab-services-stopped:
+    cmd.run:
+        - name: gitlab-ctl stop
+        - onlyif: gitlab-ctl status | egrep 'up:'
+
+{{sls}}.gitlab-runsvdir-stopped:
+    service.dead:
         - name: gitlab-runsvdir 
         - enable: {{activated}} 
 
+{%-     else %}
+
+{{sls}}.gitlab-runsvdir:
+    service.running:
+        - name: gitlab-runsvdir 
+        - enable: {{activated}} 
+
+{{sls}}.gitlab-services:
+    cmd.run:
+        - name: gitlab-ctl start
+        - onlyif: sleep 2; gitlab-ctl status | egrep 'down:'
+
+{%-     endif %}
 {%- endif %}
+

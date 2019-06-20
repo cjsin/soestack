@@ -23,13 +23,14 @@ COLOR_WHITE=37m
 COLOR_ERR=${COLOR_RED}
 COLOR_WARN=${COLOR_YELLOW}
 COLOR_NOTICE=${COLOR_BLUE}
-COLOR_INFO=${COLOR_GREY}
+COLOR_INFO=${COLOR_GRAY}
 #COLOR_RESET=$'\u001b[0m'
 COLOR_RESET=$'\e[0m'
 
 function msg()
 {
-    echo "${FUNCNAME[1]}:" "${@}" 1>&2
+    local funcname=$(interesting_frame 2)
+    echo "${funcname}:" "${@}" 1>&2
 }
 
 function bmsg()
@@ -37,13 +38,35 @@ function bmsg()
     echo "${*}"
 }
 
+function interesting_frame()
+{
+    local frame="${1:-2}"
+    local nframes="${#FUNCNAME[@]}"
+    local funcname=""
+    local skip_func='^(|colored|spam|notice|info|err|warn|die|echo_stage)$'
+    while [[ "${frame}" -lt "${nframes}" ]]
+    do
+        funcname="${FUNCNAME[${frame}]}"
+        ((frame++))
+        if [[ ! "${funcname}" =~ ${skip_func} ]]
+        then
+            echo "${funcname}"
+            return 0
+        fi
+    done
+    if [[ -n "${BASH_SOURCE[1]}" ]]
+    then 
+        echo "${BASH_SOURCE[1]}"
+    fi
+}
+
 function colored()
 {
     local color="${1}"
     local text="${2}"
     shift 2
-
-    echo "${COLOR_BEGIN}${color}${FUNCNAME[2]}:${text}${COLOR_RESET}" "${@}" 1>&2
+    local funcname=$(interesting_frame 2)
+    echo "${COLOR_BEGIN}${color}${funcname}:${text}${COLOR_RESET}" "${@}" 1>&2
 }
 
 function err()
@@ -126,7 +149,7 @@ function echo_done()
 
 function die()
 {
-    msg "${FUNCNAME[1]}:FATAL:" "${*}"
+    msg "FATAL:" "${*}"
     exit 1
 }
 
@@ -848,7 +871,9 @@ function bootstrap_repos()
             then
                 msg "Installing ${found} which provides the following repos:"
                 egrep '^\[' "${found}" | tr '[]' ':' | cut -d: -f2 | indent
-                /bin/cp -f "${found}" /etc/yum.repos.d/
+                local name="${found##*/}"
+                msg "Substituting '${NEXUS}' for \$NEXUS in ${found}"
+                sed -e "s%\$NEXUS%$NEXUS%" < "${found}" > /etc/yum.repos.d/"${name}"
             else 
                 err "Bootstrap repos file ${f} was not found!"
             fi 

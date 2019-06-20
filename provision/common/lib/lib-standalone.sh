@@ -107,7 +107,32 @@ function configure_standalone_network()
     fi
 }
 
-function copy_bundled_files()
+function copy_bundled_soe()
+{
+    if ! ensure_installed rsync
+    then
+        notice "rsync is required before continuing"
+        return 1
+    fi
+
+    if [[ ! -d "${SS_DIR}/salt" ]]
+    then 
+        if [[ -d /e/bundled/soe ]]
+        then 
+            msg "Copy bundled SOE to /e/soestack"
+            if rsync -av /e/bundled/soe/salt/ "${SS_DIR}/salt/"
+            then 
+                msg "OK."
+            else
+                msg "Failed copying SOE."
+            fi
+        else 
+            notice "No SOE copy is available for pre-configuration"
+        fi
+    fi
+}
+
+function setup_bundled_pkgs()
 {
     msg "Copy bootstrap packages"
  
@@ -152,20 +177,10 @@ function copy_bundled_files()
     else
         notice "No bootstrap repos for bundled rpms found."
     fi 
+}
 
-    ensure_installed rsync
-
-    if [[ ! -d "${SS_DIR}/salt" ]]
-    then 
-        if [[ -d /e/bundled/soe ]]
-        then 
-            msg "Copy bundled SOE to /e/soestack"
-            rsync -av /e/bundled/soe/salt/ "${SS_DIR}/salt/"
-        else 
-            notice "No SOE copy is available for pre-configuration"
-        fi
-    fi
-
+function setup_bundled_iso()
+{
     # Set up installmedia repo - this may have been done already if performing a USB build,
     # since the USB build can include the files. 
     # But in other types of builds, these files may be copied now from ${BUNDLED_SRC}.
@@ -202,6 +217,29 @@ function copy_bundled_files()
             return 1
         fi
     fi
+}
+
+function copy_bundled_files()
+{
+    local probs=0
+
+    notice "Will setup bundled packages, SOE, and ISO"
+
+    setup_bundled_pkgs
+    ((probs+=$?))
+
+    copy_bundled_soe
+    ((probs+=$?))
+
+    setup_bundled_iso
+    ((probs+=$?))
+
+    if (( probs ))
+    then
+        notice "Some problems occurred setting up bundled packages, SOE, and ISO."
+    fi 
+
+    return ${probs}
 }
 
 function select_iso()
@@ -623,7 +661,8 @@ function configure_standalone_server()
     # We prefer to use docker community edition, although unfortunately it 
     # does not support the ability to block the default registry, for operation in a standalone network
     if ls /etc/yum.repos.d | egrep -q 'docker.*ce' 
-    then 
+    then
+        msg "Installing docker-ce"
         rpm -qa | grep docker-ce || yum -y --enablerepo='*' install docker-ce
     else
         ensure_installed docker
@@ -695,6 +734,7 @@ function switchover_to_nexus()
         # at the start of it (ie the hostname / port part).
         local NEXUS=$(cat /etc/yum/vars/NEXUS)
         sed -r -i 's%\$NEXUS%'"${NEXUS}"'%' "/etc/yum.repos.d/${bootstrap_repo_name}"
+        msg "Running yum makecache"
         yum makecache
     else 
         notice "Skipping yum repo switchover because nexus is not available"

@@ -276,7 +276,7 @@ Example output is shown below:
         @@ 
         @@ Good luck.
         * BUILDER ./build-boot-image.py
-        * ISO ../../bundled/iso/CentOS-7-x86_64-Everything-1810.iso
+        * ISO ../../bundled/iso/CentOS-7-x86_64-DVD-1810.iso
         * LABEL SSBOOT
         * VAR cmdline
         * APPEND cmdline  
@@ -320,7 +320,7 @@ Example output is shown below:
         * APPEND cmdline rd.shell noquiet
         127 actions of 127
         ./build-boot-image.py 
-            --iso ../../bundled/iso/CentOS-7-x86_64-Everything-1810.iso 
+            --iso ../../bundled/iso/CentOS-7-x86_64-DVD-1810.iso 
             --img /dev/sdc 
             --imgformat raw 
             --verbose 

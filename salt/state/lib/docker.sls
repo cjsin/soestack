@@ -1,13 +1,13 @@
 {% macro image_present(image,image_prefix='') -%}
 
-{%- if not image %}
+{%-     set prefix, suffix  = salt.uuid.ids() %}
 
-{{prefix}}docker-image-no-image-specified-present{{suffix}}:
+{%-     if not image %}
+
+{{prefix}}docker-image-no-image-specified{{suffix}}:
     noop.notice
 
-{%- else %}
-
-{%-   set prefix, suffix  = salt.uuid.ids() %}
+{%-     else %}
 
 {{prefix}}docker-image-{{image}}-present{{suffix}}:
     # This doesn't work because the python modules for the docker support
@@ -18,6 +18,6 @@
         - name:   docker pull '{{image_prefix}}{{image}}'
         - unless: docker images --format '{%raw%}{{.Repository}}:{{.Tag}}{%endraw%}' | grep '{{image_prefix}}{{image}}'
 
-{%- endif %}
+{%-     endif %}
 
 {%- endmacro %}

@@ -169,7 +169,7 @@ function select_partitioning()
 
 function generate_repositories()
 { 
-    # The extra repos are for the pxe install only
+    # The extra repos are for the pxe/nfs install only
     if [[ "${KICKSTART_TYPE}" == "pxe" ]]
     then
         local repo_lines=()

@@ -36,6 +36,11 @@ rsyslog:
     server:
         enabled: True
 
+# Override the runlevel to multi-user for this node
+# despite configuring it with desktop packages
+runlevel: multi-user
+
 tftp:
     implementation: dnsmasq
+
 

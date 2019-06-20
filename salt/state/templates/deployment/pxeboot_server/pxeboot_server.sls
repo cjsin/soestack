@@ -95,6 +95,7 @@
         - mode:  '0755'
         # The following test prevents salt trying to change the permissions on a mounted iso directory
         - unless: test -d '{{extractpath}}/repodata'
+        - makedirs: True
 
 {{sls}}.pxeboot_server.{{prefix}}.iso-extracted.{{iso_shortname}}:
     cmd.run:
@@ -378,7 +379,7 @@
 {%-         set octets = subnet_ip_prefix.split('.') %}
 {%-         set nibbles = [] %}
 {%-         for o in octets %}
-{%-             set twonibbles = '%02x' % (o|int) %}
+{%-             set twonibbles = '%02X' % (o|int) %}
 {%-             do nibbles.append(twonibbles) %}
 {%-         endfor %}
 {%-         set hexstr = ''.join(nibbles) %}

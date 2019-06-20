@@ -83,7 +83,7 @@ function determine_kickstart_type()
         echo_return "usb"
     elif (( is_nfs ))
     then
-        echo_return "nfs"
+        echo_return "pxe"
     elif (( is_vagrant ))
     then
         echo_return "vagrant"

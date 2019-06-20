@@ -1,5 +1,6 @@
 #!stateconf yaml . jinja
 
+{%- set diagnostics = False %}
 {%- if 'filesystem' in pillar %}
 {%-     set default_file_mode = '0644' %}
 {%-     set default_dir_mode = '0755' %}
@@ -18,6 +19,14 @@
 {%-         set dirs = filesystem.dirs %}
 {%-         set dirs_defaults = dirs.defaults if 'defaults' in dirs else {} %}
 {%-         do base_defaults.update(dirs_defaults) %}
+
+{%-         if diagnostics %}
+{{sls}}.filesystem-defaults:
+    noop.notice:
+        - text: |
+            {{base_defaults|json}}
+{%-         endif %}
+
 {%-         for grouping in ['by-role','by-host'] %}
 {%-             if grouping in dirs %}
 {%-                 for key, items in dirs[grouping].iteritems() %}
@@ -27,6 +36,9 @@
 {%-                         for role in grains.roles %}
 {%-                             if role in these_roles %}
 {%-                                 do accepted.append('role:'~role) %}
+{%-                             elif diagnostics %}
+{{sls}}.role-{{role}}-did-not-match-{{key}}:
+    noop.notice
 {%-                             endif %}
 {%-                         endfor %}
 {%-                     elif grouping == 'by-host' %}
@@ -34,8 +46,14 @@
 {%-                         for regex in these_hosts %}
 {%-                             if grains.host | regex_match(item) %}
 {%-                                 do accepted.append('host:'~regex) %}
+{%-                             elif diagnostics %}
+{{sls}}.host-{{rexex}}-did-not-match-{{grains.host}}:
+    noop.notice
 {%-                             endif %}
 {%-                         endfor %}
+{%-                     elif diagnostics %}
+{{sls}}.unrecognised-grouping-{{grouping}}:
+    noop.notice
 {%-                     endif %}
 {%-                     if accepted|length > 0 %}
 {%-                         for item_name, overrides in items.iteritems() %}
@@ -58,7 +76,7 @@
 #                        opts:
 #                            - bind
 
-.filesystem-dirs-{{grouping}}-{{key}}-{{item_name}}:
+{{sls}}.filesystem-dirs-{{grouping}}-{{key}}-{{item_name}}:
     file.directory:
         - name:     '{{item_name}}'
         - user:     '{{props.user}}'
@@ -75,7 +93,7 @@
 {%-                                     set clients = [export_data] if export_data is mapping else export_data %}
 
 
-.exports-dirs-{{grouping}}-{{key}}-{{item_name}}:
+{{sls}}.exports-dirs-{{grouping}}-{{key}}-{{item_name}}:
     nfs_export.{{'absent' if props.export == False else 'present'}}:
         - name:  {{item_name}}
         - clients:
@@ -91,7 +109,8 @@
 
 
 {%- else %}
-.exports-dirs-{{grouping}}-{{key}}-{{item_name}}:
+
+{{sls}}.exports-dirs-{{grouping}}-{{key}}-{{item_name}}:
     noop.notice:
         - text: |
             apparently, there is no 'export' in {{props|json}}
@@ -104,7 +123,7 @@
 {%-                                 set rw = 'rw' if ('readwrite' in props and props.readwrite) or ('readonly' in props and not props.readonly) else '' %}
 {%-                                 set rorw = '' if (not ro and not rw) else ',' ~ ro ~ rw %}
 {%-                                 if 'dev' in props.bind %}
-.add-bind-mount-{{grouping}}-{{key}}-{{item_name}}:
+{{sls}}.add-bind-mount-{{grouping}}-{{key}}-{{item_name}}:
     mount.mounted:
         - name:    {{item_name}}
         - device:  {{props.bind.dev}}
@@ -128,9 +147,27 @@
 {%-                                 endif %}
 {%-                             endif %}
 {%-                         endfor %}
+
+{%-                     elif diagnostics %}
+
+{{sls}}.no-accepted-paths:
+    noop.notice
+
 {%-                     endif %}
 {%-                 endfor %}
 {%-             endif %}
 {%-         endfor %}
+
+{%-     elif diagnostics %}
+
+{{sls}}.no-filesystem-dirs-data:
+    noop.notice
+
 {%-     endif %}
+
+{%- elif diagnostics %}
+
+{{sls}}.no-filesystem-data:
+    noop.notice
+
 {%- endif %}

@@ -25,11 +25,29 @@ deployments:
             config:
                 lans:
                     # defaults:
-                    #     kernel:        os/everything/images/pxeboot/vmlinuz
-                    #     initrd:        os/everything/images/pxeboot/initrd.img
+                    #     kernel:        os/dvd/images/pxeboot/vmlinuz
+                    #     initrd:        os/dvd/images/pxeboot/initrd.img
+                    defaults:
+                        timeout:       600
+                        title:         'Default Network Boot'
+                        type:          'soestack'
+                        kernel:        os/dvd/images/pxeboot/vmlinuz
+                        initrd:        os/dvd/images/pxeboot/initrd.img
+                        ss_provisioning: provision
+                        entries:
+                            netinstall:
+                                ss_settings:
+                                    DOMAIN:            qemu
+                                    SALT_MASTER:       infra.qemu
+                                    GATEWAY:           192.168.121.101
+                                    NAMESERVER:        infra.qemu
+                                    ROLES:             developer-workstation
+                                    LAYERS:            soe:demo,site:testing,lan:usb-vm
+                                kickstart: http://%http_server%/provision/kickstart/kickstart.cfg
+                                #stage2:    nfs:%nfs_server%:/e/pxe/os/dvd/
                     qemu:
-                        kernel:                os/everything/images/pxeboot/vmlinuz
-                        initrd:                os/everything/images/pxeboot/initrd.img
+                        kernel:                os/dvd/images/pxeboot/vmlinuz
+                        initrd:                os/dvd/images/pxeboot/initrd.img
                         iface:                 eth0
                         static:                True
                         subnet:                192.168.121
@@ -38,6 +56,7 @@ deployments:
                                 title:    '^Custom Kickstart (Centos7 custom)'
                                 ss_settings:
                                     DOMAIN:            qemu
+                                    NAMESERVER:        infra.qemu
                                     ROLES:             developer-workstation
                                     LAYERS:            soe:demo,site:testing,lan:usb-vm
                                 ss_hosts:
@@ -46,7 +65,7 @@ deployments:
                                     192.168.121.101:   infra.qemu infra master salt ipa ldap nfs pxe
                                     192.168.121.103:   nexus.qemu nexus
                                 append:    noquiet custom-test
-                                kickstart: http://%http_server%/os/minimal/provision/kickstart/kickstart-custom.cfg
+                                kickstart: http://%http_server%/provision/kickstart/kickstart-custom.cfg
                                 stage2:    nfs:%nfs_server%:/e/pxe/os/custom/
 
                 hosts:

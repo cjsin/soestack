@@ -40,13 +40,16 @@ deployments:
                                     192.168.121.101:   infra.qemu infra master salt ipa ldap nfs pxe
                                     192.168.121.103:   nexus.qemu nexus
                                 append:    noquiet custom-test
-                                kickstart: http://%http_server%/os/minimal/provision/kickstart/kickstart-custom.cfg
+                                kickstart: http://%http_server%/os/dvd/provision/kickstart/kickstart-custom.cfg
                                 stage2:    nfs:%nfs_server%:/e/pxe/os/custom/
 
                 hosts:
                     client:
                         lan:    qemu
                         append: test-host-override
+                    pxe-client1:
+                        ss_settings:
+                            ROLES: basic-node
 
     grafana_container:
         grafana-cont:

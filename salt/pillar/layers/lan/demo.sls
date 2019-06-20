@@ -44,7 +44,7 @@ deployments:
                         subnet:                192.168.121
                         static:                True
                         entries:
-                            netinstall: # test resilience with empty entry
+                            netinstall:
                                 ss_settings:
                                     DOMAIN:            demo
                                     ROLES:             basic-node

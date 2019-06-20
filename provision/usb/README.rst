@@ -16,7 +16,7 @@ ISOs
 
     .. code-block:: console
 
-        iso      ../../bundled/iso/CentOS-7-x86_64-Everything-1810.iso
+        iso      ../../bundled/iso/CentOS-7-x86_64-DVD-1810.iso
 
 
 VM image files

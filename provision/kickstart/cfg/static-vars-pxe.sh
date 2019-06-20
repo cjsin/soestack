@@ -3,11 +3,11 @@ hosts=(
     "10.10.10.101 infra.soestack infra    master"
 )
 
-NEXUS=127.0.0.1:7081/
+NEXUS=nexus:7081/
 
 repos=(
-    "repo --name=os      --baseurl=http://$NEXUS/repository/centos/centos/\$releasever/os/\$basearch"
-    "repo --name=updates --baseurl=http://$NEXUS/repository/centos/centos/\$releasever/updates/\$basearch"
+    "repo --name=os      --baseurl=http://$NEXUS/repository/centos/centos/\$releaselong/os/\$basearch"
+    "repo --name=updates --baseurl=http://$NEXUS/repository/centos/centos/\$releaselong/updates/\$basearch"
 )
 
 # These vars are defaults which can be overridden
@@ -18,12 +18,12 @@ DOMAIN=demo
 NAMESERVER=gateway
 ROLES=basic-node
 LAYERS=soe:soestack,site:testing,lan:demo
-DEVELOPMENT=1
-INSPECT=1
-WAIT=5
-INTERACTIVE=1
+DEVELOPMENT=0
+INSPECT=0
+WAIT=0
+INTERACTIVE=0
 SELINUX=permissive
 TIMEZONE=UTC
 HWCLOCK=UTC
 BOOTSTRAP_REPOS=bootstrap-centos.repo
-
+DOCKER_REGISTRIES=nexus:7082,nexus:7083,nexus:7084,nexus:7085

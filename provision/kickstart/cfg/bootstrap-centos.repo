@@ -1,12 +1,12 @@
 [os]
 name=os
-baseurl=http://$NEXUS/repository/centos/centos/$releasever/os/$basearch
+baseurl=http://$NEXUS/repository/centos/centos/$releaselong/os/$basearch
 enabled=1
 gpgcheck=0
 
 [updates]
 name=updates
-baseurl=http://$NEXUS/repository/centos/centos/$releasever/updates/$basearch
+baseurl=http://$NEXUS/repository/centos/centos/$releaselong/updates/$basearch
 enabled=1
 gpgcheck=0
 
