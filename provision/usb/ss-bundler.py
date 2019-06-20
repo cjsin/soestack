@@ -417,7 +417,7 @@ def process_line(line):
             return False
 
     if action == [Directives.BOOT]:
-        G.BOOT = true 
+        G.BOOT = True 
         return True
     elif action == G.MODES:
         G.MODES = remainder

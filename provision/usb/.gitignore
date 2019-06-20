@@ -2,3 +2,4 @@ bundled
 boot-image.raw
 images
 isos
+bundler-personal-*.properties

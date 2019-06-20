@@ -29,7 +29,7 @@ all:
 #help:##
 #help:#
 #help:#  building a physical USB:
-#help:#      make USB_NAME=example-device IMAGE=/dev/sdc
+#help:#      make USB_NAME=usb-example-device IMAGE=/dev/sdc
 #help:#  building an image file:
 #help:#      make USB_NAME=image-file IMAGE=images/boot-image.qcow2
 #help:#
