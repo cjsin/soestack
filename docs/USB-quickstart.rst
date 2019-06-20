@@ -340,7 +340,7 @@ Example output is shown below:
                     Checking image file /dev/sdc against imgformat raw
                 OK
                 Determine partitioning
-                    Found USB/image partition /dev/sdb1
+                    Found (Guestfs) USB/image partition /dev/sdb1
                 OK
                 Mount
                     Create mountpoint /usb
@@ -365,7 +365,7 @@ Example output is shown below:
             Update image filesystem label
             OK
         OK
-        Spawning tar : ['tar', 'cf', '-', '--checkpoint=1000', '-C', '../', '.']
+        Spawning tar : ['tar', 'cf', '-', '--checkpoint=10000', '-C', '../', '.']
         Waiting for tar process to finish
         OK
         Copying files from iso to ks.cfg - ['../kickstart/kickstart.cfg']

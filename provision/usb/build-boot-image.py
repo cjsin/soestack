@@ -1122,7 +1122,7 @@ class ImageAccess(VerboseBase):
             for part in partitions:
                 if part.startswith(self.usb):
                     if self.verbose:
-                        self.msg("Found USB/image partition "+part)
+                        self.msg("Found (Guestfs) USB/image partition "+part)
                     self.usbpart = part
 
         self.end()
@@ -1888,7 +1888,7 @@ class ImageBuilderBase(ImageAccess):
             else:
                 exclude_flags.append('--exclude='+item)
 
-        command=[ 'tar', 'cf', '-', '--checkpoint=1000', '-C', extdir ] + exclude_flags + [ '.' ]
+        command=[ 'tar', 'cf', '-', '--checkpoint=10000', '-C', extdir ] + exclude_flags + [ '.' ]
 
         if self.verbose:
             self.msg("Spawning tar : {}".format(command))

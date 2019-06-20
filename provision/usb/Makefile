@@ -1,13 +1,12 @@
-#IMAGE        = boot-image.raw
-IMAGE        = /dev/sdc
 DEBUG        = 
 VERBOSE      = 
 
-#CONFIG       = bundler-dev.properties
-#CONFIG       = bundler-usb.properties
-CONFIG       = bundler-ultra-fit.properties
-#CONFIG       = bundler-ultra-flair.properties
-#CONFIG       = bundler-cruzer.properties
+IMAGE        ?= images/boot-image.qcow2
+#IMAGE       ?= /dev/sdc
+USB_NAME     ?= image-file
+#USB_NAME    ?= usb-example-device
+
+CONFIG       := bundler-$(USB_NAME).properties
 
 BUNDLER_HELP = ./ss-bundler.py $(CONFIG) --mode help
 BUNDLER      = ./ss-bundler.py $(CONFIG) $(VERBOSE) --mode 
@@ -15,33 +14,56 @@ INSPECT      = ./build-boot-image.py --img $(IMAGE) inspect
 CAT_SYSLINUX = --cat /usb/syslinux/syslinux.cfg
 KS_FILES     = $(shell find ../kickstart -type f)
 
-all: check
+.PHONY: all help bundler-help full create bundle update kickstarts nexus check soe isos menus conf quick
 
-.phony: update check help
+all:
+	@echo "Running with the following settings:"
+	@echo "    IMAGE    = $(IMAGE)"
+	@echo "    USB_NAME = $(USB_NAME)"
+	@echo "    CONFIG   = $(CONFIG)"
+	@echo
+	@make help
 
+#help:##
+#help:# Example usage:
+#help:##
+#help:#
+#help:#  building a physical USB:
+#help:#      make USB_NAME=example-device IMAGE=/dev/sdc
+#help:#  building an image file:
+#help:#      make USB_NAME=image-file IMAGE=images/boot-image.qcow2
+#help:#
+#help:
 
-#help:########################
-#help:## USB
-#help:########################
-#help:#boot-sector           # 
-#help:#files                 #
-#help:# |                    #
-#help:# |syslinux            # - make menus
-#help:# |   +syslinux.cfg    #
-#help:# |                    #
-#help:# |provision           # - make kickstarts
-#help:#                      #
-#help:# |bundled             #               \
-#help:# |   +soe             #               |
-#help:# |   +bootstrap-pkgs  #               |-- make bundle
-#help:# |   +docker          #               |
-#help:# |   +nexus           # - make nexus  /
-#help:# |                    #
-#help:# |iso                 # - make isos
-#help:# |                    #
-#help:# |Packages            # - make full
-#help:# |                    #
-#help:########################
+#help:############################ 
+#help:## USB                     # Make target
+#help:############################
+#help:# boot-sector              # ----------------\
+#help:# partitioning             #                  |
+#help:# files                    #                  |
+#help:#   _                      #                  |
+#help:#  | |provision/           # \ kickstarts     |
+#help:#  |_|ks.cfg               # /                |
+#help:#   _                      #                  |
+#help:#  | |bundled/             #                  |
+#help:#  | |  _   _              #                  |
+#help:#  | | | | |_| soe/        # - soe \          |
+#help:#  | | | | bootstrap-pkgs/ #       |-- bundle |
+#help:#  | | |_| docker/         #       /          |
+#help:#  |_| |_| nexus/          # - nexus          |-- full
+#help:#   _                      #                  |
+#help:#  |_|isos/                # - isos           |
+#help:#   _                      #                  |
+#help:#  | |Packages/            #                  |
+#help:#  | |repodata/            #                  |
+#help:#  | |images/              #                  |
+#help:#  | |EFI/                 #                  |
+#help:#  | |isolinux/            #                  |
+#help:#  | |syslinux/            #                  |
+#help:#  | |  _                  #                  |
+#help:#  |_| |_| syslinux.cfg    # - menus          |
+#help:#                          # ----------------/
+#help:############################
 
 #help:help        : display this help
 help:
@@ -56,35 +78,39 @@ $(IMAGE):
 	$(BUNDLER) create
 
 #help:full        : prepare complete image
-full: $(IMAGE)
+full:
 	$(BUNDLER) full
 
 #help:create      : synonym for full
-create: $(IMAGE)
+create:
 	$(BUNDLER) full
 
 #help:bundle      : update bundled files
-bundle: $(IMAGE) 
+bundle:
 	$(BUNDLER) bundle
 
 #help:update      : update image
-update: $(IMAGE) 
+update:
 	$(BUNDLER) update
 
 #help:kickstarts  : update kickstart provisioning
-kickstarts: $(IMAGE)
+kickstarts:
 	$(BUNDLER) kickstarts
 
 #help:nexus       : update nexus files
-nexus: $(IMAGE)
+nexus:
 	$(BUNDLER) nexus
 
 #help:menus       : update syslinux menus
-menus: $(IMAGE)
+menus:
 	$(BUNDLER) menus
 
+#help:soe         : update bundled soe code copy
+soe:
+	$(BUNDLER) soe
+
 #help:isos        : copy isos
-isos: $(IMAGE) 
+isos:
 	$(BUNDLER) isos
 
 #help:check       : print boot labels from the image
@@ -98,4 +124,3 @@ conf:
 #help:quick       : update the image in quick mode
 quick: $(KS_FILES)
 	$(BUNDLER) quick
-

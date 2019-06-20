@@ -614,7 +614,7 @@ def process_copy_action(line):
         tar_flags = [
             "cf",
             tar_file_canonical,
-            '--checkpoint=1000'
+            '--checkpoint=10000'
         ]
 
         if style == C.CONTENTS:
