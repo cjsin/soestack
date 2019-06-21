@@ -1,6 +1,13 @@
 _loaded:
     {{sls}}:
 
+
+# Overrides and data for the demo test soe lan, 
+# which is set up on a libvirt virtual network,
+# and intended for running vagrant images with two network
+# devices ( therefore the eth0 network is left for vagrant
+# and the eth1 device is configured as normal)
+
 deployments:
     gitlab_baremetal:
         gitlab:
@@ -87,22 +94,27 @@ network:
         # to stop stupid NetworkManager overwriting the resolv.conf
         #eth0:
         #    ignore: True 
-        # eth0:
-        #     inherit:
-        #         - no-peerdns
-        #         - ethernet
-        #         - enabled
-        #         - no-defroute
-        #         - dhcp
-        #         - no-nm-controlled
 
         eth0:
+            inherit:
+                - no-peerdns
+                - ethernet
+                - enabled
+                - no-defroute
+                - no-zeroconf
+                - no-nm-controlled
+                # Vagrant will configure this interface with dhcp
+                - dhcp
+
+        eth1:
             inherit:
                 - defaults
                 - ethernet
                 - enabled
                 - gateway
                 - defroute
+                - no-zeroconf
+                - no-nm-controlled
                 - infra-server
                 - infra-dns
 

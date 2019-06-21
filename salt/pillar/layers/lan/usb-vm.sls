@@ -17,67 +17,48 @@ docker:
                 - 192.168.121.1   # host in VM environment
                 - 192.168.121.101 # infra server
             dns-search:
-                - qemu
+                - usb-vm
 
 deployments:
     pxeboot_server:
         soestack_demo:
             config:
                 lans:
-                    # defaults:
-                    #     kernel:        os/dvd/images/pxeboot/vmlinuz
-                    #     initrd:        os/dvd/images/pxeboot/initrd.img
                     defaults:
-                        timeout:       600
-                        title:         'Default Network Boot'
-                        type:          'soestack'
-                        kernel:        os/dvd/images/pxeboot/vmlinuz
-                        initrd:        os/dvd/images/pxeboot/initrd.img
+                        timeout:         0
+                        title:           Default Network Boot
+                        type:            soestack
+                        kernel:          os/minimal/images/pxeboot/vmlinuz
+                        initrd:          os/minimal/images/pxeboot/initrd.img
                         ss_provisioning: provision
                         entries:
                             netinstall:
                                 ss_settings:
-                                    DOMAIN:            qemu
-                                    SALT_MASTER:       infra.qemu
+                                    DOMAIN:            usb-vm
+                                    SALT_MASTER:       infra.usb-vm
                                     GATEWAY:           192.168.121.101
-                                    NAMESERVER:        infra.qemu
-                                    ROLES:             developer-workstation
+                                    NAMESERVER:        192.168.121.101
+                                    ROLES:             role-set:developer-workstation-node
                                     LAYERS:            soe:demo,site:testing,lan:usb-vm
                                 kickstart: http://%http_server%/provision/kickstart/kickstart.cfg
-                                #stage2:    nfs:%nfs_server%:/e/pxe/os/dvd/
-                    qemu:
-                        kernel:                os/dvd/images/pxeboot/vmlinuz
-                        initrd:                os/dvd/images/pxeboot/initrd.img
+                                #stage2:    nfs:%nfs_server%:/e/pxe/os/minimal/
+                    usb-vm:
+                        kernel:                os/minimal/images/pxeboot/vmlinuz
+                        initrd:                os/minimal/images/pxeboot/initrd.img
                         iface:                 eth0
                         static:                True
                         subnet:                192.168.121
-                        entries:
-                            custom:
-                                title:    '^Custom Kickstart (Centos7 custom)'
-                                ss_settings:
-                                    DOMAIN:            qemu
-                                    NAMESERVER:        infra.qemu
-                                    ROLES:             developer-workstation
-                                    LAYERS:            soe:demo,site:testing,lan:usb-vm
-                                ss_hosts:
-                                    # To nodes booting within the libvirt/qemu/vagrant test network the nexus server and gateway are 10.0.2.2
-                                    192.168.121.1:     gateway gateway.qemu
-                                    192.168.121.101:   infra.qemu infra master salt ipa ldap nfs pxe
-                                    192.168.121.103:   nexus.qemu nexus
-                                append:    noquiet custom-test
-                                kickstart: http://%http_server%/provision/kickstart/kickstart-custom.cfg
-                                stage2:    nfs:%nfs_server%:/e/pxe/os/custom/
 
                 hosts:
                     client:
-                        lan:    qemu
+                        lan:    usb-vm
                         append: test-host-override
 
     grafana_container:
         grafana-cont:
             config:
                 ip:     192.168.121.108
-                domain: qemu
+                domain: usb-vm
                 datasources:
                     - access: 'proxy'                       # make grafana perform the requests
                       editable: true                        # whether it should be editable
@@ -85,7 +66,7 @@ deployments:
                       name: 'prometheus'                    # name of the datasource
                       orgId: 1                              # id of the organization to tie this datasource to
                       type: 'prometheus'                    # type of the data source
-                      url: 'http://prometheus.qemu:9090'    # url of the prom instance
+                      url: 'http://prometheus.usb-vm:9090'  # url of the prom instance
                       version: 1                            # well, versioning
 
     ipa_client:
@@ -94,20 +75,20 @@ deployments:
             activated:   True
             activated_where: {{sls}}
             config:
-                server:  infra.qemu
-                realm:   QEMU
-                domain:  qemu
-                site:    qemu
+                server:  infra.usb-vm
+                realm:   DEMO
+                domain:  usb-vm
+                site:    testing
                 ldap:
-                    base-dn: dc=qemu
+                    base-dn: dc=usb-vm
 
     ipa_master:
         testenv-master:
             config:
-                domain: qemu
-                realm:  QEMU
-                fqdn:   infra.qemu
-                site:   qemu
+                domain: usb-vm
+                realm:  DEMO
+                fqdn:   infra.usb-vm
+                site:   testing
                 ip:     192.168.121.101
                 install:
                     dns:
@@ -117,26 +98,26 @@ deployments:
 
                     automount:
                         locations:
-                            - qemu
+                            - testing
 
     managed_hosts:
         testenv-master:
             config:
-                domain: qemu
+                domain: usb-vm
 
         testenv-client:
             config:
-                domain: qemu
+                domain: usb-vm
 
 dns:
     # if is_server is set, the server will have a customised dns configuration
-    server:      infra.qemu
+    server:      infra.usb-vm
     nameservers:
         dns1:    192.168.121.101
         dns2:    192.168.121.1
         dns3:    ''
     search:
-        search1: demo
+        search1: usb-vm
         search2: ''
         search3: ''
 
@@ -151,8 +132,8 @@ managed-hosts:
         infra:
             ip:       192.168.121.101
             mac:      '52:54:00:d5:19:d5'
-            lan:      qemu
-            aliases:  infra ipa.qemu ipa salt.qemu salt ldap.qemu ldap
+            lan:      usb-vm
+            aliases:  infra ipa.usb-vm ipa salt.usb-vm salt ldap.usb-vm ldap
             type:     client
             hostfile:
                 - '.*'
@@ -164,14 +145,14 @@ network:
     netmask: 255.255.255.0
     prefix:  24
     gateway: 192.168.121.1
-    system_domain: qemu
+    system_domain: usb-vm
     
     hostfile-additions:
         # For now use the nexus on my host box to avoid re-downloading anything
-        192.168.121.1:   gateway.qemu gateway
+        192.168.121.1:   gateway.usb-vm gateway
         
-        192.168.121.101: infra.qemu infra ipa.qemu ipa salt.qemu salt ldap.qemu ldap
-        192.168.121.103: nexus.qemu nexus
+        192.168.121.101: infra.usb-vm infra ipa.usb-vm ipa salt.usb-vm salt ldap.usb-vm ldap
+        192.168.121.103: nexus.usb-vm nexus
 
     classes:
         gateway:

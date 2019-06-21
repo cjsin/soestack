@@ -107,6 +107,16 @@ filesystem:
                         1-pxe-dvd:
                             - '*':       ro,async,insecure,root_squash,nohide,no_subtree_check
 
+                /e/pxe/os/minimal:
+                    user:  root
+                    group: root
+                    mode: '0775'
+                    mkdirs: True
+                    description: Exports for installing pxe clients from minimal image
+                    export:
+                        1-pxe-minimal:
+                            - '*':       ro,async,insecure,root_squash,nohide,no_subtree_check
+
                 /home:
                     description: Home directories
 
@@ -222,6 +232,15 @@ network:
         no-dhcp:
             sysconfig:
                 BOOTPROTO: 'none'
+
+        # Zeroconf routing is responsible for the 169.254.0.0 route that gets added
+        zeroconf:
+            sysconfig:
+                NOZEROCONF: 'no'
+
+        no-zeroconf:
+            sysconfig:
+                NOZEROCONF: 'yes'
 
         wireless:
             sysconfig:

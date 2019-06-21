@@ -36,6 +36,24 @@ deployments:
     pxeboot_server:
         soestack_demo:
                 lans:
+                    defaults:
+                        timeout:         0
+                        title:           Default Network Boot
+                        type:            soestack
+                        kernel:          os/minimal/images/pxeboot/vmlinuz
+                        initrd:          os/minimal/images/pxeboot/initrd.img
+                        ss_provisioning: provision
+                        entries:
+                            netinstall:
+                                ss_settings:
+                                    DOMAIN:            demo
+                                    SALT_MASTER:       infra.demo
+                                    GATEWAY:           192.168.121.101
+                                    NAMESERVER:        192.168.121.101
+                                    ROLES:             role-set:developer-workstation-node
+                                    LAYERS:            soe:demo,site:testing,lan:demo
+                                kickstart: http://%http_server%/provision/kickstart/kickstart.cfg
+                                #stage2:    nfs:%nfs_server%:/e/pxe/os/minimal/
                     demo:
                         # For whatever reason  (probably routing) 
                         # since both these network devices ar using the same subnet,

@@ -51,34 +51,41 @@
         - onchanges:
             - file: {{sls}}.gitlab-baremetal-config-file
 
-{%     if 'mattermost' in config and 'app_id' in config.mattermost and 'token' in config.mattermost %}
+{%-    if 'mattermost' in config and 'app_id' in config.mattermost and 'token' in config.mattermost %}
+{%-        set mattermost = config.mattermost %}
+{%-        if mattermost.app_id and mattermost.token and mattermost.app_id != 'unset' and mattermost.token != 'unset' %}
 
-# {{sls}}.gitlab-mattermost-integration-appid:
-#     file.managed:
-#         - name: /var/opt/gitlab/mattermost/env/MM_GITLABSETTINGS_ID
-#         - contents: |
-#             {{config.mattermost.app_id}} 
+{{sls}}.gitlab-mattermost-integration-appid:
+    file.managed:
+        - name: /var/opt/gitlab/mattermost/env/MM_GITLABSETTINGS_ID
+        - contents: |
+            {{config.mattermost.app_id}} 
 
-# {{sls}}.gitlab-mattermost-integration-token:
-#     file.managed:
-#         - name: /var/opt/gitlab/mattermost/env/MM_GITLABSETTINGS_SECRET
-#         - contents: |
-#             {{config.mattermost.token}}
+{{sls}}.gitlab-mattermost-integration-token:
+    file.managed:
+        - name: /var/opt/gitlab/mattermost/env/MM_GITLABSETTINGS_SECRET
+        - contents: |
+            {{config.mattermost.token}}
 
-# {{sls}}.gitlab-mattermost-restarted:
-#     cmd.run:
-#         - name: |
-#             gitlab-ctl stop mattermost
-#             sleep 10
-#             gitlab-ctl start mattermost
-#         - onchanges:
-#             - file: {{sls}}.gitlab-mattermost-integration-token
-#             - file: {{sls}}.gitlab-mattermost-integration-appid
-            
-{%     endif %}
-{% endif %}
+{{sls}}.gitlab-mattermost-restarted:
+    cmd.run:
+        - name: |
+            gitlab-ctl stop mattermost
+            sleep 10
+            gitlab-ctl start mattermost
+        - onchanges:
+            - file: {{sls}}.gitlab-mattermost-integration-token
+            - file: {{sls}}.gitlab-mattermost-integration-appid
+
+{%-        endif %}
+{%-     endif %}
+{%- endif %}
 
 {%- if action in [ 'all', 'activate'] %}
+
+{#-     Note that gitlab uses gitlab-runsvdir service, which starts/stops its component parts #}
+{#-     There, to stop it, we need to use gitlab-ctl, then stop gitlab-runsvdir #}
+{#-     Whereas to start it, we need to first start gitlab-runsvdir, and then use gitlab-ctl if necessary #}
 
 {%-     set activated = 'activated' in deployment and deployment.activated %}
 
@@ -104,7 +111,9 @@
 {{sls}}.gitlab-services:
     cmd.run:
         - name: gitlab-ctl start
-        - onlyif: sleep 2; gitlab-ctl status | egrep 'down:'
+        {#- If not already running, gitlab-runsvdir will start the services when it starts #}
+        {#- so we give it a chance to do that first before checking #}
+        - onlyif: sleep 5; gitlab-ctl status | egrep 'down:'
 
 {%-     endif %}
 {%- endif %}

@@ -14,7 +14,7 @@ INSPECT      = ./build-boot-image.py --img $(IMAGE) inspect
 CAT_SYSLINUX = --cat /usb/syslinux/syslinux.cfg
 KS_FILES     = $(shell find ../kickstart -type f)
 
-.PHONY: all help bundler-help full create bundle update kickstarts nexus check soe isos menus conf quick
+.PHONY: all help bundler-help full create bundle update provision nexus check soe isos menus conf quick htdocs
 
 all:
 	@echo "Running with the following settings:"
@@ -42,7 +42,7 @@ all:
 #help:# partitioning             #                  |
 #help:# files                    #                  |
 #help:#   _                      #                  |
-#help:#  | |provision/           # \ kickstarts     |
+#help:#  | |provision/           # \ provision      |
 #help:#  |_|ks.cfg               # /                |
 #help:#   _                      #                  |
 #help:#  | |bundled/             #                  |
@@ -51,6 +51,8 @@ all:
 #help:#  | | | | bootstrap-pkgs/ #       |-- bundle |
 #help:#  | | |_| docker/         #       /          |
 #help:#  |_| |_| nexus/          # - nexus          |-- full
+#help:#   _                      #                  |
+#help:#  |_| htdocs/             #                  |
 #help:#   _                      #                  |
 #help:#  |_|isos/                # - isos           |
 #help:#   _                      #                  |
@@ -93,9 +95,9 @@ bundle:
 update:
 	$(BUNDLER) update
 
-#help:kickstarts  : update kickstart provisioning
-kickstarts:
-	$(BUNDLER) kickstarts
+#help:provision   : update kickstart provisioning
+provision:
+	$(BUNDLER) provision
 
 #help:nexus       : update nexus files
 nexus:
@@ -108,6 +110,10 @@ menus:
 #help:soe         : update bundled soe code copy
 soe:
 	$(BUNDLER) soe
+
+#help:htdocs      : copy the generated html docs
+htdocs:
+	$(BUNDLER) htdocs
 
 #help:isos        : copy isos
 isos:

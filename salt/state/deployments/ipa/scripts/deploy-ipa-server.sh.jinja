@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# Load routines such as msg,die,notice
+. /soestack/provision/common/lib/lib.sh
+
 {%- set hostname = grains.fqdn %}
 {%- set hostname_components = hostname.split('.') %}
 {%- set hostname_domain = '.'.join(hostname_components[0:-1]) %}
@@ -15,12 +18,6 @@ DEBUG="{{'echo' if 'debug' in install and install.debug else ''}}"
 TIMESTAMP=$(date +%s)
 logprefix="/var/log/ipaserver-install"
 
-function die()
-{
-    echo "ERROR: ${*}" 1>&2
-    exit 1
-}
-
 function uninstall_failed_first()
 {
     local logfile="${logprefix}.log"
@@ -28,7 +25,7 @@ function uninstall_failed_first()
     then
         if [[ -f "${logprefix}.FAILED" ]]
         then
-            echo "Uninstalling failed ipa server installation" 1>&2
+            notice "Uninstalling failed ipa server installation"
             ipa-server-install --uninstall -U 
             local timestamp=$(stat -c %Z "${logfile}")
             mv "${logfile}" "${logprefix}.FAILED.${TIMESTAMP}.log"
@@ -40,7 +37,7 @@ function uninstall_failed_first()
 
 function install_server()
 {
-    # Load pregenerated passwords
+    # Load pre-generated passwords
     . "{{pwfile}}"
 
     [[ -n "${master_password}" ]] || die "No random ipa passwords generated!"
@@ -84,13 +81,43 @@ function install_server()
     # The installation is performed with selinux disabled 
     # and the firewall rules flushed, because it has troubles otherwise.
     # The rules it requires can be configured after
-    setenforce 0
+    msg "Preparing server for ipa server install (temporarily disable firewall, selinux)"
+
+    local selinux_state=$(getenforce)
+    if [[ "${selinux_state}" =~ Enforcing ]]
+    then
+        msg "SELinux is enforcing - going Permissive..."
+        setenforce 0
+    fi
+
+    msg "Flush firewall"
     iptables -F
     iptables -nvL
+
+    msg "OK - continuing with unattended install"
+    local result
     ${DEBUG} ipa-server-install -U "${options[@]}"
-    setenforce 1
+    result=$?
+    
+    msg "Installation result is ${result}"
+    if (( result ))
+    then
+        msg "The installation failed."
+    fi
+
+    msg "Re-enabling selinux, firewall as required"
+
+    if [[ "${selinux_state}" =~ Enforcing ]]
+    then
+        msg "Set selinux Enforcing again"
+        setenforce 1
+    fi
+
+    msg "Restart firewall"
     systemctl restart iptables
     
+    # Return the ipa-server-install exit code 
+    return ${result}
 }
 
 function main()
@@ -104,18 +131,27 @@ function main()
 
         mkdir -p /var/cache/salt/master
         export KRB5CCNAME=/var/cache/salt/master/salt.krb
+
+        notice "Installation was successful. Preparing salt/IPA integration ticket (${KRB5CCNAME})."
         kinit admin <<< "${admin_password}"
 
-        /usr/local/sbin/ipa-postinstall-{{deployment_name}}
+        # Set up root profile to use the same ticket
+        echo "export KRB5CCNAME=/var/cache/salt/master/salt.krb" >> /root/.profile
 
+        notice "Salt ipa ticket can be renewed during installation phase, using 'salt-ipa-ticket-<deployment-name> --renew'."
+
+        msg "Running IPA post-install"
+        /usr/local/sbin/ipa-postinstall-{{deployment_name}}
+        # Note, the exit code from ipa-postinstall is passed out here just to make it explicit
+        return $?
     else
 
         local saved="${logprefix}.FAILED.${TIMESTAMP}.log"
-        touch -f "${logprefix}.FAILED"
         cp -f "${logprefix}.log" "${saved}"
-        echo "ERROR: IPA server install failed - log file is ${saved}" 1>&2
+        touch -f "${logprefix}.FAILED"
+        err "IPA server install failed - log file is ${saved}"
+        err "IPA post-install will be skipped"
         return 1
-
     fi
 }
 

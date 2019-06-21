@@ -65,8 +65,8 @@ deployments:
                     hostname:     mattermost
                     port:         80
                     bind_ip:      192.168.121.105
-                    token:        a29362af4cf0ad81466ead3ae8d82d78b295563b826f77496336c43ac5c3b2cb
-                    app_id:       ecdd5b5f4d9967e6bf342e8d34519f51f88ceed91634963cfb1591f6b2f8b4f6
+                    token:        unset
+                    app_id:       unset
 
                 prometheus:
                     enabled:  False

@@ -61,10 +61,8 @@ function configure_globals()
         'certificatesubjectbase',
         'pwdexpadvnotify',
         'configstring',
-        'configstring',
         'selinuxusermaporder',
         'selinuxusermapdefault',
-        'krbauthzdata',
         'krbauthzdata'
     ] %}
 
@@ -106,7 +104,7 @@ function create_groups()
 {
     {%- if groups %}
     {%-     for group_name, group in groups.iteritems() %}
-        quiet ipa group-find --group-name="{{group_name}}" || verbose ipa group-add "{{group_name}}"
+    quiet ipa group-find --group-name="{{group_name}}" || verbose ipa group-add "{{group_name}}"
     {%-     endfor %}
     {%- endif %}
 }
@@ -119,8 +117,9 @@ function set_password()
     local p1=$(mktemp -u XXXXXXXXXXXXXXXXX)
     [[ -n "${p2}" ]] || p2=$(mktemp -u XXXXXXXXXXXXXXXXX)
     
-    ipa passwd "${u}" <<< "${p1}"$'\n'"${p1}"$'\n'
-    su -c "passwd" "${u}" <<< "${p1}"$'\n'"${p2}"$'\n'"${p2}"$'\n'
+    local lf=$'\n'
+    ipa passwd "${u}" <<< "${p1}${lf}${p1}${lf}"
+    su -c "passwd" "${u}" <<< "${p1}${lf}${p2}${lf}${p2}${lf}"
 
     local result=$?
 

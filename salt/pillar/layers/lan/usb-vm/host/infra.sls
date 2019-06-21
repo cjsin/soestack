@@ -5,7 +5,7 @@ deployments:
     gitlab_baremetal:
         gitlab:
             config:
-                hostname:     gitlab.qemu
+                hostname:     gitlab.usb-vm
                 # In my demo VM's I have very limited ram available, so need to set this down low
                 # The default is that it will use 1/4 of total RAM or so
                 postgres_ram: 128MB
@@ -13,41 +13,41 @@ deployments:
 # Override DNS on the infra server
 dns:
     # if is_server is set, the server will have a customised dns configuration
-    server:      infra.qemu
+    server:      infra.usb-vm
     nameservers:
         dns1:    127.0.0.1
         dns2:    192.168.121.1 # The VM host
         dns3:    ''
     search:
-        search1: qemu
+        search1: usb-vm
         search2: ''
         search3: ''
         
 managed-hosts:
     testenv-master:
-        infra.qemu:
+        infra.usb-vm:
             ip:      192.168.121.101
-            lan:     qemu
-            aliases: ipa ipa.qemu
+            lan:     usb-vm
+            aliases: ipa ipa.usb-vm
             type:    dns
         pxe-client1:
             ip:       192.168.121.241
             mac:      '52:54:00:96:72:f9'
-            lan:      qemu
+            lan:      usb-vm
             type:     client
             hostfile:
                 - pxe-client1
         pxe-client2:
             ip:       192.168.121.242
             mac:      '52:54:00:b9:62:3b'
-            lan:      qemu
+            lan:      usb-vm
             type:     client
             hostfile:
                 - pxe-client2
         wildcard:
             ip:       192.168.121.102
             type:     dns 
-            aliases:  nginx.qemu nginx wildcard
+            aliases:  nginx.usb-vm nginx wildcard
         nexus:
             ip:       192.168.121.103
             type:     dns 
@@ -56,30 +56,30 @@ managed-hosts:
             ip:       192.168.121.104
             type:     dns 
             aliases:   gitlab
-        mattermost.qemu:
+        mattermost.usb-vm:
             ip:       192.168.121.105
             type:     dns 
             aliases:  mattermost
-        pages.qemu:
+        pages.usb-vm:
             ip:       192.168.121.106 
             type:     dns
             aliases:  pages
-        gitlab-registry.qemu:
+        gitlab-registry.usb-vm:
             ip:       192.168.121.107 
             type:     dns
             aliases:  gitlab-registry
         grafana:
             ip:       192.168.121.108
             type:     dns 
-            aliases:  prometheus.qemu grafana prometheus
+            aliases:  prometheus.usb-vm grafana prometheus
         kibana:
             ip:       192.168.121.109
             type:     dns 
-            aliases:  elasticsearch.qemu kibana elasticsearch
+            aliases:  elasticsearch.usb-vm kibana elasticsearch
         master:
             ip:       192.168.121.110
             type:     dns 
-            aliases:  master.qemu master k8s.qemu k8s
+            aliases:  master.usb-vm master k8s.usb-vm k8s
 
 network:
     devices:

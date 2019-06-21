@@ -57,6 +57,13 @@
 {%                      include('templates/support/packagesets.sls') with context %}
 {%-                 endwith %}
 {%-             endif %}
+{#-             at the end of the install stage (after packages installed), process the filesystem settings #}
+{#-             # process filesystem objects that are always updated #}
+{%-             if 'filesystem' in nugget and nugget.filesystem %}
+{%-                 with args = { 'parent': nugget.filesystem, 'pillar_location' : pillar_location } %}
+{%                      include('templates/support/filesystem.sls') with context %}
+{%-                 endwith %}
+{%-             endif %}
 {%-         endif %}
 
 {%-         if action == 'activate' %}
@@ -75,16 +82,6 @@
 {{noop.notice('no firewall data within activate') }}
 {%-                 endif %}
 {%-             endif %}
-{%-         endif %}
-{%-     endif %}
-
-{#-     in the configure stage, process the filesystem settings #}
-{%-     if action == 'configure' %}
-{#-         # process filesystem objects that are always updated #}
-{%-         if 'filesystem' in nugget and nugget.filesystem %}
-{%-             with args = { 'parent': nugget.filesystem, 'pillar_location' : pillar_location } %}
-{%                  include('templates/support/filesystem.sls') with context %}
-{%-            endwith %}
 {%-         endif %}
 {%-     endif %}
 

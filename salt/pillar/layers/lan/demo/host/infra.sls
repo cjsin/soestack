@@ -85,23 +85,9 @@ network:
                 - defaults
                 - ethernet
                 - enabled
-                - infra-server
+                - no-peerdns
+                - no-zeroconf
+                - no-nm-controlled
                 - lan-wired-gateway
+                - infra-server
                 - infra-dns
-        #wlan0:
-        #    inherit:
-        #        - defaults
-        #        - wireless
-        #        - enabled
-        #        - gateway
-        #        - defroute
-        #        # - home-test-environment
-        #        - infra-dns
-
-# For now the private layer files are not included, as 
-# the USB provisioning has no way currently to include them
-
-#include:
-#    - layers.private.gitlab
-#    - layers.private.wpa
-#    - layers.private.timezone

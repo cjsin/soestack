@@ -77,11 +77,6 @@
 
 {%-     if activated %}
 
-{{sls}}.{{deployment_name}}.deploy:
-    cmd.run:
-        - name:     /usr/local/sbin/deploy-ipa-server-{{deployment_name}}
-        - unless:   test -f /var/log/ipaserver-install.log && ! test -f /var/log/ipaserver-install.FAILED
-
 {%-         set dependent_states = [] %}
 {%-         if 'bind_ips' in config and config.bind_ips %}
 
@@ -127,6 +122,25 @@
 {%-                 endif %}
 {%-             endfor %}
 {%-         endif %}
+
+# Now testing performing the IPA server deploy *after* performing the above modifications 
+#   because the initial ipa-server-install fails to start httpd, with bind errors
+# To that end, we attempt to restart httpd also, prior to the IPA install
+
+{#- Perform a conditional restart, dependent on whether the configs above changed #}
+{{sls}}.{{deployment_name}}.restart-http.conditional:
+    cmd.run:
+        - name:     systemctl restart httpd
+        - onchanges:
+            {%- for dependency in dependent_states %}
+            - {{dependency[0]}}: {{sls}}.{{deployment_name}}.{{dependency[1]}}
+            {%- endfor %}
+
+{{sls}}.{{deployment_name}}.deploy:
+    cmd.run:
+        - name:     /usr/local/sbin/deploy-ipa-server-{{deployment_name}}
+        - unless:   test -f /var/log/ipaserver-install.log && ! test -f /var/log/ipaserver-install.FAILED
+
 
 {#- # IPA is a bit different from other services in that it uses ipactl to start/stop #}
 {#- # and in addition here, if we modified the files above, we want to do a full restart #}

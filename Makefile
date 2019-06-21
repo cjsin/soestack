@@ -30,8 +30,9 @@ venv:
 sphinx-help: venv
 	. venv/bin/activate && @$(SPHINXBUILD) -M help docs public $(O)
 
-# Catch-all target: route all unknown targets to Sphinx using the new
-# "make mode" option.  $(O) is meant as a shortcut for $(SPHINXOPTS).
+htdocs: venv docs/*.rst
+	. venv/bin/activate && $(SPHINXBUILD) docs htdocs
+
 gitlab-pages: venv docs/*.rst
 	. venv/bin/activate && $(SPHINXBUILD) docs public
 

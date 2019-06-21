@@ -14,13 +14,29 @@ role-sets:
             - email-server-node
             - homedir-server-node
             - processor-node
-            - software-development-node
             - login-node
             - jumpserver-node
             ## - elasticsearch-node
             - service-node
             - login-processor-node
+            - nexus-node
+            - software-development-node
             - workstation-node
+
+    usb-infra-server-node:
+        purpose: |
+            slightly cut-back usb infrastructure server node for
+            quicker USB install testing
+        combine:
+            - primary-server-node
+            - docker-node
+            - email-server-node
+            - homedir-server-node
+            - processor-node
+            - login-node
+            - jumpserver-node
+            - service-node
+            - login-processor-node
             - nexus-node
 
     quickstart-infra-server-node:

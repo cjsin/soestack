@@ -274,8 +274,11 @@ package-sets:
         purpose: |
             provide a newer version of git
         centos,redhat:
+            # Install the OS repo dependencies before the ius packages
+            order: os,ius
             os:
                 - perl-Error
+                - perl-TermReadKey
             ius:
                 - git2u
         fedora:

@@ -11,6 +11,17 @@ function completed_bootstrap()
     msg "Completed bootstrap: $(date)"
 }
 
+function xfs_bug_workaround()
+{
+    msg "XFS bug workaround."
+    # There is a bug wherein the anaconda installer hangs during 'modprobe xfs'
+    # however the module is loaded first, this doesn't happen.
+    modprobe xfs
+    msg "OK."
+}
+
+xfs_bug_workaround
+
 # This is done before calculating the kickstart vars, which
 # will hopefully be able to use the DHCP hostname
 # Therefore we cannot use 'is_standalone'

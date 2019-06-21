@@ -1,6 +1,9 @@
 #!stateconf yaml . jinja
 {% import 'lib/noop.sls' as noop %}
 
+{#- This is disabled until systemd bug is fixed, where it hangs in 'systemctl isolate' #}
+{%- if False %}
+
 {%- if 'runlevel' in pillar and pillar.runlevel %}
 {%-    set runlevel = pillar.runlevel %}
 
@@ -26,4 +29,5 @@
 
 {{ noop.notice('No system runlevel specified - runlevel will remain at system default') }}
 
+{%-     endif %}
 {%- endif %}

@@ -1,4 +1,9 @@
 include:
+    # Some managed_hosts states will fail the first time
+    # the server is installed because IPA won't have been
+    # installed yet.
+    # However it still needs to be run early, to ensure the
+    # host file is updated appropriately
     - .managed_hosts
 
     # NOTE the order of these is important, because for example
@@ -13,10 +18,16 @@ include:
     - .ipa.master
     - .ipa.client
 
-    # Infrastructure support for building clients over the network
-    - .pxeboot_server
+    # Simple python http services for various functions
+    # (including the pxeboot service deployed after)
     - .simple_http
 
+    # Infrastructure support for building clients over the network
+    - .pxeboot_server
+
+    ## Temporarily disabling these deployments for easier debugging
+    {%- if False %}
+    ## of initial USB install
     # Monitoring metrics
     - .node_exporter_baremetal
     # Monitoring server
@@ -28,7 +39,8 @@ include:
     # - .nginx
 
     # Git repos
-    - .gitlab_baremetal
+    ##- .gitlab_baremetal
+    {%- endif %}
 
     # Logging server
     ## - .elasticsearch_container

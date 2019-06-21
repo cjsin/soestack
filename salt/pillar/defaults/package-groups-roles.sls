@@ -2,12 +2,6 @@
 
 package-groups:
 
-    #all-in-one-sde-server-node:
-    #    package-groups:
-    #        - software-development-node
-    #        - kubernetes-node
-    #        - homedir-server-node
-
     basic-node:
         package-groups:
             - minimal-node

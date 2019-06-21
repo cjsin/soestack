@@ -1,7 +1,11 @@
 _loaded:
     {{sls}}:
 
-# Overrides and data for the demo test soe lan
+# Overrides and data for the demo test soe lan, 
+# which is set up on a libvirt virtual network,
+# and intended for running vagrant images with two network
+# devices ( therefore the eth0 network is left for vagrant
+# and the eth1 device is configured as normal)
 
 cups:
 
@@ -18,30 +22,52 @@ docker:
                 - 192.168.121.101 # infra server
             dns-search:
                 - qemu
+
 deployments:
     pxeboot_server:
         soestack_demo:
             config:
                 lans:
+                    defaults:
+                        timeout:         0
+                        title:           Default Network Boot
+                        type:            soestack
+                        kernel:          os/minimal/images/pxeboot/vmlinuz
+                        initrd:          os/minimal/images/pxeboot/initrd.img
+                        ss_provisioning: provision
+                        entries:
+                            netinstall:
+                                ss_settings:
+                                    DOMAIN:            qemu
+                                    SALT_MASTER:       infra.qemu
+                                    GATEWAY:           192.168.121.101
+                                    NAMESERVER:        192.168.121.101
+                                    ROLES:             role-set:developer-workstation-node
+                                    LAYERS:            soe:demo,site:testing,lan:qemu
+                                kickstart: http://%http_server%/provision/kickstart/kickstart.cfg
+                                #stage2:    nfs:%nfs_server%:/e/pxe/os/minimal/
                     qemu:
+                        kernel:                os/minimal/images/pxeboot/vmlinuz
+                        initrd:                os/minimal/images/pxeboot/initrd.img
                         iface:                 eth1
                         static:                True
                         subnet:                192.168.121
-                        entries:
-                            custom:
-                                title:    '^Custom Kickstart (Centos7 custom)'
-                                ss_settings:
-                                    DOMAIN:            qemu
-                                    ROLES:             developer-workstation
-                                    LAYERS:            soe:demo,site:testing,lan:qemu
-                                ss_hosts:
-                                    # To nodes booting within the libvirt/qemu/vagrant test network the nexus server and gateway are 10.0.2.2
-                                    192.168.121.1:     gateway gateway.qemu
-                                    192.168.121.101:   infra.qemu infra master salt ipa ldap nfs pxe
-                                    192.168.121.103:   nexus.qemu nexus
-                                append:    noquiet custom-test
-                                kickstart: http://%http_server%/os/dvd/provision/kickstart/kickstart-custom.cfg
-                                stage2:    nfs:%nfs_server%:/e/pxe/os/custom/
+                        # entries:
+                        #     # Example custom entry
+                        #     custom:
+                        #         title:    '^Custom Kickstart (Centos7 custom)'
+                        #         ss_settings:
+                        #             DOMAIN:            qemu
+                        #             ROLES:             role-set:developer-workstation-node
+                        #             LAYERS:            soe:demo,site:testing,lan:qemu
+                        #         ss_hosts:
+                        #             # To nodes booting within the libvirt/qemu/vagrant test network the nexus server and gateway are 10.0.2.2
+                        #             192.168.121.1:     gateway gateway.qemu
+                        #             192.168.121.101:   infra.qemu infra master salt ipa ldap nfs pxe
+                        #             192.168.121.103:   nexus.qemu nexus
+                        #         append:    noquiet custom-test
+                        #         kickstart: http://%http_server%/provision/kickstart/kickstart-custom.cfg
+                        #         stage2:    nfs:%nfs_server%:/e/pxe/os/custom/
 
                 hosts:
                     client:
@@ -73,7 +99,7 @@ deployments:
             activated_where: {{sls}}
             config:
                 server:  infra.qemu
-                realm:   QEMU
+                realm:   DEMO
                 domain:  qemu
                 site:    qemu
                 ldap:
@@ -83,7 +109,7 @@ deployments:
         testenv-master:
             config:
                 domain: qemu
-                realm:  QEMU
+                realm:  DEMO
                 fqdn:   infra.qemu
                 site:   qemu
                 ip:     192.168.121.101
@@ -114,7 +140,7 @@ dns:
         dns2:    192.168.121.1
         dns3:    ''
     search:
-        search1: demo
+        search1: qemu
         search2: ''
         search3: ''
 
