@@ -1,0 +1,26 @@
+#!/bin/bash
+
+function repo_names()
+{
+    yum repolist | awk '{print $1}' | cut -d/ -f1 | egrep -v repolist: | tail -n +2
+}
+
+function refresh_repo()
+{
+    yum --disablerepo='*' --enablerepo="${1}" clean all
+    yum --disablerepo='*' --enablerepo="${1}" makecache
+}
+
+function refresh_repos()
+{
+    local r
+    for r in $(repo_names)
+    do 
+        echo
+        echo "${r}"
+        echo
+        refresh_repo "${r}"
+    done
+}
+
+refresh_repos
