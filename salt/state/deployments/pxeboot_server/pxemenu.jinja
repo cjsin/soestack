@@ -45,7 +45,7 @@ MENU TITLE SoeStack
 {%-         set ss_array_types=[ 'host', 'repo' ] %}
 {%-         for arrtype in ss_array_types %}
 {%-             set key = ('ss_'~arrtype~'s') %}
-{%-             set addvar = ('ss.add_' ~ arrtype ~ '=').upper() %}
+{%-             set addvar = 'ss.ADD_' ~ arrtype.upper() ~ '=' %}
 {%-             if key in entry and entry[key] %}
 {%-                 for n,v in entry[key].iteritems() %}
 {%-                     set rhs = ','.join([n]+v.split(' ')) if v else n %}
@@ -55,7 +55,13 @@ MENU TITLE SoeStack
 {%-         endfor %}
 {%-         if 'ss_settings' in entry and entry.ss_settings %}
 {%-             for key,value in entry.ss_settings.iteritems() %}
-{%-                 do append.append("ss."~key.upper()~'='~value|replace(' ',',')) %}
+{%-                 if value is string %}
+{%-                     do append.append("ss."~key.upper()~'='~value|replace(' ',',')) %}
+{%-                 elif key[0:4] == "ADD_" and value is iterable %}
+{%-                     for item in value %}
+{%-                         do append.append("ss."~key.upper()~'='~item|replace(' ',',')) %}
+{%-                     endfor %}
+{%-                 endif %}
 {%-             endfor %}
 {%-         endif %}
 {%-     endif %}

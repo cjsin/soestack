@@ -40,6 +40,17 @@ deployments:
                                     NAMESERVER:        192.168.121.101
                                     ROLES:             role-set:developer-workstation-node
                                     LAYERS:            soe:demo,site:testing,lan:usb-vm
+                                    #ADD_HOST:
+                                    #    - 192.168.121.101,infra.usb-vm,infra
+                                    #    - 192.168.121.103,nexus.usb-vm,nexus
+                                    #    - 192.168.121.1,gateway.usb-vm,gateway
+                                ss_repos: {}
+                                ss_hosts:
+                                    # NOTE the demo lan is associated with the ethernet device, 
+                                    # this gateway is for that and what clients booted on that network will use
+                                    192.168.121.1:     gateway.usb-vm gateway
+                                    192.168.121.101:   infra.usb-vm infra master salt ipa ldap nfs pxe
+                                    192.168.121.103:   nexus.usb-vm nexus
                                 kickstart: http://%http_server%/provision/kickstart/kickstart.cfg
                                 #stage2:    nfs:%nfs_server%:/e/pxe/os/minimal/
                     usb-vm:

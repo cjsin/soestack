@@ -20,6 +20,9 @@ function xfs_bug_workaround()
     msg "OK."
 }
 
+echo "Boot commandline is:"
+cat /proc/cmdline | tr ' \0' '\n' | sed 's/^/    /'
+
 xfs_bug_workaround
 
 # This is done before calculating the kickstart vars, which
