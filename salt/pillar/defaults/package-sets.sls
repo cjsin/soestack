@@ -1,5 +1,15 @@
 package-sets:
 
+    alternative-desktops:
+        purpose: |
+            provide other desktop
+        centos,redhat,fedora:
+            - '@MATE Desktop'
+            #- '@Cinnamon Desktop'
+            #- '@General Purpose Desktop'
+            - openbox
+            - fluxbox
+
     alternative-toolchains:
         purpose: | 
             provide some other common development toolchains
@@ -7,13 +17,6 @@ package-sets:
             - cmake
             - extra-cmake-modules
             - python2-scons
-
-    console-tools:
-        purpose: |
-            provide tools that improve console usage
-        centos,redhat,fedora:
-            - gpm
-            - htop
 
     chromium-browser:
         purpose: |
@@ -26,7 +29,20 @@ package-sets:
                 - chromium-libs-media
             #rpmfusion-free-updates:
             #    - chromium-libs-media-freeworld
-    
+
+    console-tools:
+        purpose: |
+            provide tools that improve console usage
+        centos,redhat,fedora:
+            - gpm
+            - htop
+
+    development-base:
+        purpose: |
+            provide the centos/redhat development group
+        centos,redhat,fedora:
+            - '@Development and Creative Workstation'
+
     dhcp-server:
         purpose: |
             provide standardised well known DHCP server implementation
@@ -83,6 +99,35 @@ package-sets:
             - glibc-headers
             - kernel-headers
 
+    git-standard-uninstall:
+        purpose: |
+            uninstall standard version of git included with the OS
+        action: absent
+        centos,redhat:
+            - git
+            - perl-git
+
+    git-newer:
+        purpose: |
+            provide a newer version of git
+        centos,redhat:
+            # Install the OS repo dependencies before the ius packages
+            order: os,ius
+            os:
+                - perl-Error
+                - perl-TermReadKey
+            ius:
+                - git2u
+        fedora:
+            - git
+
+    gnome-desktop:
+        purpose: |
+            provide the gnome desktop
+        centos,redhat,fedora:
+            - '@GNOME Desktop'
+            #- '@General Purpose Desktop'
+
     gnu-autotools-toolchain:
         purpose: |
             provide standard GNU development toolchain
@@ -94,37 +139,6 @@ package-sets:
             - m4
             - make
             - pkgconfig
-
-    selinux-tools:
-        purpose: |
-            provide tools for configuring selinux ports, booleans, etc.
-        centos,redhat:
-            - policycoreutils-python
-        fedora:
-            - policycoreutils-python-utils
-
-    virt-fs-tools:
-        purpose: |
-            provide virtual filesystem tools. These are used for buildling a
-            bootable USB stick image for booting a server, among other things.
-        fedora:
-            - libguestfs
-            - libguestfs-forensics
-            - libguestfs-gfs2
-            - libguestfs-man-pages
-            - libguestfs-nbdkit # create image over network, for automated pxeboot
-            - libguestfs-nilfs 
-            - libguestfs-rsync
-            - libguestfs-rescue 
-            - libguestfs-tools
-            - guestfs-browser
-            - perl-Sys-Guestfs
-            - nbdkit-plugin-guestfs 
-            - python2-libguestfs
-            - python3-libguestfs
-
-
-        centos,redhat:
 
     iptables-firewall:
         purpose: |
@@ -146,6 +160,15 @@ package-sets:
         centos,redhat,fedora:
             - ipa-server
             - ipa-server-dns
+
+    kde-desktop:
+        purpose: |
+            provide the kde desktop
+        centos,redhat,fedora:
+            - '@KDE Plasma Workspaces'
+            # - '@KDE Desktop'
+            #- '@General Purpose Desktop'
+            # - openbox-kde
 
     kubernetes:
         purpose: |
@@ -170,6 +193,12 @@ package-sets:
             # provides 'ip'
             - iproute
 
+    nfs-server:
+        purpose: |
+            provide nfs exports or access nfs exports
+        centos,redhat,fedora:
+            - nfs-utils
+
     nodejs-development:
         purpose: |
             provide nodejs tools
@@ -177,19 +206,6 @@ package-sets:
             nodesource:
                 - nodejs
                 - npm
-
-    development-base:
-        purpose: |
-            provide the centos/redhat development group
-        centos,redhat,fedora:
-            - '@Development and Creative Workstation'
-    
-            
-    nfs-server:
-        purpose: |
-            provide nfs exports or access nfs exports
-        centos,redhat,fedora:
-            - nfs-utils
 
     oldschool-editors-console:
         purpose: |
@@ -203,7 +219,8 @@ package-sets:
             provide gui support in oldschool editors
         centos,redhat,fedora:
             - vim-X11
-            - xemacs
+            # xemacs isnt' available because epel is broken by zchunk metadata changes
+            #- xemacs
 
     process-tools:
         purpose: |
@@ -221,6 +238,14 @@ package-sets:
             # Unfortunately python2 pip is only available for RedHat/CentOS through the EPEL repos, which are currently broken due to them changing to use zchunk metadata which is not supported through nexus
             # - python2-pip
             - python37
+
+    selinux-tools:
+        purpose: |
+            provide tools for configuring selinux ports, booleans, etc.
+        centos,redhat:
+            - policycoreutils-python
+        fedora:
+            - policycoreutils-python-utils
 
     tftp-server-dnsmasq:
         purpose: |
@@ -245,55 +270,30 @@ package-sets:
         centos,redhat,fedora:
             vscode:
                 - code
- 
-    gnome-desktop:
-        purpose: |
-            provide the gnome desktop
-        centos,redhat,fedora:
-            - '@GNOME Desktop'
-            #- '@General Purpose Desktop'
 
-    kde-desktop:
+    virt-fs-tools:
         purpose: |
-            provide the kde desktop
-        centos,redhat,fedora:
-            - '@KDE Plasma Workspaces'
-            # - '@KDE Desktop'
-            #- '@General Purpose Desktop'
-            # - openbox-kde
-    
-    git-standard-uninstall:
-        purpose: |
-            uninstall standard version of git included with the OS
-        action: absent
-        centos,redhat:
-            - git
-            - perl-git
-
-    git-newer:
-        purpose: |
-            provide a newer version of git
-        centos,redhat:
-            # Install the OS repo dependencies before the ius packages
-            order: os,ius
-            os:
-                - perl-Error
-                - perl-TermReadKey
-            ius:
-                - git2u
+            provide virtual filesystem tools. These are used for buildling a
+            bootable USB stick image for booting a server, among other things.
         fedora:
-            - git
+            - libguestfs
+            - libguestfs-forensics
+            - libguestfs-gfs2
+            - libguestfs-man-pages
+            - libguestfs-nbdkit # create image over network, for automated pxeboot
+            - libguestfs-nilfs 
+            - libguestfs-rsync
+            - libguestfs-rescue 
+            - libguestfs-tools
+            - guestfs-browser
+            - perl-Sys-Guestfs
+            - nbdkit-plugin-guestfs 
+            - python2-libguestfs
+            - python3-libguestfs
 
-    alternative-desktops:
-        purpose: |
-            provide other desktop
-        centos,redhat,fedora:
-            - '@MATE Desktop'
-            #- '@Cinnamon Desktop'
-            #- '@General Purpose Desktop'
-            - openbox
-            - fluxbox
-            
+
+        centos,redhat:
+
     xfce-desktop:
         purpose: |
             provide the XFCE desktop 

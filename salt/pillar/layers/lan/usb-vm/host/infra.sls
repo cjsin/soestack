@@ -30,6 +30,7 @@ managed-hosts:
             lan:     usb-vm
             aliases: ipa ipa.usb-vm
             type:    dns
+
         pxe-client1:
             ip:       192.168.121.241
             mac:      '52:54:00:96:72:f9'
@@ -80,6 +81,10 @@ managed-hosts:
             ip:       192.168.121.110
             type:     dns 
             aliases:  master.usb-vm master k8s.usb-vm k8s
+        docs:
+            ip:       192.168.121.111
+            type:     dns 
+            aliases:  docs.usb-vm docs
 
 network:
     devices:

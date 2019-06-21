@@ -2,7 +2,7 @@
 
 {#  first install packages based on the configured roles #}
 
-{%- set diagnostics = False %}
+{%- set diagnostics = True %}
 
 {%- if 'roles' in grains %}
 {%-     for role_name in grains.roles %}
@@ -11,7 +11,7 @@
 
 {%- if diagnostics %}
 
-.pulling-in-package-group-for-role-{{role_name}}:
+{{sls}}.pulling-in-package-group-for-role-{{role_name}}:
     noop.notice
 
 {%- endif %}
@@ -19,7 +19,7 @@
 {%              include('templates/package/groups.sls') with context %}
 {%-         else %}
 
-.no-package-group-for-role-{{role_name}}:
+{{sls}}.no-package-group-for-role-{{role_name}}:
     noop.notice:
         - text: There is no package group defined for role '{{role_name}}'
 

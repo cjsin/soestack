@@ -6,6 +6,6 @@ include:
     - demo.deployments.gitlab
     - demo.deployments.grafana
     - demo.deployments.prometheus
-    - demo.deployments.simple-http-pxe
+    - demo.deployments.simple-http
     # nginx reverse proxy is not implemented yet
     ## - demo.deployments.nginx-reverse-proxy

@@ -62,13 +62,4 @@ package-groups:
             - kde-desktop
             - alternative-desktop
             #- xfce-desktop
-
-    developer-workstation-node:
-        package-groups:
-            - workstation-node
-        package-sets:
             - browsers-group
-            - development-tools-group
-            - development-editors-group
-            - development-base
-            

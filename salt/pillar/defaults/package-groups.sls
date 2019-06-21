@@ -13,11 +13,11 @@ package-groups:
     development-tools-group:
         purpose: |
             provide software development tools, libraries, headers
-        package-groups:
-            - gnu-autotools-toolchain
+        package-sets:
             - alternative-toolchains
             - gcc
             - python-development
+            - gnu-autotools-toolchain
 
     development-editors-group:
         purpose: |

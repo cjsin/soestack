@@ -53,10 +53,10 @@ deployments:
                                 '/-':     auto.direct
 
                             auto.direct:
-                                '/e':     '-fstype=nfs4,ro  infra:/e'
+                                '/e':        '-fstype=nfs4,ro  infra:/'
 
                             auto.home:
-                                '*':      '-fstype=nfs4,rw  infra:/e/home/&'
+                                '*':      '-fstype=nfs4,rw  infra:/home/&'
 
                     pwpolicy:
                         minlength:  1

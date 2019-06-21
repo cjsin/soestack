@@ -161,3 +161,7 @@ network:
                 # Kubernetes master
                 IPADDR10: '192.168.121.110'
                 PREFIX10: '24'
+
+                # SOEStack docs
+                IPADDR11: '192.168.121.111'
+                PREFIX11: '24'

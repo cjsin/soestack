@@ -839,3 +839,50 @@ sudoers:
             ALL ALL=(root) NOPASSWD: NETWORK_RESTART, NETWORK_STOP, NETWORK_START
 
 timezone: UTC
+
+firefox:
+    defaults: |
+        // Disable updater
+        pref("app.update.enabled", false);
+        // make absolutely sure it is really off
+        pref("app.update.auto", false);
+        pref("app.update.mode", 0);
+        pref("app.update.service.enabled", false);
+
+        // Disable Add-ons compatibility checking
+        pref("extensions.lastAppVersion",""); 
+
+        // Don't show 'know your rights' on first run
+        pref("browser.rights.3.shown", true);
+
+        // Don't show WhatsNew on first run after every update
+        pref("browser.startup.homepage_override.mstone","ignore");
+
+        // Set default homepage - users can change
+        // Requires a complex preference
+        pref("browser.startup.homepage","data:text/plain,browser.startup.homepage=http://docs/");
+        pref("startup.homepage_override_url",       "http://docs/");
+        pref("startup.homepage_welcome_url",        "http://docs/");
+
+        // Disable the internal PDF viewer
+        pref("pdfjs.disabled", true);
+
+        // Disable the flash to javascript converter
+        pref("shumway.disabled", true);
+
+        // Don't ask to install the Flash plugin
+        pref("plugins.notifyMissingFlash", false);
+
+        //Disable plugin checking
+        pref("plugins.hide_infobar_for_outdated_plugin", true);
+        pref("plugins.update.url","");
+
+        // Disable health reporter
+        pref("datareporting.healthreport.service.enabled", false);
+
+        // Disable all data upload (Telemetry and FHR)
+        pref("datareporting.policy.dataSubmissionEnabled", false);
+
+        // Disable crash reporter
+        pref("toolkit.crashreporter.enabled", false);
+        //Components.classes["@mozilla.org/toolkit/crash-reporter;1"].getService(Components.interfaces.nsICrashReporter).submitReports = false; 

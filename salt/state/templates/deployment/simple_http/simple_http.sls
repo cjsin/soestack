@@ -26,13 +26,27 @@
         - mode:  '0755'
         - contents: |
             #!/bin/bash
+            bind_ip="{{config.bind_ip}}"
             port="{{config.port}}"
             dir="{{config.path}}"
-            if [[ -d "${dir}" ]]
+
+            cmd=("python3" "-m" "http.server" "${port}")
+            [[ -n "${bind_ip}" ]] && cmd+=("--bind" "${bind_ip}")
+
+            if [[ ! -d "${dir}" ]]
             then
-                cd "${dir}"
-                exec python3 -m http.server "${port}"
+                echo "ERROR: No such dir: ${dir}" 1>&2
+                exit 1
             fi
+            
+            if ! cd "${dir}"
+            then
+                echo "ERROR: No permissions: ${dir}" 1>&2
+                exit 1
+            fi 
+
+            echo "${cmd[@]}" 1>&2
+            "${cmd[@]}"
 
 {{sls}}.{{deployment_name}}.simple-http-service:
     file.managed:
@@ -48,8 +62,8 @@
             [Service]
             ExecStart=/usr/local/sbin/simple-http-{{deployment_name}}
             Type=simple
-            User=nobody
-            Group=nobody
+            User={{config.user if 'user' in config else 'nobody'}}
+            Group={{config.user if 'user' in config else 'nobody'}}
             UMask=0007
 
             [Install]

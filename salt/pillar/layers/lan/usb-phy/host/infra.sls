@@ -77,6 +77,10 @@ managed-hosts:
             ip:       192.168.121.110
             type:     dns 
             aliases:  master.usb-phy master k8s.usb-phy k8s
+        docs:
+            ip:       192.168.121.111
+            type:     dns 
+            aliases:  docs.usb-vm docs
 
 network:
     devices:

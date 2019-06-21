@@ -29,8 +29,15 @@
 #
 #}
 
-{%- set suffix = salt['uuid.short']() %}
-{%- set diagnostics = False %}
+{%- set prefix, suffix  = salt.uuid.ids() %}
+{%- set diagnostics     = False %}
+
+{%- if diagnostics %}
+{{sls}}.args-{{suffix}}:
+    noop.notice:
+        - text: |
+            {{args|json}}
+{%- endif %}
 
 {%- if 'package-groups' in pillar 
     and ('package_groups' in args 
@@ -44,35 +51,70 @@
 
 {#-     # process basic names #}
 {%-     set gathered_names = [] %}
-{%-     if 'package_groups_names' in args %}
+{%-     if 'package_group_names' in args %}
 {%-         if args.package_group_names is not string %}
+
+{%-             if False %}
+{{sls}}.notice-extending-names{{suffix}}:
+    noop.notice:
+        - text: |
+            {{args.package_group_names|json}}
+{%-             endif %}
+
 {%-             do gathered_names.extend(args.package_group_names) %}
 {%-         else %}
+
+{%-             if False %}
+{{sls}}.notice-extending-names{{suffix}}:
+    noop.notice:
+        - text: |
+            {{args.package_group_names.split(',')|json}}
+{%-             endif %}
+
 {%-             do gathered_names.extend(args.package_group_names.split(',')) %}
 {%-         endif %}
 {%-     endif %}
+
 {%-     if 'package_group_name' in args %}
+
+{%-         if False %}
+{{sls}}.notice-extending-names{{suffix}}:
+    noop.notice:
+        - text: |
+            {{args.package_group_name.split(',')|json}}
+{%-         endif %}
+
 {%-         do gathered_names.extend(args.package_group_name.split(',')) %}
+{%-     endif %}
+
+{%-     if False %}
+{{sls}}.notice-gathered-names{{suffix}}:
+    noop.notice:
+        - text: |
+            {{gathered_names|json}}
 {%-     endif %}
 
 {#-     # process objects #}
 {%-     set gathered_objects = [] %}
 {%-     if 'package_groups' in args %}
-{%-         do gathered.extend(args.package_groups) %}
+{%-         do gathered_objects.extend(args.package_groups) %}
 {%-     endif %}
 {%-     if 'package_group' in args %}
-{%-         do gathered.extend([args.package_group]) %}
+{%-         do gathered_objects.extend([args.package_group]) %}
 {%-     endif %}
 
+{%-     if False %}
+{{sls}}.notice-gathered-objects{{suffix}}:
+    noop.notice:
+        - text: |
+            {{gathered_objects|json}}
+{%-     endif %}
 
-{%-     if diagnostics and not gathered_names and not gathered_objects %}
-
+{%-     if not gathered_names and not gathered_objects %}
 {{sls}}.groups.missing-parameters-for-install_package_groups-{{suffix}}:
     noop.error:
         - text: "Neither arg 'package_group_name(s)' or 'package_group(s)' was specified."
-
 {%-     endif %}
-
 
 {%-     for package_group in gathered_objects %}
 {%-         set args = { 'package_group': package_group } %}
@@ -81,12 +123,10 @@
 
 {%-     for package_group_name in gathered_names %}
 
-{%-         if diagnostics and package_group_name not in ppg %}
-
+{%-         if package_group_name not in ppg %}
 {{sls}}.groups.unrecognised-package-group-name-{{package_group_name}}-{{suffix}}:
     noop.error:
-        - text: Specified package group name was not defined in pillar.
-
+        - text: Specified package group name {{package_group_name}} was not defined in pillar.
 {%-         endif %}
 
 {%-         if package_group_name in ppg %}
