@@ -6,7 +6,8 @@ package-groups:
         purpose: |
             provide the most important web browsers
         package-sets:
-            - chromium-browser
+            # chromium-browser is broken/unailable due to broken epel zchunk issue
+            # - chromium-browser
             - firefox-browser
 
 

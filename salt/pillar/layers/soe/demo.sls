@@ -9,7 +9,6 @@ soe:
 
 # The remaining items are in alphabetical order
 
-
 build:
 
     rpm:
@@ -124,6 +123,14 @@ filesystem:
                     mode:        '0750'
                     description: Client logs split by day
 
+installed_scripts:
+    local-bin:
+        from:  salt://scripts
+        to:    /usr/local/bin
+        mode:  '0755'
+        common:
+            - uuid4
+            - yum-refresh
 
 # This data is not used yet but I am just recording the
 # configuration which is performed, so it can be automated

@@ -15,8 +15,9 @@ package-sets:
             provide some other common development toolchains
         centos,redhat,fedora:
             - cmake
-            - extra-cmake-modules
-            - python2-scons
+            # python2-scons and extra-cmake-modules are broken/unailable due to broken epel zchunk issue
+            # - extra-cmake-modules
+            #- python2-scons
 
     chromium-browser:
         purpose: |
@@ -35,7 +36,8 @@ package-sets:
             provide tools that improve console usage
         centos,redhat,fedora:
             - gpm
-            - htop
+            # htop is broken/unailable due to broken epel zchunk issue
+            #- htop
 
     development-base:
         purpose: |
@@ -219,14 +221,15 @@ package-sets:
             provide gui support in oldschool editors
         centos,redhat,fedora:
             - vim-X11
-            # xemacs isnt' available because epel is broken by zchunk metadata changes
+            # xemacs isn't available because epel is broken by zchunk metadata changes
             #- xemacs
 
     process-tools:
         purpose: |
             provide tools for management of processes
         centos,redhat,fedora:
-            - htop
+            # htop is broken/unailable due to broken epel zchunk issue
+            #- htop
             # provides pstree
             - psmisc
 
@@ -273,7 +276,7 @@ package-sets:
 
     virt-fs-tools:
         purpose: |
-            provide virtual filesystem tools. These are used for buildling a
+            provide virtual filesystem tools. These are used for building a
             bootable USB stick image for booting a server, among other things.
         fedora:
             - libguestfs
@@ -298,6 +301,7 @@ package-sets:
         purpose: |
             provide the XFCE desktop 
         # Xfce and General Purpose Desktop groups no longer seem to be provided
+        # (Xfce is in broken epel repo, General Purpos Desktop seems just gone.)
         centos,redhat,fedora: []
         #    - '@Xfce'
         #    - '@General Purpose Desktop'

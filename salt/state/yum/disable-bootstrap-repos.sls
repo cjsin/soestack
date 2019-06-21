@@ -7,9 +7,11 @@
             cd /etc/yum.repos.d
             mkdir -p disable
             # Care is taken not to disable epel bootstrap repo since the nexus epel repo is broken
-            for f in $(ls bootstrap*repo|egrep -v epel)
+            for f in $(ls bootstrap*repo 2> /dev/null | egrep -v epel)
             do
                 mv -f "${f}" disable/
             done
-            #mv -f /etc/yum.repos.d/bootstrap*repo /etc/yum.repos.d/disable/
-        - onlyif: ls /etc/yum.repos.d | egrep -i '^bootstrap.*[.]repo$'
+            
+            #mv -f bootstrap*repo disable/
+            mv -f /etc/yum.repos.d/CentOS-{Base,Sources,Debuginfo,Vault}.repo disable/
+        - onlyif: ls /etc/yum.repos.d | egrep -i '^bootstrap.*[.]repo$|CentOS-(Base|Sources|Debuginfo|Vault)[.]repo$'

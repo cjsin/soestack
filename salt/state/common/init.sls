@@ -11,11 +11,13 @@ include:
     - .repos
     # It can help to install packages before the states that require them
     - .packages
-
+    # Similarly, scripts can be installed prior to use in other states
+    - .scripts
     #
     # Other items - order doesn't matter too much
     #
     - .backups
+    - .browser
     - .bash
     - .dns
     - .docker

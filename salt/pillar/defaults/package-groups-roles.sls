@@ -14,6 +14,20 @@ package-groups:
         package-sets:
             - docker
 
+    email-server-node:
+        package-groups:
+            - basic-node
+        package-sets:
+            - email-server
+            - email-clients
+
+    homedir-server-node:
+        package-groups:
+            - basic-node
+        package-sets:
+            - nfs-server
+            - disk-quotas
+
     kubernetes-node:
         package-groups:
             - docker-node
@@ -28,8 +42,16 @@ package-groups:
             - oldschool-editors-console
             - diff-tools-console
 
+    primary-server-node:
+        package-groups:
+            - basic-node
+        package-sets:
+            - ipa-server
+            - tftp-server-dnsmasq
+
     software-development-node:
         package-groups:
+            - basic-node
             - browsers-group
             - development-tools-group
             - development-editors-group
@@ -41,22 +63,9 @@ package-groups:
             - git-standard-uninstall
             - git-newer
 
-    homedir-server-node:
-        package-sets:
-            - nfs-server
-            - disk-quotas
-
-    email-server-node:
-        package-sets:
-            - email-server
-            - email-clients
-
-    primary-server-node:
-        package-sets:
-            - ipa-server
-            - tftp-server-dnsmasq
-
     workstation-node:
+        package-groups:
+            - basic-node
         package-sets:
             - gnome-desktop
             - kde-desktop
