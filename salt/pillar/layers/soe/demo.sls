@@ -805,7 +805,12 @@ service-reg:
     nginx_https:      192.168.121.102:443
 
 ssh:
+    authorized_keys:
+        root:
+            root@infra.usb-vm: unset
     sshd:
+
+        enabled: True
         sshd_config: |
             Port 22
             ListenAddress 0.0.0.0
@@ -816,9 +821,12 @@ ssh:
             PermitRootLogin yes
             AuthorizedKeysFile	.ssh/authorized_keys
             PasswordAuthentication yes
-            ChallengeResponseAuthentication no
+            ChallengeResponseAuthentication yes
             GSSAPIAuthentication yes
             GSSAPICleanupCredentials no
+            AuthorizedKeysCommandUser nobody
+            PubkeyAuthentication yes
+            KerberosAuthentication no
             UsePAM yes
             X11Forwarding yes
             PrintMotd no

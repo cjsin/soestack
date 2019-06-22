@@ -4,7 +4,7 @@ include:
     #
 
     # Convert role-sets into a roles
-    - .role-sets.apply
+    - .role-sets
     # Create configured filesystem areas
     - .filesystem
     # Define package repositories before the states that may need to install packages
@@ -13,6 +13,9 @@ include:
     - .packages
     # Similarly, scripts can be installed prior to use in other states
     - .scripts
+    # Set up selinux booleans ASAP before configuring other stuff, to avoid denials
+    - .selinux
+    
     #
     # Other items - order doesn't matter too much
     #
@@ -34,7 +37,6 @@ include:
     - .rubygems
     - .runlevel
     - .salt
-    - .selinux
     - .sudoers
     - .services
     - .sysctls

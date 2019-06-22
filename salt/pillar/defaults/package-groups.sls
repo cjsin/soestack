@@ -10,7 +10,6 @@ package-groups:
             # - chromium-browser
             - firefox-browser
 
-
     development-tools-group:
         purpose: |
             provide software development tools, libraries, headers

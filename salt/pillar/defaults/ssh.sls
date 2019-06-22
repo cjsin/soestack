@@ -1,5 +1,6 @@
 ssh:
     sshd:
+        enabled: True
         sshd_config: ''
 
         # Example configuration:

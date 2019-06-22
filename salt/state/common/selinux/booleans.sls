@@ -2,9 +2,13 @@
 
 {%- if 'selinux' in pillar %}
 {%-     if 'booleans' in pillar.selinux %}
-{%-         for bool_name, bool_value in pillar.selinux.iteritems() %}
+{%-         for bool_name, bool_value in pillar.selinux.booleans.iteritems() %}
 
-# TODO 
+.{{bool_name}}:
+    selinux.boolean:
+        - name:    '{{bool_name}}'
+        - value:   {{bool_value}}
+        - persist: True
 
 {%-         endfor %}
 {%-     endif %}

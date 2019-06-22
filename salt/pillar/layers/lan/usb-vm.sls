@@ -38,7 +38,8 @@ deployments:
                                     SALT_MASTER:       infra.usb-vm
                                     GATEWAY:           192.168.121.101
                                     NAMESERVER:        192.168.121.101
-                                    ROLES:             role-set:developer-workstation-node
+                                    # auto ROLES will use data from node_maps
+                                    ROLES:             auto
                                     LAYERS:            soe:demo,site:testing,lan:usb-vm
                                     #ADD_HOST:
                                     #    - 192.168.121.101,infra.usb-vm,infra
@@ -175,3 +176,8 @@ network:
                 DNS2: 192.168.121.1
                 DNS3: ''
                 
+node_maps:
+    pxe-client1:
+        roles: 'role-set:developer-workstation-node'
+    pxe-client2:
+        roles: 'role-set:processor-node'
