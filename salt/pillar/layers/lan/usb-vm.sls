@@ -180,4 +180,4 @@ node_maps:
     pxe-client1:
         roles: 'role-set:developer-workstation-node'
     pxe-client2:
-        roles: 'role-set:processor-node'
+        roles: 'role-set:login-processor-node'

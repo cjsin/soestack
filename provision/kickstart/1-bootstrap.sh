@@ -23,15 +23,12 @@ function xfs_bug_workaround()
 echo "Boot commandline is:"
 cat /proc/cmdline | tr ' \0' '\n' | sed 's/^/    /'
 
-xfs_bug_workaround
+#xfs_bug_workaround
 
 # This is done before calculating the kickstart vars, which
 # will hopefully be able to use the DHCP hostname
 # Therefore we cannot use 'is_standalone'
-if ! grep -q ss.STANDALONE=1 /proc/cmdline
-then
-    dhcp_hostname_fix
-fi
+dhcp_hostname_fix
 
 load_kickstart_vars
 
@@ -42,6 +39,8 @@ then
 fi
 
 date
+
+check_host_recognised
 
 setup_symlinks
 

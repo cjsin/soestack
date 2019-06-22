@@ -47,15 +47,90 @@ function switch_to_logfile()
 # 
 # }
 
+function check_ipa_host()
+{
+    local host="$(hostname -f)"
+    local search=""
+
+    if ! [[ "${host}" =~ [.] ]]
+    then
+        if [[ -n "${DOMAIN}" ]]
+        then
+            host="${host}.${DOMAIN}"
+        else
+            search="+search"
+        fi
+    fi
+
+    if command -v dig > /dev/null 2>/dev/null
+    then
+        local arecord=$(dig ${search} A "${host}" | grep -A1 ANSWER.SECTION:)
+        local sshfp_record=$(dig ${search} SSHFP "${host}" | grep -A1 ANSWER.SECTION:)
+
+        if [[ -n "${arecord}" ]]
+        then
+            if [[ -n "${sshfp_record}" ]]
+            then
+                spam notice "The host was already enrolled and needs to be re-enrolled prior to rebuilding!"
+                spam notice "Please use host-rm/host-add to re-enrol it."
+                return 1
+            else
+                spam notice "The host appears to be enrolled ready to (re)build."
+                return 0
+            fi
+        else
+            spam notice "The host does not seem to be recognised!"
+            return 1
+        fi
+    else
+        spam notice "The required tools are not available for checking host enrolment."
+        return 0
+    fi
+}
+
+function check_host_recognised()
+{
+    local host=$(hostname -s)
+    
+    if [[ "${host}" == "localhost" ]]
+    then
+        spam notice "Hostname detected as 'localhost'."
+        spam notice "Please check:"
+        spam notice "  - is the host mac address defined correctly in the SOE configuration"
+        spam notice "  - is the host booting from the correct DHCP server"
+        exit 1
+    fi
+
+    if ! is_standalone
+    then
+        while ! check_ipa_host
+        do
+            spam notice "Either the host is not registered in IPA, needs to be re-enrolled, "
+            spam notice "or you booted off the wrong DHCP server."
+            spam notice "You may enrol the host now using the host-add command."
+            spam notice "Checking again in a minute."
+            sleep 60
+        done
+    fi
+}
+
 function dhcp_hostname_fix()
 {
-    # Release IP address so that hostname will be processed.
-    # This is because NetworkManager tries to do everything but fails
-    # at the basics, as always.
-    dhclient -r eth0 
-    dhclient 4 -x &
-    sleep 5
-    dhclient eth0 &
+    if ! grep -q ss.STANDALONE=1 /proc/cmdline
+    then
+        if [[ "$(hostname -s)" =~ localhost ]] && ps -wef | egrep -q dhclient
+        then 
+            msg "Applying DHCP hostname fix"
+            # Release IP address so that hostname will be processed.
+            # This is because NetworkManager tries to do everything but fails
+            # at the basics, as always.
+            dhclient -r eth0 
+            dhclient 4 -x &
+            sleep 5
+            dhclient eth0 &
+            sleep 3
+        fi
+    fi
 }
 
 function determine_kickstart_type()

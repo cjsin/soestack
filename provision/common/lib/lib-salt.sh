@@ -216,6 +216,9 @@ function salt_state_provision()
         salt-step grains.set vagrant True
     fi
 
+    # NOTE the roles grains must be configured prior to running the 
+    # full state apply, because the roles grains are utilised in selecting
+    # which states are applied. 
     if [[ "${preconfigured_roles}" == "auto" ]]
     then 
         salt-step state.sls common.role-sets.auto

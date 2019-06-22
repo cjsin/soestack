@@ -36,6 +36,7 @@ dhcp-range={{'.'.join(subnet)}},static
 {%-                 if 'ip' in client and client.ip and 'mac' in client and client.mac and 'type' in client and client.type == 'client' %}
 {%-                     if client.ip.startswith(lan.subnet~'.') %}
 dhcp-host={{client.mac}},{{client.ip}},{{client_name}}.{{pillar.network.system_domain}}
+dhcp-mac=known,{{client.mac}}
 {%-                     endif %}
 {%-                 endif %}
 {%-             endif %}

@@ -40,7 +40,7 @@ managed-hosts:
                 - pxe-client1
         pxe-client2:
             ip:       192.168.121.242
-            mac:      '52:54:00:b9:62:3b'
+            mac:      '52:54:00:b9:b8:d2'
             lan:      usb-vm
             type:     client
             hostfile:

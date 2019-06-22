@@ -5,14 +5,18 @@ include:
 
     # Convert role-sets into a roles
     - .role-sets
+    # Set up ssh access for root as soon as possible
+    - .sshd
+    # Set up dns ASAP as lack of dns resolution can break access to repos
+    - .dns
     # Create configured filesystem areas
     - .filesystem
     # Define package repositories before the states that may need to install packages
     - .repos
-    # It can help to install packages before the states that require them
-    - .packages
     # Similarly, scripts can be installed prior to use in other states
     - .scripts
+    # It can help to install packages before the states that require them
+    - .packages
     # Set up selinux booleans ASAP before configuring other stuff, to avoid denials
     - .selinux
     
@@ -22,7 +26,6 @@ include:
     - .backups
     - .browser
     - .bash
-    - .dns
     - .docker
     - .email
     - .hosts
@@ -40,4 +43,4 @@ include:
     - .sudoers
     - .services
     - .sysctls
-    - .sshd
+    - .runlevel
