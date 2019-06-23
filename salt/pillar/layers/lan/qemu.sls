@@ -21,7 +21,7 @@ docker:
                 - 192.168.121.1   # host in VM environment
                 - 192.168.121.101 # infra server
             dns-search:
-                - demo.qemu
+                - demo.com
 
 deployments:
     pxeboot_server:
@@ -38,8 +38,8 @@ deployments:
                         entries:
                             netinstall:
                                 ss_settings:
-                                    DOMAIN:            demo.qemu
-                                    SALT_MASTER:       infra.demo.qemu
+                                    DOMAIN:            demo.com
+                                    SALT_MASTER:       infra.demo.com
                                     GATEWAY:           192.168.121.101
                                     NAMESERVER:        192.168.121.101
                                     ROLES:             role-set:developer-workstation-node
@@ -57,14 +57,14 @@ deployments:
                         #     custom:
                         #         title:    '^Custom Kickstart (Centos7 custom)'
                         #         ss_settings:
-                        #             DOMAIN:            demo.qemu
+                        #             DOMAIN:            demo.com
                         #             ROLES:             role-set:developer-workstation-node
                         #             LAYERS:            soe:demo,site:testing,lan:qemu
                         #         ss_hosts:
                         #             # To nodes booting within the libvirt/qemu/vagrant test network the nexus server and gateway are 10.0.2.2
-                        #             192.168.121.1:     gateway gateway.demo.qemu
-                        #             192.168.121.101:   infra.demo.qemu infra master salt ipa ldap nfs pxe
-                        #             192.168.121.103:   nexus.demo.qemu nexus
+                        #             192.168.121.1:     gateway gateway.demo.com
+                        #             192.168.121.101:   infra.demo.com infra master salt ipa ldap nfs pxe
+                        #             192.168.121.103:   nexus.demo.com nexus
                         #         append:    noquiet custom-test
                         #         kickstart: http://%http_server%/provision/kickstart/kickstart-custom.cfg
                         #         stage2:    nfs:%nfs_server%:/e/pxe/os/custom/
@@ -81,7 +81,7 @@ deployments:
         grafana-cont:
             config:
                 ip:     192.168.121.108
-                domain: demo.qemu
+                domain: demo.com
                 datasources:
                     - access: 'proxy'                       # make grafana perform the requests
                       editable: true                        # whether it should be editable
@@ -89,7 +89,7 @@ deployments:
                       name: 'prometheus'                    # name of the datasource
                       orgId: 1                              # id of the organization to tie this datasource to
                       type: 'prometheus'                    # type of the data source
-                      url: 'http://prometheus.demo.qemu:9090'    # url of the prom instance
+                      url: 'http://prometheus.demo.com:9090'    # url of the prom instance
                       version: 1                            # well, versioning
 
     ipa_client:
@@ -98,18 +98,18 @@ deployments:
             activated:   True
             activated_where: {{sls}}
             config:
-                server:  infra.demo.qemu
+                server:  infra.demo.com
                 realm:   DEMO
-                domain:  demo.qemu
+                domain:  demo.com
                 ldap:
-                    base-dn: dc=demo,dc=qemu
+                    base-dn: dc=demo,dc=com
 
     ipa_master:
         testenv-master:
             config:
-                domain: demo.qemu
+                domain: demo.com
                 realm:  DEMO
-                fqdn:   infra.demo.qemu
+                fqdn:   infra.demo.com
                 ip:     192.168.121.101
                 install:
                     dns:
@@ -117,31 +117,31 @@ deployments:
                             - 192.168.121.1 # virtual machine host
                 initial-setup:
                     global-config:
-                        defaultemaildomain:  demo.qemu
+                        defaultemaildomain:  demo.com
 
     managed_hosts:
         testenv-master:
             config:
-                domain: demo.qemu
+                domain: demo.com
 
         testenv-client:
             config:
-                domain: demo.qemu
+                domain: demo.com
 
 dns:
     # if is_server is set, the server will have a customised dns configuration
-    server:      infra.demo.qemu
+    server:      infra.demo.com
     nameservers:
         dns1:    192.168.121.101
         dns2:    192.168.121.1
         dns3:    ''
     search:
-        search1: demo.qemu
+        search1: demo.com
         search2: ''
         search3: ''
 
 ipa:
-    base_dn:   dc=demo.qemu
+    base_dn:   dc=demo,dc=com
 
 ipa-configuration:
     dns:
@@ -155,7 +155,7 @@ managed-hosts:
             ip:       192.168.121.101
             mac:      '52:54:00:d5:19:d5'
             lan:      qemu
-            aliases:  infra ipa.demo.qemu ipa salt.demo.qemu salt ldap.demo.qemu ldap
+            aliases:  infra ipa.demo.com ipa salt.demo.com salt ldap.demo.com ldap
             type:     client
             hostfile:
                 - '.*'
@@ -167,14 +167,14 @@ network:
     netmask: 255.255.255.0
     prefix:  24
     gateway: 192.168.121.1
-    system_domain: demo.qemu
+    system_domain: demo.com
     
     hostfile-additions:
         # For now use the nexus on my host box to avoid re-downloading anything
-        192.168.121.1:   gateway.demo.qemu gateway
+        192.168.121.1:   gateway.demo.com gateway
         
-        192.168.121.101: infra.demo.qemu infra ipa.demo.qemu ipa salt.demo.qemu salt ldap.demo.qemu ldap
-        192.168.121.103: nexus.demo.qemu nexus
+        192.168.121.101: infra.demo.com infra ipa.demo.com ipa salt.demo.com salt ldap.demo.com ldap
+        192.168.121.103: nexus.demo.com nexus
 
     classes:
         gateway:
@@ -189,5 +189,5 @@ network:
 ssh:
     authorized_keys:
         root:
-            root@infra.demo.qemu: unset
+            root@infra.demo.com: unset
 

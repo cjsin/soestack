@@ -44,8 +44,6 @@ deployments:
             host:        infra
             activated:   False
             activated_where: {{sls}}
-            config:
-                hostname: gitlab.qemu
     grafana_container:
         grafana-cont:
             host:        infra
@@ -53,7 +51,7 @@ deployments:
             activated_where: {{sls}}
             config:
                 ip:      192.168.121.108
-                domain:  qemu
+                domain:  demo.com
     ipa_client:
         testenv-client:
             config:

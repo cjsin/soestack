@@ -29,7 +29,7 @@ function xfs_bug_workaround()
 }
 
 echo "Boot commandline is:"
-cat /proc/cmdline | tr ' \0' '\n' | sed 's/^/    /'
+cat /proc/cmdline | tr ' \0' '\n' | sort | sed 's/^/    /'
 
 #xfs_bug_workaround
 
@@ -48,7 +48,13 @@ fi
 
 date
 
-check_host_recognised
+if ! is_standalone
+then
+    if ! check_host_recognised
+    then
+        exit 1
+    fi
+fi
 
 setup_symlinks
 

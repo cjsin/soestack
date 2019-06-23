@@ -100,7 +100,7 @@ deployments:
                             - 192.168.188.1 # modem / wifi
                 initial-setup:
                     global-config:
-                        defaultemaildomain:  demo.usb-vm
+                        defaultemaildomain:  demo.com
 
     managed_hosts:
         testenv-master:

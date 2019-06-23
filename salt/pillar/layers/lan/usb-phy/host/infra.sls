@@ -5,7 +5,7 @@ deployments:
     gitlab_baremetal:
         gitlab:
             config:
-                hostname: gitlab.demo.usb-phy
+                hostname: gitlab.demo.com
     ipa_master:
         testenv-master:
             config:
@@ -17,19 +17,19 @@ deployments:
 # Override DNS on the infra server
 dns:
     # if is_server is set, the server will have a customised dns configuration
-    server:      infra.demo.usb-phy
+    server:      infra.demo.com
     nameservers:
         dns1:    127.0.0.1
         dns2:    192.168.0.1 # The wifi/modem
         dns3:    ''
     search:
-        search1: demo.usb-phy
+        search1: demo.com
         search2: ''
         search3: ''
         
 managed-hosts:
     testenv-master:
-        infra.demo.usb-phy:
+        infra.demo.com:
             ip:      192.168.121.101
             lan:     usb-phy
             aliases: ipa
@@ -51,7 +51,7 @@ managed-hosts:
         wildcard:
             ip:       192.168.121.102
             type:     dns 
-            aliases:  nginx.demo.usb-phy nginx wildcard
+            aliases:  nginx.demo.com nginx wildcard
         nexus:
             ip:       192.168.121.103
             type:     dns 
@@ -59,35 +59,35 @@ managed-hosts:
         gitlab:
             ip:       192.168.121.104
             type:     dns 
-            aliases:  gitlab.demo.usb-phy gitlab
-        mattermost.demo.usb-phy:
+            aliases:  gitlab.demo.com gitlab
+        mattermost.demo.com:
             ip:       192.168.121.105
             type:     dns 
             aliases:  mattermost
-        pages.demo.usb-phy:
+        pages.demo.com:
             ip:       192.168.121.106 
             type:     dns
             aliases:  pages
-        gitlab-registry.demo.usb-phy:
+        gitlab-registry.demo.com:
             ip:       192.168.121.107 
             type:     dns
             aliases:  gitlab-registry
         grafana:
             ip:       192.168.121.108
             type:     dns 
-            aliases:  prometheus.demo.usb-phy grafana prometheus
+            aliases:  prometheus.demo.com grafana prometheus
         kibana:
             ip:       192.168.121.109
             type:     dns 
-            aliases:  elasticsearch.demo.usb-phy kibana elasticsearch
+            aliases:  elasticsearch.demo.com kibana elasticsearch
         master:
             ip:       192.168.121.110
             type:     dns 
-            aliases:  master.demo.usb-phy master k8s.demo.usb-phy k8s
+            aliases:  master.demo.com master k8s.demo.com k8s
         docs:
             ip:       192.168.121.111
             type:     dns 
-            aliases:  docs.demo.usb-phy docs
+            aliases:  docs.demo.com docs
 
 network:
     devices:

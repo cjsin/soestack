@@ -17,7 +17,7 @@ docker:
                 - 192.168.121.1   # host in VM environment
                 - 192.168.121.101 # infra server
             dns-search:
-                - demo.usb-vm
+                - demo.com
 
 deployments:
     pxeboot_server:
@@ -34,24 +34,24 @@ deployments:
                         entries:
                             netinstall:
                                 ss_settings:
-                                    DOMAIN:            demo.usb-vm
-                                    SALT_MASTER:       infra.demo.usb-vm
+                                    DOMAIN:            demo.com
+                                    SALT_MASTER:       infra.demo.com
                                     GATEWAY:           192.168.121.101
                                     NAMESERVER:        192.168.121.101
                                     # auto ROLES will use data from node_maps
                                     ROLES:             auto
                                     LAYERS:            soe:demo,site:testing,lan:usb-vm
                                     #ADD_HOST:
-                                    #    - 192.168.121.101,infra.demo.usb-vm,infra
-                                    #    - 192.168.121.103,nexus.demo.usb-vm,nexus
-                                    #    - 192.168.121.1,gateway.demo.usb-vm,gateway
+                                    #    - 192.168.121.101,infra.demo.com,infra
+                                    #    - 192.168.121.103,nexus.demo.com,nexus
+                                    #    - 192.168.121.1,gateway.demo.com,gateway
                                 ss_repos: {}
                                 ss_hosts:
                                     # NOTE the demo lan is associated with the ethernet device, 
                                     # this gateway is for that and what clients booted on that network will use
-                                    192.168.121.1:     gateway.demo.usb-vm gateway
-                                    192.168.121.101:   infra.demo.usb-vm infra master salt ipa ldap nfs pxe
-                                    192.168.121.103:   nexus.demo.usb-vm nexus
+                                    192.168.121.1:     gateway.demo.com gateway
+                                    192.168.121.101:   infra.demo.com infra master salt ipa ldap nfs pxe
+                                    192.168.121.103:   nexus.demo.com nexus
                                 kickstart: http://%http_server%/provision/kickstart/kickstart.cfg
                                 #stage2:    nfs:%nfs_server%:/e/pxe/os/minimal/
                     usb-vm:
@@ -70,7 +70,7 @@ deployments:
         grafana-cont:
             config:
                 ip:     192.168.121.108
-                domain: demo.usb-vm
+                domain: demo.com
                 datasources:
                     - access: 'proxy'                       # make grafana perform the requests
                       editable: true                        # whether it should be editable
@@ -78,7 +78,7 @@ deployments:
                       name: 'prometheus'                    # name of the datasource
                       orgId: 1                              # id of the organization to tie this datasource to
                       type: 'prometheus'                    # type of the data source
-                      url: 'http://prometheus.demo.usb-vm:9090'  # url of the prom instance
+                      url: 'http://prometheus.demo.com:9090'  # url of the prom instance
                       version: 1                            # well, versioning
 
     ipa_client:
@@ -87,18 +87,18 @@ deployments:
             activated:   True
             activated_where: {{sls}}
             config:
-                server:  infra.demo.usb-vm
+                server:  infra.demo.com
                 realm:   DEMO
-                domain:  demo.usb-vm
+                domain:  demo.com
                 ldap:
-                    base-dn: dc=demo,dc=usb-vm
+                    base-dn: dc=demo,dc=com
 
     ipa_master:
         testenv-master:
             config:
-                domain: demo.usb-vm
+                domain: demo.com
                 realm:  DEMO
-                fqdn:   infra.demo.usb-vm
+                fqdn:   infra.demo.com
                 ip:     192.168.121.101
                 install:
                     dns:
@@ -106,31 +106,31 @@ deployments:
                             - 192.168.121.1 # virtual machine host
                 initial-setup:
                     global-config:
-                        defaultemaildomain:  demo.usb-vm
+                        defaultemaildomain:  demo.com
 
     managed_hosts:
         testenv-master:
             config:
-                domain: demo.usb-vm
+                domain: demo.com
 
         testenv-client:
             config:
-                domain: demo.usb-vm
+                domain: demo.com
 
 dns:
     # if is_server is set, the server will have a customised dns configuration
-    server:      infra.demo.usb-vm
+    server:      infra.demo.com
     nameservers:
         dns1:    192.168.121.101
         dns2:    192.168.121.1
         dns3:    ''
     search:
-        search1: demo.usb-vm
+        search1: demo.com
         search2: ''
         search3: ''
 
 ipa:
-    base_dn:   dc=demo,dc=usb-vm
+    base_dn:   dc=demo,dc=com
 
 ipa-configuration:
     dns:
@@ -144,7 +144,7 @@ managed-hosts:
             ip:       192.168.121.101
             mac:      '52:54:00:d5:19:d5'
             lan:      usb-vm
-            aliases:  infra ipa.demo.usb-vm ipa salt.demo.usb-vm salt ldap.demo.usb-vm ldap
+            aliases:  infra ipa.demo.com ipa salt.demo.com salt ldap.demo.com ldap
             type:     client
             hostfile:
                 - '.*'
@@ -155,14 +155,14 @@ network:
     netmask: 255.255.255.0
     prefix:  24
     gateway: 192.168.121.1
-    system_domain: demo.usb-vm
+    system_domain: demo.com
     
     hostfile-additions:
         # For now use the nexus on my host box to avoid re-downloading anything
-        192.168.121.1:   gateway.demo.usb-vm gateway
+        192.168.121.1:   gateway.demo.com gateway
         
-        192.168.121.101: infra.demo.usb-vm infra ipa.demo.usb-vm ipa salt.demo.usb-vm salt ldap.demo.usb-vm ldap
-        192.168.121.103: nexus.demo.usb-vm nexus
+        192.168.121.101: infra.demo.com infra ipa.demo.com ipa salt.demo.com salt ldap.demo.com ldap
+        192.168.121.103: nexus.demo.com nexus
 
     classes:
         gateway:
@@ -184,16 +184,15 @@ postfix:
     config:
         append_dot_mydomain: no
         inet_protocols:     ipv4
-        myorigin:           usb-vm
-        #myorigin:           demo.usb-vm
+        myorigin:           demo.com
         home_mailbox:       ''
         mydomain:           localhost.localdomain
         mydestination:      localhost.$mydomain, localhost.localdomain, localhost
-        relayhost:          '[infra.usb-vm]:25'
-        relay_domains:      usb-vm
+        relayhost:          '[infra.demo.com]:25'
+        relay_domains:      demo.com
         default_transport:  smtp
 
 ssh:
     authorized_keys:
         root:
-            root@infra.demo.usb-vm: ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDAHwPMVvnL0JEUjfw5dUOGTfWaec5g7qZj1pm8I0m/aZGZs/a4paD08BwzOLjc7NBF0mveYNRIdWNX9AhdbTG/d6uelNOhQ9Tmc6TwV/NVFKNntfZ3mzpy3tGKyIa+UGWttkng07eMwx1ZJFlebmYolIdZbVDo5oQhjnv/3b9gQz22t8JZibWw1YlfDYBvF2xNZ2MuJvTSSUP5lyps6CNgTiTLV0bRCeiOlRqRv1H7EUrR16vVY42DUHg4RvmuqFhwxIHFMtQcOgQ9J/MOGUlaUb8C94bytwZMpyFwdDp7dqtMII3MqsuoLbTrDH2Qsd7ZOd1zC8W4fR3aqbBMh8wD
+            root@infra.demo.com: ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDAHwPMVvnL0JEUjfw5dUOGTfWaec5g7qZj1pm8I0m/aZGZs/a4paD08BwzOLjc7NBF0mveYNRIdWNX9AhdbTG/d6uelNOhQ9Tmc6TwV/NVFKNntfZ3mzpy3tGKyIa+UGWttkng07eMwx1ZJFlebmYolIdZbVDo5oQhjnv/3b9gQz22t8JZibWw1YlfDYBvF2xNZ2MuJvTSSUP5lyps6CNgTiTLV0bRCeiOlRqRv1H7EUrR16vVY42DUHg4RvmuqFhwxIHFMtQcOgQ9J/MOGUlaUb8C94bytwZMpyFwdDp7dqtMII3MqsuoLbTrDH2Qsd7ZOd1zC8W4fR3aqbBMh8wD

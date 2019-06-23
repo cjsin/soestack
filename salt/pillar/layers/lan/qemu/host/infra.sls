@@ -12,7 +12,7 @@ deployments:
     gitlab_baremetal:
         gitlab:
             config:
-                hostname: gitlab.demo.qemu
+                hostname: gitlab.demo.com
                 # In my demo vm's I have very limited ram available, so need to set this down low
                 # The default is that it will use 1/4 of total RAM or so
                 postgres_ram: 128MB
@@ -27,19 +27,19 @@ deployments:
 # Override DNS on the infra server
 dns:
     # if is_server is set, the server will have a customised dns configuration
-    server:      infra.demo.qemu
+    server:      infra.demo.com
     nameservers:
         dns1:    127.0.0.1
         dns2:    192.168.121.1 # The VM host
         dns3:    ''
     search:
-        search1: demo.qemu
+        search1: demo.com
         search2: ''
         search3: ''
         
 managed-hosts:
     testenv-master:
-        infra.demo.qemu:
+        infra.demo.com:
             ip:      192.168.121.101
             lan:     qemu
             aliases: ipa
@@ -61,43 +61,43 @@ managed-hosts:
         wildcard:
             ip:       192.168.121.102
             type:     dns 
-            aliases:  nginx.demo.qemu nginx wildcard
+            aliases:  nginx.demo.com nginx wildcard
         nexus:
             ip:       192.168.121.103
             type:     dns 
-            aliases:  nexus.demo.qemu
+            aliases:  nexus.demo.com
         gitlab:
             ip:       192.168.121.104
             type:     dns 
-            aliases:  gitlab.demo.qemu
-        mattermost.demo.qemu:
+            aliases:  gitlab.demo.com
+        mattermost.demo.com:
             ip:       192.168.121.105
             type:     dns 
             aliases:  mattermost
-        pages.demo.qemu:
+        pages.demo.com:
             ip:       192.168.121.106 
             type:     dns
             aliases:  pages
-        gitlab-registry.demo.qemu:
+        gitlab-registry.demo.com:
             ip:       192.168.121.107 
             type:     dns
             aliases:  gitlab-registry
         grafana:
             ip:       192.168.121.108
             type:     dns 
-            aliases:  prometheus.qemu grafana prometheus
+            aliases:  prometheus.demo.com grafana prometheus
         kibana:
             ip:       192.168.121.109
             type:     dns 
-            aliases:  elasticsearch.demo.qemu kibana elasticsearch
+            aliases:  elasticsearch.demo.com kibana elasticsearch
         master:
             ip:       192.168.121.110
             type:     dns 
-            aliases:  master.demo.qemu master k8s.demo.qemu k8s
+            aliases:  master.demo.com master k8s.demo.com k8s
         docs:
             ip:       192.168.121.111
             type:     dns 
-            aliases:  docs.demo.qemu docs
+            aliases:  docs.demo.com docs
 
 network:
     devices:
