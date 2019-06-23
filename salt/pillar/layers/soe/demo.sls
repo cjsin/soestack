@@ -129,6 +129,8 @@ installed_scripts:
         to:    /usr/local/bin
         mode:  '0755'
         common:
+            - salt-render
+            - systemd-bugfix-change-runlevel
             - uuid4
             - yum-refresh
 
@@ -805,9 +807,6 @@ service-reg:
     nginx_https:      192.168.121.102:443
 
 ssh:
-    authorized_keys:
-        root:
-            root@infra.usb-vm: unset
     sshd:
 
         enabled: True

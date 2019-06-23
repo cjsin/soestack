@@ -17,7 +17,7 @@ docker:
                 - 192.168.0.1     # network gateway/router/modem
                 - 192.168.121.101 # infra server
             dns-search:
-                - usb-phy
+                - demo.usb.demo-phy
 
 deployments:
     pxeboot_server:
@@ -34,8 +34,8 @@ deployments:
                         entries:
                             netinstall:
                                 ss_settings:
-                                    DOMAIN:            usb-phy
-                                    SALT_MASTER:       infra.usb-phy
+                                    DOMAIN:            demo.usb-phy
+                                    SALT_MASTER:       infra.demo.usb-phy
                                     GATEWAY:           192.168.0.1
                                     NAMESERVER:        192.168.121.101
                                     ROLES:             role-set:developer-workstation-node
@@ -57,7 +57,7 @@ deployments:
         grafana-cont:
             config:
                 ip:     192.168.121.108
-                domain: usb-phy
+                domain: demo.usb-phy
                 datasources:
                     - access: 'proxy'                       # make grafana perform the requests
                       editable: true                        # whether it should be editable
@@ -65,7 +65,7 @@ deployments:
                       name: 'prometheus'                    # name of the datasource
                       orgId: 1                              # id of the organization to tie this datasource to
                       type: 'prometheus'                    # type of the data source
-                      url: 'http://prometheus.usb-phy:9090' # url of the prom instance
+                      url: 'http://prometheus.demo.usb-phy:9090' # url of the prom instance
                       version: 1                            # well, versioning
 
     ipa_client:
@@ -74,51 +74,50 @@ deployments:
             activated:   True
             activated_where: {{sls}}
             config:
-                server:  infra.usb-phy
+                server:  infra.demo.usb-phy
                 realm:   DEMO
-                domain:  usb-phy
-                site:    testing
+                domain:  demo.usb-phy
                 ldap:
-                    base-dn: dc=usb-phy
+                    base-dn: dc=demo,dc=usb-phy
 
     ipa_master:
         testenv-master:
             config:
-                domain: usb-phy
+                domain: demo.usb-phy
                 realm:  DEMO
-                fqdn:   infra.usb-phy
-                site:   testing
+                fqdn:   infra.demo.usb-phy
                 ip:     192.168.121.101
                 install:
                     dns:
                         forwarders:
                             - 192.168.0.1 # interwebs gateway
                 initial-setup:
-
-                    automount:
-                        locations:
-                            - usb-phy
+                    global-config:
+                        defaultemaildomain:  demo.usb-phy
 
     managed_hosts:
         testenv-master:
             config:
-                domain: usb-phy
+                domain: demo.usb-phy
 
         testenv-client:
             config:
-                domain: usb-phy
+                domain: demo.usb-phy
 
 dns:
     # if is_server is set, the server will have a customised dns configuration
-    server:      infra.usb-phy
+    server:      infra.demo.usb-phy
     nameservers:
         dns1:    192.168.121.101
         dns2:    192.168.0.1
         dns3:    ''
     search:
-        search1: usb-phy
+        search1: demo.usb-phy
         search2: ''
         search3: ''
+
+ipa:
+    base_dn:   dc=demo,dc=usb-phy
 
 ipa-configuration:
     dns:
@@ -132,7 +131,7 @@ managed-hosts:
             ip:       192.168.121.101
             mac:      '52:54:00:d5:19:d5'
             lan:      usb-phy
-            aliases:  infra ipa.usb-phy ipa salt.usb-phy salt ldap.usb-phy ldap
+            aliases:  infra ipa.demo.usb-phy ipa salt.demo.usb-phy salt ldap.demo.usb-phy ldap
             type:     client
             hostfile:
                 - '.*'
@@ -144,14 +143,14 @@ network:
     netmask: 255.255.255.0
     prefix:  24
     gateway: 192.168.0.1
-    system_domain: usb-phy
+    system_domain: demo.usb-phy
     
     hostfile-additions:
         # For now use the nexus on my host box to avoid re-downloading anything
-        192.168.0.1:     gateway.usb-phy gateway
+        192.168.0.1:     gateway.demo.usb-phy gateway
         
-        192.168.121.101: infra.usb-phy infra ipa.usb-phy ipa salt.usb-phy salt ldap.usb-phy ldap
-        192.168.121.103: nexus.usb-phy nexus
+        192.168.121.101: infra.demo.usb-phy infra ipa.demo.usb-phy ipa salt.demo.usb-phy salt ldap.demo.usb-phy ldap
+        192.168.121.103: nexus.demo.usb-phy nexus
 
     classes:
         gateway:
@@ -162,4 +161,8 @@ network:
                 DNS1: 127.0.0.1
                 DNS2: 192.168.0.1
                 DNS3: ''
-                
+
+ssh:
+    authorized_keys:
+        root:
+            root@infra.demo.usb-phy: unset

@@ -20,7 +20,7 @@ nuggets:
             service-sets:
                 enabled:
                     - dnsmasq
-                
+
         config:
             test_data: test1
 

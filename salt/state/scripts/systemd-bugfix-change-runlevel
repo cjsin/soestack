@@ -1,0 +1,96 @@
+#!/bin/bash
+
+too_long=10
+
+function usage()
+{
+    local exitcode="${1:-0}"
+    echo "Usage: ${0##*/} [multi-user|graphical|3|5] [--force] [--help]"
+    echo ""
+    echo "Attempt to change runlevel using systemd, but working around"
+    echo "systemd bug whereby it hangs during 'isolate'"
+    exit "${exitcode}"
+}
+
+function current_targets()
+{
+    systemctl list-units --type target | egrep '^(emergency|rescue|graphical|multi-user)[.]target' | egrep 'active[[:space:]]+active' | cut -d' ' -f1
+}
+
+function current_runlevel()
+{
+    runlevel | egrep -v unknown | cut -d' ' -f2
+}
+
+function main()
+{
+    local force=0
+    local runlevel=""
+    local target=""
+    local arg="" 
+
+    for arg in "${@}"
+    do
+        case "${arg}" in 
+            3|multi-user|multi-user.target)
+                runlevel=3
+                ;;
+            5|graphical|graphical.target)
+                runlevel=5
+                ;;
+            force|--force)
+                force=1
+                ;;
+            *.target)
+                target="${arg}"
+                ;;
+            -help|--help|help|-h)
+                usage 0
+                ;;
+            *)
+                usage 1
+                ;;
+        esac
+    done
+
+    local current=""
+    local -a cmd=()
+    local needs_change=0
+
+    if [[ -n "${runlevel}" ]]
+    then
+        cmd=(init "${runlevel}")
+        current=$(current_runlevel)
+        [[ "${current}" == "${runlevel}" ]] || needs_change=1
+    elif [[ -n "${target}" ]]
+    then
+        cmd=(systemctl isolate "${target}")
+        current=$(current_targets)
+        [[ "${current_targets}" =~ ${target} ]] || needs_change=1
+    fi
+
+    if (( needs_change + force ))
+    then
+        local pid 
+        "${cmd[@]}" &
+        pid=$!
+        local sec
+        local waited=0
+        for sec in $(seq 60 -1 1)
+        do 
+            sleep 1
+
+            ((waited++))
+            [[ -d /proc/${pid} ]] || exit 0
+
+            if [[ "${waited}" -gt "${too_long}" ]]
+            then
+                echo "The '${cmd[*]}' command appears to have hung. Killing it."
+                kill ${pid}
+                kill -TERM ${pid}
+            fi
+        done
+    fi
+}
+
+main "${@}"

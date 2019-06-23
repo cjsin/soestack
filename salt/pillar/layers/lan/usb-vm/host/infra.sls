@@ -5,30 +5,37 @@ deployments:
     gitlab_baremetal:
         gitlab:
             config:
-                hostname:     gitlab.usb-vm
+                hostname:     gitlab.demo.usb-vm
                 # In my demo VM's I have very limited ram available, so need to set this down low
                 # The default is that it will use 1/4 of total RAM or so
                 postgres_ram: 128MB
+    ipa_master:
+        testenv-master:
+            config:
+                passwords:
+                    master: master123
+                    admin:  admin123
+                    ds:     random
 
 # Override DNS on the infra server
 dns:
     # if is_server is set, the server will have a customised dns configuration
-    server:      infra.usb-vm
+    server:      infra.demo.usb-vm
     nameservers:
         dns1:    127.0.0.1
         dns2:    192.168.121.1 # The VM host
         dns3:    ''
     search:
-        search1: usb-vm
+        search1: demo.usb-vm
         search2: ''
         search3: ''
         
 managed-hosts:
     testenv-master:
-        infra.usb-vm:
+        infra.demo.usb-vm:
             ip:      192.168.121.101
             lan:     usb-vm
-            aliases: ipa ipa.usb-vm
+            aliases: ipa
             type:    dns
 
         pxe-client1:
@@ -48,7 +55,7 @@ managed-hosts:
         wildcard:
             ip:       192.168.121.102
             type:     dns 
-            aliases:  nginx.usb-vm nginx wildcard
+            aliases:  nginx.demo.usb-vm nginx wildcard
         nexus:
             ip:       192.168.121.103
             type:     dns 
@@ -56,35 +63,35 @@ managed-hosts:
         gitlab:
             ip:       192.168.121.104
             type:     dns 
-            aliases:   gitlab
-        mattermost.usb-vm:
+            aliases:   gitlab.demo.usb-vm
+        mattermost.demo.usb-vm:
             ip:       192.168.121.105
             type:     dns 
             aliases:  mattermost
-        pages.usb-vm:
+        pages.demo.usb-vm:
             ip:       192.168.121.106 
             type:     dns
             aliases:  pages
-        gitlab-registry.usb-vm:
+        gitlab-registry.demo.usb-vm:
             ip:       192.168.121.107 
             type:     dns
             aliases:  gitlab-registry
         grafana:
             ip:       192.168.121.108
             type:     dns 
-            aliases:  prometheus.usb-vm grafana prometheus
+            aliases:  prometheus.demo.usb-vm grafana prometheus
         kibana:
             ip:       192.168.121.109
             type:     dns 
-            aliases:  elasticsearch.usb-vm kibana elasticsearch
+            aliases:  elasticsearch.demo.usb-vm kibana elasticsearch
         master:
             ip:       192.168.121.110
             type:     dns 
-            aliases:  master.usb-vm master k8s.usb-vm k8s
+            aliases:  master.demo.usb-vm master k8s.demo.usb-vm k8s
         docs:
             ip:       192.168.121.111
             type:     dns 
-            aliases:  docs.usb-vm docs
+            aliases:  docs.demo.usb-vm docs
 
 network:
     devices:
@@ -110,6 +117,17 @@ network:
                 - defroute
                 - infra-server
                 - infra-dns
+
+postfix:
+    config:
+        inet_interfaces:  192.168.121.101
+        mydomain:         usb-vm
+        #myorigin:         demo.usb-vm
+        myorigin:         usb-vm
+        mydestination:    $myhostname, $mydomain, localhost.$mydomain, localhost.localdomain, localhost
+        home_mailbox:     Maildir/
+        relayhost:        ''
+        relay_domains:    ''
 
 layer-host-loaded: {{sls}}
 

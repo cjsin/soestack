@@ -120,6 +120,10 @@
 {%-             endif %}
 
 {%-             with args = { 'nugget_name': base_nugget_type} %}
+{%-             if diagnostics %}
+{{sls}}.{{deployment_name}}.{{action}}.base-nugget-type.{{base_nugget_type}}-{{action}}:
+    noop.notice
+{%-             endif %}
 {%                  include('templates/nugget/'~action~'.sls') with context %}
 {%-             endwith %}
 {%-         endif %}

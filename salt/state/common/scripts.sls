@@ -43,11 +43,12 @@
 
 {{sls}}.{{groupname}}-{{item}}:
     file.managed:
-        - name:   {{to}}/{{item}}
-        - source: {{from}}/{{item}}
-        - user:   root
-        - group:  root
-        - mode:   {{mode}}
+        - name:    '{{to}}/{{item}}'
+        - source:  '{{from}}/{{item}}'
+        - user:    root
+        - group:   root
+        - mode:    '{{mode}}'
+        - template: jinja
 
 {%-                     endfor %}
 {%-                 endif %}

@@ -4,7 +4,15 @@
 # because if a problem happens then it may have happened
 # before the user confirmation has occurred.
 
+lib_result=
 . "${SS_DIR:=${BASH_SOURCE[0]%/provision/*}}"/provision/kickstart/lib/lib-bootstrap.sh
+lib_result=$?
+
+if (( lib_result ))
+then
+    echo "Loading the SOE libs failed." 1>&2
+    exit 1
+fi
 
 function completed_bootstrap()
 {

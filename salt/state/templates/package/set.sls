@@ -61,7 +61,7 @@
 {%-                 if groups %}
 {%-                     if action == 'absent' %}
 
-{{sls}}.set.error-group-uninstalls-not-supported-for-{{package_set_name}}-{{repo_name}}:
+{{sls}}.package.set.error-group-uninstalls-not-supported-for-{{package_set_name}}-{{repo_name}}:
     noop.error
 
 {%-                     else %}
@@ -83,7 +83,7 @@
 # (yum groupinfo gnome-desktop returns results for gnome-desktop and gnome-desktop-environment 
 # and the group_installed code only handles one type of result at a time).
 
-{{sls}}.set.install-package-set-{{package_set_name}}-{{repo_name}}-groupinstalls-{{group_name}}-{{suffix}}:
+{{sls}}.package.set.install-package-set-{{package_set_name}}-{{repo_name}}-groupinstalls-{{group_name}}-{{suffix}}:
     cmd.run:
         - name: yum -y {%if repo_name != 'any' %}--enablerepo='{{repo_name}}'{%endif%} groupinstall '{{group_name}}' && yum group mark install "{{group_name}}"
         - unless: yum group list installed | egrep '[[:space:]]{{group_name}}$'
@@ -94,7 +94,7 @@
 
 {%-                 if regular_pkgs %}
 
-{{sls}}.set.install-package-set-{{package_set_name}}-{{repo_name}}-{{suffix}}:
+{{sls}}.package.set.install-package-set-{{package_set_name}}-{{repo_name}}-{{suffix}}:
     pkg.{{'removed' if action == 'absent' else action}}:
         {%- if repo_name != 'any' %}
         - fromrepo: {{repo_name}}

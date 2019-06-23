@@ -5,22 +5,26 @@
 {%-    set runlevel = pillar.runlevel %}
 {%-    if runlevel in [ 'multi-user', 'graphical' ] %}
 
-{#-        # This is disabled for multi-user runlevel at least until systemd bug is fixed, where it hangs in 'systemctl isolate multi-user' #}
-{%-        if runlevel not in ['multi-user'] %}
-
 .set-default:
     cmd.run:
         - name:   systemctl set-default '{{runlevel}}'            
         - unless: systemctl get-default | grep '{{runlevel}}'
 
+{%-         if runlevel in [ 'graphical' ] %}
+{#-             # if trying to switch to graphical runlevel, systemd needs to be #}
+{#-             # forced to reload multi-user target first #}
+{#-             # otherwise, it fails to start various services needed for desktop login #}
+.force-multi-user-first:
+    cmd.run:
+        - name:   systemd-bugfix-change-runlevel --force 3
+        - unless: systemctl list-units --type target | egrep '^{{runlevel}}(|[.]target)[[:space:]].*loaded.active[[:space:]]+active'
+{%-         endif %}
+
 .isolate:
     cmd.run:
-        - name:   systemctl isolate '{{runlevel}}'
-        - unless: systemctl list-units --type target | egrep '^{{runlevel}}(|[.]target)[[:space:]].*loaded.active'
+        - name:   systemd-bugfix-change-runlevel --force '{{runlevel}}'
+        - unless: systemctl list-units --type target | egrep '^{{runlevel}}(|[.]target)[[:space:]].*loaded.active[[:space:]]+active'
 
-{%-         else %}
-{{ noop.notice('Switching to multi-user runlevel disabled due to systemd bug/hang.') }}
-{%-         endif %}
 {%-     else %}
 {{ noop.notice('Unrecognised runlevel '+runlevel) }}
 {%-     endif %}

@@ -5,27 +5,34 @@ deployments:
     gitlab_baremetal:
         gitlab:
             config:
-                hostname: gitlab.demo
+                hostname: gitlab.demo.com
+    ipa_master:
+        testenv-master:
+            config:
+                passwords:
+                    master: master123
+                    admin:  admin123
+                    ds:     random
 
 # Override DNS on the infra server
 dns:
     # if is_server is set, the server will have a customised dns configuration
-    server:      infra.demo
+    server:      infra.demo.com
     nameservers:
         dns1:    127.0.0.1
         dns2:    192.168.188.1   # The internet connected router
         dns3:    ''
     search:
-        search1: demo
+        search1: demo.com
         search2: ''
         search3: ''
 
 managed-hosts:
     testenv-master:
-        infra.demo:
+        infra.demo.com:
             ip:      192.168.121.101
             lan:     demo
-            aliases: ipa ipa.demo
+            aliases: ipa
             type:    dns
         pxe-client1:
             ip:       192.168.121.241
@@ -44,7 +51,7 @@ managed-hosts:
         wildcard:
             ip:       192.168.121.102
             type:     dns 
-            aliases:  nginx.demo nginx wildcard
+            aliases:  nginx.demo.com nginx wildcard
         nexus:
             ip:       192.168.121.103
             type:     dns 
@@ -52,35 +59,35 @@ managed-hosts:
         gitlab:
             ip:       192.168.121.104
             type:     dns 
-            aliases:   gitlab
-        mattermost.demo:
+            aliases:  gitlab
+        mattermost.demo.com:
             ip:       192.168.121.105
             type:     dns 
             aliases:  mattermost
-        pages.demo:
+        pages.demo.com:
             ip:       192.168.121.106 
             type:     dns
             aliases:  pages
-        gitlab-registry.demo:
+        gitlab-registry.demo.com:
             ip:       192.168.121.107 
             type:     dns
             aliases:  gitlab-registry
         grafana:
             ip:       192.168.121.108
             type:     dns 
-            aliases:  prometheus.demo grafana prometheus
+            aliases:  prometheus.demo.com grafana prometheus
         kibana:
             ip:       192.168.121.109
             type:     dns 
-            aliases:  elasticsearch.demo kibana elasticsearch
+            aliases:  elasticsearch.demo.com kibana elasticsearch
         master:
             ip:       192.168.121.110
             type:     dns 
-            aliases:  master.demo master k8s.demo k8s
+            aliases:  master.demo.com master k8s.demo.com k8s
         docs:
             ip:       192.168.121.111
             type:     dns 
-            aliases:  docs.usb-vm docs
+            aliases:  docs.demo.com docs
 
 network:
     devices:

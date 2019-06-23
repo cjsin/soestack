@@ -12,30 +12,37 @@ deployments:
     gitlab_baremetal:
         gitlab:
             config:
-                hostname: gitlab.qemu
+                hostname: gitlab.demo.qemu
                 # In my demo vm's I have very limited ram available, so need to set this down low
                 # The default is that it will use 1/4 of total RAM or so
                 postgres_ram: 128MB
+    ipa_master:
+        testenv-master:
+            config:
+                passwords:
+                    master: master123
+                    admin:  admin123
+                    ds:     random
 
 # Override DNS on the infra server
 dns:
     # if is_server is set, the server will have a customised dns configuration
-    server:      infra.qemu
+    server:      infra.demo.qemu
     nameservers:
         dns1:    127.0.0.1
         dns2:    192.168.121.1 # The VM host
         dns3:    ''
     search:
-        search1: qemu
+        search1: demo.qemu
         search2: ''
         search3: ''
         
 managed-hosts:
     testenv-master:
-        infra.qemu:
+        infra.demo.qemu:
             ip:      192.168.121.101
             lan:     qemu
-            aliases: ipa ipa.qemu
+            aliases: ipa
             type:    dns
         pxe-client1:
             ip:       192.168.121.241
@@ -54,24 +61,24 @@ managed-hosts:
         wildcard:
             ip:       192.168.121.102
             type:     dns 
-            aliases:  nginx.qemu nginx wildcard
+            aliases:  nginx.demo.qemu nginx wildcard
         nexus:
             ip:       192.168.121.103
             type:     dns 
-            # aliases:  nexus
+            aliases:  nexus.demo.qemu
         gitlab:
             ip:       192.168.121.104
             type:     dns 
-            aliases:   gitlab
-        mattermost.qemu:
+            aliases:  gitlab.demo.qemu
+        mattermost.demo.qemu:
             ip:       192.168.121.105
             type:     dns 
             aliases:  mattermost
-        pages.qemu:
+        pages.demo.qemu:
             ip:       192.168.121.106 
             type:     dns
             aliases:  pages
-        gitlab-registry.qemu:
+        gitlab-registry.demo.qemu:
             ip:       192.168.121.107 
             type:     dns
             aliases:  gitlab-registry
@@ -82,15 +89,15 @@ managed-hosts:
         kibana:
             ip:       192.168.121.109
             type:     dns 
-            aliases:  elasticsearch.qemu kibana elasticsearch
+            aliases:  elasticsearch.demo.qemu kibana elasticsearch
         master:
             ip:       192.168.121.110
             type:     dns 
-            aliases:  master.qemu master k8s.qemu k8s
+            aliases:  master.demo.qemu master k8s.demo.qemu k8s
         docs:
             ip:       192.168.121.111
             type:     dns 
-            aliases:  docs.usb-vm docs
+            aliases:  docs.demo.qemu docs
 
 network:
     devices:

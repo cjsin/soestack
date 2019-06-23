@@ -111,7 +111,7 @@
 {%-     endif %}
 
 {%-     if not gathered_names and not gathered_objects %}
-{{sls}}.groups.missing-parameters-for-install_package_groups-{{suffix}}:
+{{sls}}.package.groups.missing-parameters-for-install_package_groups-{{suffix}}:
     noop.error:
         - text: "Neither arg 'package_group_name(s)' or 'package_group(s)' was specified."
 {%-     endif %}
@@ -124,7 +124,7 @@
 {%-     for package_group_name in gathered_names %}
 
 {%-         if package_group_name not in ppg %}
-{{sls}}.groups.unrecognised-package-group-name-{{package_group_name}}-{{suffix}}:
+{{sls}}.package.groups.unrecognised-package-group-name-{{package_group_name}}-{{suffix}}:
     noop.error:
         - text: Specified package group name {{package_group_name}} was not defined in pillar.
 {%-         endif %}

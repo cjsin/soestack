@@ -12,13 +12,13 @@ cups:
 
 dns:
     # if is_server is set, the server will have a customised dns configuration
-    server:      infra.demo
+    server:      infra.demo.com
     nameservers:
         dns1:    192.168.121.101
         dns2:    192.168.188.1
         dns3:    ''
     search:
-        search1: demo
+        search1: demo.com
         search2: ''
         search3: ''
 
@@ -30,7 +30,7 @@ docker:
                 - 192.168.121.101 # infra server
                 - 192.168.188.1   # internet gateway in demo environment
             dns-search:
-                - qemu
+                - demo.com
 
 deployments:
     pxeboot_server:
@@ -46,8 +46,8 @@ deployments:
                         entries:
                             netinstall:
                                 ss_settings:
-                                    DOMAIN:            demo
-                                    SALT_MASTER:       infra.demo
+                                    DOMAIN:            demo.com
+                                    SALT_MASTER:       infra.demo.com
                                     GATEWAY:           192.168.121.101
                                     NAMESERVER:        192.168.121.101
                                     ROLES:             role-set:developer-workstation-node
@@ -64,15 +64,15 @@ deployments:
                         entries:
                             netinstall:
                                 ss_settings:
-                                    DOMAIN:            demo
+                                    DOMAIN:            demo.com
                                     ROLES:             basic-node
                                     NAMESERVER:        192.168.121.101
                                 ss_hosts:
                                     # NOTE the demo lan is associated with the ethernet device, 
                                     # this gateway is for that and what clients booted on that network will use
                                     192.168.121.1:     gateway
-                                    192.168.121.101:   infra.demo infra master salt ipa ldap nfs pxe
-                                    192.168.121.103:   nexus.demo nexus
+                                    192.168.121.101:   infra.demo.com infra master salt ipa ldap nfs pxe
+                                    192.168.121.103:   nexus.demo.com nexus
 
 
     ipa_client:
@@ -81,38 +81,38 @@ deployments:
             activated:   True
             activated_where: {{sls}}
             config:
-                server:  infra.demo
+                server:  infra.demo.com
                 realm:   DEMO
-                domain:  demo
-                site:    demo
+                domain:  demo.com
+                site:    testing
                 ldap:
-                    base-dn: dc=demo
+                    base-dn: dc=demo,dc=com
 
     ipa_master:
         testenv-master:
             config:
-                domain: demo
+                domain: demo.com
                 realm:  DEMO
-                fqdn:   infra.demo
-                site:   demo
+                fqdn:   infra.demo.com
                 install:
                     dns:
                         forwarders:
                             - 192.168.188.1 # modem / wifi
                 initial-setup:
-
-                    automount:
-                        locations:
-                            - demo
+                    global-config:
+                        defaultemaildomain:  demo.usb-vm
 
     managed_hosts:
         testenv-master:
             config:
-                domain: demo
+                domain: demo.com
 
         testenv-client:
             config:
-                domain: demo
+                domain: demo.com
+
+ipa:
+    base_dn:   dc=demo,dc=com
 
 managed-hosts:
     testenv-client:
@@ -120,7 +120,7 @@ managed-hosts:
             ip:       192.168.121.101
             mac:      '52:54:00:d5:19:d5'
             lan:      demo
-            aliases:  infra ipa.demo ipa salt.demo salt ldap.demo ldap
+            aliases:  infra ipa.demo.com ipa salt.demo.com salt ldap.demo.com ldap
             type:     client
             hostfile:
                 - '.*'
@@ -131,15 +131,15 @@ network:
     netmask: 255.255.255.0
     prefix:  24
     gateway: 192.168.188.1
-    system_domain: demo
+    system_domain: demo.com
 
     hostfile-additions:
         # For now use the nexus on my host box to avoid re-downloading anything
         192.168.121.1:   wired-gateway
-        192.168.188.1:   gateway.demo gateway modem
-        192.168.121.101: infra.demo infra ipa.demo ipa salt.demo salt ldap.demo ldap
-        192.168.121.103: nexus.demo nexus
-        10.0.2.15:       client.demo client
+        192.168.188.1:   gateway.demo.com gateway modem
+        192.168.121.101: infra.demo.com infra ipa.demo.com ipa salt.demo.com salt ldap.demo.com ldap
+        192.168.121.103: nexus.demo.com nexus
+        10.0.2.15:       client.demo.com client
 
     classes:
         gateway:
@@ -153,3 +153,8 @@ network:
                 DNS1: 127.0.0.1
                 DNS2: 192.168.188.1
                 DNS3: ''
+
+ssh:
+    authorized_keys:
+        root:
+            root@infra.demo.com: unset

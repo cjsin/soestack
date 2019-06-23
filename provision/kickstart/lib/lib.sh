@@ -49,42 +49,69 @@ function switch_to_logfile()
 
 function check_ipa_host()
 {
-    local host="$(hostname -f)"
+    set -vx
+    local host_domain="$(hostname -f)"
+    local host="$(hostname -s)"
     local search=""
 
-    if ! [[ "${host}" =~ [.] ]]
+    if ! [[ "${host_domain}" =~ [.] ]]
     then
         if [[ -n "${DOMAIN}" ]]
         then
-            host="${host}.${DOMAIN}"
+            host_domain="${host_domain}.${DOMAIN}"
         else
             search="+search"
         fi
     fi
 
-    if command -v dig > /dev/null 2>/dev/null
-    then
-        local arecord=$(dig ${search} A "${host}" | grep -A1 ANSWER.SECTION:)
-        local sshfp_record=$(dig ${search} SSHFP "${host}" | grep -A1 ANSWER.SECTION:)
+    local arecord
+    local sshfp_record
 
-        if [[ -n "${arecord}" ]]
+    local -a server=""
+
+    if ! egrep -q '^nameserver[[:space:]]+([0-9]+[.]){3}[0-9]' /etc/resolv.conf
+    then
+        # No nameserver is configured in /etc/resolv.conf
+        [[ -n "${NAME_SERVER}" ]] && server="${NAME_SERVER}"
+    fi
+
+    local h
+
+    # Try doing lookup with domain first, otherwise use the short name.
+    # It seems the nsookup in the install ISO fails when using domain names
+    for h in "${host_domain}" "${host}"
+    do
+        if command -v dig > /dev/null 2>/dev/null
         then
-            if [[ -n "${sshfp_record}" ]]
-            then
-                spam notice "The host was already enrolled and needs to be re-enrolled prior to rebuilding!"
-                spam notice "Please use host-rm/host-add to re-enrol it."
-                return 1
-            else
-                spam notice "The host appears to be enrolled ready to (re)build."
-                return 0
-            fi
+            arecord=$(dig ${search} A "${host}" ${server:+@}${server} | grep -A1 ANSWER.SECTION:)
+            sshfp_record=$(dig ${search} SSHFP "${host}" ${server:+@}${server} | grep -A1 ANSWER.SECTION:)
+
+        elif command -v nslookup > /dev/null 2>/dev/null 
+        then 
+            arecord=$(nslookup -query=A "${host}" ${server} | egrep -A1 Name: | egrep ^Address:)
+            sshfp_record=$(nslookup -query=SSHFP "${host}" ${server} | grep rdata)
         else
-            spam notice "The host does not seem to be recognised!"
+            spam notice "The required tools are not available for checking host enrolment."
+            return 0
+        fi
+        [[ -n "${arecord}" ]] && break
+    done
+
+    set +vx
+    if [[ -n "${arecord}" ]]
+    then
+        if [[ -n "${sshfp_record}" ]]
+        then
+            spam notice "The host '${host}' was already enrolled and needs to be re-enrolled prior to rebuilding!"
+            spam notice "Please use 'host-add --re-register' to re-enrol it."
             return 1
+        else
+            spam notice "The host appears to be enrolled ready to (re)build."
+            return 0
         fi
     else
-        spam notice "The required tools are not available for checking host enrolment."
-        return 0
+        spam notice "The host '${host}' does not seem to be recognised!"
+        return 1
     fi
 }
 

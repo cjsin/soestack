@@ -2,6 +2,7 @@ _loaded:
     {{sls}}:
 
 include:
+    - demo.deployments.dovecot-server
     - demo.deployments.gitlab-runner
     - demo.deployments.gitlab
     - demo.deployments.grafana

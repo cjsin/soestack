@@ -24,6 +24,11 @@ cups:
             ip:        192.168.121.215
 
 deployments:
+    dovecot_server:
+        dovecot:
+            host:        infra
+            activated:   True
+            activated_where: {{sls}}
     elasticsearch_container:
         elasticsearch-testdev:
             host:        infra
@@ -109,7 +114,6 @@ docker:
 
 
 ipa:
-    base_dn:   dc=demo
     server_ip: 192.168.121.101
     bind_user: bind-user
 

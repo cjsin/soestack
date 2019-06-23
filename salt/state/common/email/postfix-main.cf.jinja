@@ -3,22 +3,23 @@ command_directory = /usr/sbin
 daemon_directory = /usr/libexec/postfix
 data_directory = /var/lib/postfix
 mail_owner = postfix
-inet_interfaces = all
-inet_protocols = ipv4
-mydomain = {{pillar.network.system_domain}}
-
+inet_interfaces = {{config.inet_interfaces if 'inet_interfaces' in config else 'localhost'}}
+inet_protocols = {{config.inet_protocols if 'inet_protocols' in config else 'all' }}
+mydomain = {{config.mydomain if 'mydomain' in config else 'localhost.localdomain' }}
+myorigin = {{config.myorigin if 'myorigin' in config else pillar.network.system_domain}}
 # NOTE that $mydomain is included here, so that any mail to our 
 # domain is delivered straight to the user mail spool (no server required).
 # If we change our subnet to actually have an email server ,then this mydomain
 # will only be included on the gateway.
-mydestination = $myhostname, $mydomain, localhost.$mydomain, localhost.localdomain, localhost
+mydestination = {{config.mydestination if 'mydestination' in config else '$myhostname, $mydomain, localhost.$mydomain, localhost.localdomain, localhost' }}
 mynetworks_style = subnet
 unknown_local_recipient_reject_code = 550
-default_transport = error: outside mail is not deliverable
+default_transport = {{config.default_transport if 'default_transport' in config else 'error: outside mail is not deliverable' }}
+local_transport = local:$myhostname
 alias_maps = hash:/etc/aliases
 alias_database = hash:/etc/aliases
 masquerade_domains = demo
-append_dot_mydomain = no
+append_dot_mydomain = {{'yes' if ('append_dot_mydomain' in config and config.append_dot_mydomain ) else 'no'}}
 
 debug_peer_level = 2
 debugger_command =
@@ -32,4 +33,15 @@ html_directory = no
 manpage_directory = /usr/share/man
 sample_directory = /usr/share/doc/postfix-2.10.1/samples
 readme_directory = /usr/share/doc/postfix-2.10.1/README_FILES
-#home_mailbox = Maildir/
+
+{%- if 'home_mailbox' in config and config.home_mailbox not in ['','unset']%}
+home_mailbox = {{config.home_mailbox}}Maildir/
+{%- else %}
+#home_mailbox =
+{%- endif %}
+{%- if 'relayhost' in config and config.relayhost not in ['','unset'] %}
+relayhost = {{config.relayhost}}
+{%- endif %}
+{%- if 'relay_domains' in config and config.relay_domains not in ['','unset'] %}
+relay_domains = {{config.relay_domains}}
+{%- endif %}

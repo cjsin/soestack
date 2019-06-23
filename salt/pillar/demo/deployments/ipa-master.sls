@@ -36,7 +36,7 @@ deployments:
                         homesrootdir:        /home
                         defaultloginshell:   /bin/bash
                         defaultprimarygroup: ipausers
-                        defaultemaildomain:  localhost.localdomain
+                        defaultemaildomain:  demo.com
                         usersearchfields:    uid,givenname,sn,telephonenumber,ou,title
                         migrationenabled:    FALSE
                         pwdexpadvnotify:     4

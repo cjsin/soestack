@@ -5,27 +5,34 @@ deployments:
     gitlab_baremetal:
         gitlab:
             config:
-                hostname: gitlab.usb-phy
+                hostname: gitlab.demo.usb-phy
+    ipa_master:
+        testenv-master:
+            config:
+                passwords:
+                    master: master123
+                    admin:  admin123
+                    ds:     random
 
 # Override DNS on the infra server
 dns:
     # if is_server is set, the server will have a customised dns configuration
-    server:      infra.usb-phy
+    server:      infra.demo.usb-phy
     nameservers:
         dns1:    127.0.0.1
         dns2:    192.168.0.1 # The wifi/modem
         dns3:    ''
     search:
-        search1: usb-phy
+        search1: demo.usb-phy
         search2: ''
         search3: ''
         
 managed-hosts:
     testenv-master:
-        infra.usb-phy:
+        infra.demo.usb-phy:
             ip:      192.168.121.101
             lan:     usb-phy
-            aliases: ipa ipa.usb-phy
+            aliases: ipa
             type:    dns
         pxe-client1:
             ip:       192.168.121.241
@@ -44,7 +51,7 @@ managed-hosts:
         wildcard:
             ip:       192.168.121.102
             type:     dns 
-            aliases:  nginx.usb-phy nginx wildcard
+            aliases:  nginx.demo.usb-phy nginx wildcard
         nexus:
             ip:       192.168.121.103
             type:     dns 
@@ -52,35 +59,35 @@ managed-hosts:
         gitlab:
             ip:       192.168.121.104
             type:     dns 
-            aliases:   gitlab
-        mattermost.usb-phy:
+            aliases:  gitlab.demo.usb-phy gitlab
+        mattermost.demo.usb-phy:
             ip:       192.168.121.105
             type:     dns 
             aliases:  mattermost
-        pages.usb-phy:
+        pages.demo.usb-phy:
             ip:       192.168.121.106 
             type:     dns
             aliases:  pages
-        gitlab-registry.usb-phy:
+        gitlab-registry.demo.usb-phy:
             ip:       192.168.121.107 
             type:     dns
             aliases:  gitlab-registry
         grafana:
             ip:       192.168.121.108
             type:     dns 
-            aliases:  prometheus.usb-phy grafana prometheus
+            aliases:  prometheus.demo.usb-phy grafana prometheus
         kibana:
             ip:       192.168.121.109
             type:     dns 
-            aliases:  elasticsearch.usb-phy kibana elasticsearch
+            aliases:  elasticsearch.demo.usb-phy kibana elasticsearch
         master:
             ip:       192.168.121.110
             type:     dns 
-            aliases:  master.usb-phy master k8s.usb-phy k8s
+            aliases:  master.demo.usb-phy master k8s.demo.usb-phy k8s
         docs:
             ip:       192.168.121.111
             type:     dns 
-            aliases:  docs.usb-vm docs
+            aliases:  docs.demo.usb-phy docs
 
 network:
     devices:
