@@ -4,7 +4,7 @@ include:
     - .mutt
     - .postfix
     - .clients
-    - .apline
+    - .alpine
     - .mailrc
     # no nmh available without working epel repos (disabled till nexus bugfix)
     # - .mh
