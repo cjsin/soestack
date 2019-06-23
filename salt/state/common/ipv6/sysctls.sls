@@ -17,7 +17,7 @@
     cmd.wait:
         - name: sysctl --system
         - onchanges:
-            - file: common.ipv6::sysctls
+            - file: {{sls}}::sysctls
 
 {%-     endif %}
 {%- endif %}
