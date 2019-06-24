@@ -9,6 +9,16 @@
 #        - unless: grep "home_mailbox = Maildir/" /etc/postfix/main.cf
 
 {%- if 'postfix' in pillar and pillar.postfix is mapping and 'config' in pillar.postfix %}
+{%-     set postfix  = pillar.postfix %}
+{%-     set configs  = postfix.config %}
+{%-     set mode     = postfix.mode if 'mode' in postfix else 'client' %}
+{%-     set defaults = configs.defaults if 'defaults' in configs else {'enabled': True } %}
+{%-     set selected = configs[mode] if mode in configs else {} %}
+
+{%-     set config     = {} %}
+{%-     do config.update(defaults) %}
+{%-     do config.update(selected) %}
+{%-     set enabled = config['enabled'] %}
 
 .postconf:
     file.managed: 
@@ -19,14 +29,14 @@
         - template: jinja
         - source: salt://{{slspath}}/postfix-main.cf.jinja
         - context:
-            config: {{pillar.postfix.config|json}}
+            config: {{config|json}}
 
 # May need to uninstall esmtp or ssmtp
 
 .service:
-    service.running:
+    service.{{'running' if enabled else 'dead'}}:
         - name:   postfix
-        - enable: True
+        - enable: {{enabled}}
         - watch:
             - file: {{sls}}::postconf
 

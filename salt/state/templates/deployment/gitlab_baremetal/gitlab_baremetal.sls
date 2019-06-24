@@ -46,7 +46,7 @@
 
 {{sls}}.gitlab-baremetal-configured:
     cmd.run:
-        - name:     gitlab-ctl reconfigure
+        - name:     gitlab-ctl reconfigure >> /var/log/gitlab-reconfigure.log 2>&1
         - onlyif:   test -f /usr/bin/gitlab-ctl
         - onchanges:
             - file: {{sls}}.gitlab-baremetal-config-file

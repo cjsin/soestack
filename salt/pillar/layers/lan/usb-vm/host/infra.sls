@@ -119,14 +119,7 @@ network:
                 - infra-dns
 
 postfix:
-    config:
-        inet_interfaces:  192.168.121.101
-        mydomain:         demo.com
-        myorigin:         demo.com
-        mydestination:    $myhostname, $mydomain, localhost.$mydomain, localhost.localdomain, localhost
-        home_mailbox:     Maildir/
-        relayhost:        ''
-        relay_domains:    ''
+    mode: server
 
 layer-host-loaded: {{sls}}
 

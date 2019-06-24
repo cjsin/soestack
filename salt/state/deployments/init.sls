@@ -15,6 +15,10 @@ include:
     # but is updated by this deployment
     - .nexus_container
 
+    # dovecot is deployed before ipa master so that /etc/skel has a Maildir prior
+    # to preconfigured user account homedir creation
+    - .dovecot_server
+
     - .ipa.master
     - .ipa.client
 
@@ -26,7 +30,7 @@ include:
     - .pxeboot_server
 
     ## Temporarily disabling these deployments for easier debugging
-    {%- if False %}
+    {%- if True %}
     ## of initial USB install
     # Monitoring metrics
     - .node_exporter_baremetal
@@ -39,7 +43,7 @@ include:
     # - .nginx
 
     # Git repos
-    ##- .gitlab_baremetal
+    - .gitlab_baremetal
     {%- endif %}
 
     # Logging server

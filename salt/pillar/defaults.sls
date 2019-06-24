@@ -42,3 +42,4 @@ include:
     - defaults.sudoers
     - defaults.svd
     - defaults.timezone
+    - defaults.thunderbird

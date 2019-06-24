@@ -91,7 +91,7 @@ deployments:
                 realm:   DEMO
                 domain:  demo.com
                 ldap:
-                    base-dn: dc=demo,dc=com
+                    base-dn: dc=demo
 
     ipa_master:
         testenv-master:
@@ -130,7 +130,8 @@ dns:
         search3: ''
 
 ipa:
-    base_dn:   dc=demo,dc=com
+    # NOTE: IPA uses the REALM to generate the base dn, dc=xxx, not the dns domain
+    base_dn:   dc=demo
 
 ipa-configuration:
     dns:
@@ -181,18 +182,30 @@ node_maps:
         roles: 'role-set:login-processor-node'
 
 postfix:
+    mode: client
     config:
-        append_dot_mydomain: no
-        inet_protocols:     ipv4
-        myorigin:           demo.com
-        home_mailbox:       ''
-        mydomain:           localhost.localdomain
-        mydestination:      localhost.$mydomain, localhost.localdomain, localhost
-        relayhost:          '[infra.demo.com]:25'
-        relay_domains:      demo.com
-        default_transport:  smtp
+        defaults:
+            enabled:             True
+            append_dot_mydomain: no
+            inet_protocols:      ipv4
+            myorigin:            demo.com
+            home_mailbox:        ''
+            mydomain:            localhost.localdomain
+            mydestination:       localhost.$mydomain, localhost.localdomain, localhost
+        server:
+            inet_interfaces:     192.168.121.101
+            mydomain:            demo.com
+            myorigin:            demo.com
+            mydestination:       $myhostname, $mydomain, localhost.$mydomain, localhost.localdomain, localhost
+            home_mailbox:        Maildir/
+            relayhost:           ''
+            relay_domains:       ''
+        client: 
+            relayhost:           '[infra.demo.com]:25'
+            relay_domains:       demo.com
+            default_transport:   smtp
 
 ssh:
     authorized_keys:
         root:
-            root@infra.demo.com: ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDAHwPMVvnL0JEUjfw5dUOGTfWaec5g7qZj1pm8I0m/aZGZs/a4paD08BwzOLjc7NBF0mveYNRIdWNX9AhdbTG/d6uelNOhQ9Tmc6TwV/NVFKNntfZ3mzpy3tGKyIa+UGWttkng07eMwx1ZJFlebmYolIdZbVDo5oQhjnv/3b9gQz22t8JZibWw1YlfDYBvF2xNZ2MuJvTSSUP5lyps6CNgTiTLV0bRCeiOlRqRv1H7EUrR16vVY42DUHg4RvmuqFhwxIHFMtQcOgQ9J/MOGUlaUb8C94bytwZMpyFwdDp7dqtMII3MqsuoLbTrDH2Qsd7ZOd1zC8W4fR3aqbBMh8wD
+            root@infra.demo.com: unset

@@ -35,7 +35,7 @@
 {%- set scripts = { 
     '.sh'                 : [ 'lib-ipa' ], 
     '-' ~ deployment_name : [ 'salt-ipa-ticket', 'deploy-ipa-server', 'ipa-postinstall' ],
-    ''                    : [ 'host-add', 'host-rm', 'update-hosts', 'reset-user-passwd' ]
+    ''                    : [ 'host-add', 'host-rm', 'user-create', 'update-hosts', 'reset-user-passwd' ]
     } %}
 {%- for script_suffix, script_names in scripts.iteritems() %}
 {%-     for script_prefix in script_names %}

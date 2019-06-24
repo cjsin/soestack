@@ -1,6 +1,8 @@
 #!/bin/bash
 {%- if 'initial-setup' in config %}
 
+. /usr/local/sbin/lib-ipa.sh 
+
 {%- set init       = config['initial-setup'] %}
 {%- set accounts   = init.accounts         if 'accounts'      in init     and init.accounts         else {} %}
 {%- set groups     = accounts.groups       if 'groups'        in accounts and accounts.groups       else {} %}
@@ -8,6 +10,7 @@
 {%- set pwpolicy   = init.pwpolicy         if 'pwpolicy'      in init     and init.pwpolicy         else {} %}
 {%- set automount  = init.automount        if 'automount'     in init     and init.automount        else {} %}
 {%- set globalconf = init['global-config'] if 'global-config' in init     and init['global-config'] else {} %}
+{%- set emaildomain = globalconf.defaultemaildomain if 'defaultemaildomain' in globalconf else  pillar.network.system_domain %}
 
 function quiet()
 {
@@ -109,64 +112,12 @@ function create_groups()
     {%- endif %}
 }
 
-function set_password()
-{
-    local u="${1}"
-    local p2="${2}"
-    local save_it="${3}"
-    local p1=$(mktemp -u XXXXXXXXXXXXXXXXX)
-    [[ -n "${p2}" ]] || p2=$(mktemp -u XXXXXXXXXXXXXXXXX)
-    
-    local lf=$'\n'
-    ipa passwd "${u}" <<< "${p1}${lf}${p1}${lf}"
-    su -c "passwd" "${u}" <<< "${p1}${lf}${p2}${lf}${p2}${lf}"
-
-    local result=$?
-
-    if [[ "${save_it}" == "save" ]]
-    then
-        mkdir -p /root/.bind-users
-        chmod ug-rwx /root/.bind-users
-        local savefile="/root/.bind-users/${u}.txt"
-        if (( result ))
-        then
-            p2="${p2} (failed)"
-        fi
-        # NOTE the construct cat > f <<< var   is used to protect the contents of the string from the commandline
-        cat > "${savefile}" <<< "${p2}"
-        chmod go-rwx "${savefile}"
-    fi
-}
-
-function create_user()
-{
-    local u="${1}"
-    local email="${2}"
-    local first_name="${3}"
-    local last_name="${4}"
-    local save_it="${5}"
-
-    if ! quiet ipa user-find --login="${u}"
-    then
-        msg "Creating user ${u}"
-        if verbose ipa user-add "${u}" --email="${email}" --first="${first_name}" --last="${last_name}"
-        then
-            msg "Setting password for user ${u}"
-            set_password "${u}" "" "${save_it}"
-        else
-            err "Failed adding user ${u}"
-        fi
-    else 
-        msg "User ${u} already exists"
-    fi
-}
-
 function setup_user_accounts()
 {
     {%- if users %}
     {%-     for user_name, user in users.iteritems() %}
     {%-         if user_name not in ['admin'] %}
-    {%-             set email   = user.email         if 'email'      in user and user.email         else '' %}
+    {%-             set email   = user.email         if 'email'      in user and user.email         else user_name ~ '@' ~ emaildomain %}
     {%-             set first   = user['first-name'] if 'first-name' in user and user['first-name'] else '' %}
     {%-             set surname = user.surname       if 'surname'    in user and user.surname       else '' %}
     {%-             set save_it = 'save' if 'groups' in user and user.groups and 'bind-users' in user.groups else 'nosave' %}
@@ -174,11 +125,6 @@ function setup_user_accounts()
     {%-         endif %}
     {%-     endfor %}
     {%- endif %}
-}
-
-function check_group_member()
-{
-    ipa group-show "${1}" 2> /dev/null | egrep -q "[:,] ${2}(,|\$)"
 }
 
 function add_group_members()

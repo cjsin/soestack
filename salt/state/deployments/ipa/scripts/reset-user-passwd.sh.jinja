@@ -16,7 +16,7 @@ function usage()
     echo ""
     echo "  -u,--user <username>       Specify the user name."
     echo "  --no-email                 Don't send the password via email."
-    echo "  --email                    Send the password via email."
+    echo "  --email|--send             Send the password via email."
 }
 
 function process_argv()
@@ -40,7 +40,7 @@ function process_argv()
             -n|--no-email|-no-email)
                 send_email=0
                 ;;
-            -e|--email|-email)
+            -e|--email|-email|--send|-send)
                 send_email=1
                 ;;
             [a-z][-_a-z0-9]*)
@@ -60,7 +60,7 @@ function process_argv()
 function main()
 {
     process_argv "${@}"
-    reset_user_password "${username}" 
+    reset_user_password "${username}" ${send_email}
 }
 
 main "${@}"

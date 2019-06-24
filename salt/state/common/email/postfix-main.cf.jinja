@@ -35,7 +35,7 @@ sample_directory = /usr/share/doc/postfix-2.10.1/samples
 readme_directory = /usr/share/doc/postfix-2.10.1/README_FILES
 
 {%- if 'home_mailbox' in config and config.home_mailbox not in ['','unset']%}
-home_mailbox = {{config.home_mailbox}}Maildir/
+home_mailbox = {{config.home_mailbox}}
 {%- else %}
 #home_mailbox =
 {%- endif %}

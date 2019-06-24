@@ -40,7 +40,6 @@ deployments:
                 storage: /d/local/node_exporter
                 textfile_directory: /d/local/node_exporter/textfile_collector 
                 options:
-
                     - --collector.textfile.directory /d/local/node_exporter/textfile_collector 
                     - --collector.filesystem.ignored-mount-points=^(/sys$|/proc$|/dev$|/var/lib/docker/.*|/run.*|/sys/fs/.*) 
                     - --collector.filesystem.ignored-fs-types=^(sysfs|procfs|autofs|overlay|nsfs|securityfs|pstore)$ 

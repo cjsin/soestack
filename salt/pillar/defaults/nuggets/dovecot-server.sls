@@ -38,7 +38,14 @@ nuggets:
                     mail_location = {{config.mail_location}}
                 {%- endraw %}
 
+            dirs:
+                /etc/skel/Maildir:
+                /etc/skel/Maildir/new:
+                /etc/skel/Maildir/cur:
+                /etc/skel/Maildir/tmp:
+
             files:
+
                 /etc/dovecot/conf.d/99-soestack.conf:
                     config_pillar:   :config
                     template:        dovecot-mail-conf

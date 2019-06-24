@@ -102,7 +102,7 @@ deployments:
                 realm:   DEMO
                 domain:  demo.com
                 ldap:
-                    base-dn: dc=demo,dc=com
+                    base-dn: dc=demo
 
     ipa_master:
         testenv-master:
@@ -141,7 +141,8 @@ dns:
         search3: ''
 
 ipa:
-    base_dn:   dc=demo,dc=com
+    # NOTE: IPA uses the REALM to generate the base dn, dc=xxx, not the dns domain
+    base_dn:   dc=demo
 
 ipa-configuration:
     dns:

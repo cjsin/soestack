@@ -37,8 +37,6 @@
 include:
     - accounts.node_exporter
 
-{# A salt bug requires this comment here (without a comment, it appends an 'f' to the line above) #}
-
 {%-         if 'textfile_directory' in config and config.textfile_directory %}
 
 {{sls}}.node_exporter_baremetal.textfile-collector-dir:
@@ -47,10 +45,31 @@ include:
         - user:   root
         - group:  root
         - mode:   '0755'
+        - makedirs: True
 
 {%-         endif %}
 
 {%-     endif %}
+
+{{sls}}.node_exporter_baremetal.{{deployment_name}}-{{action}}.sysconfig:
+    file.managed:
+        - name:     /etc/sysconfig/node_exporter
+        - user:     root
+        - group:    root
+        - mode:     '0644'
+        - source:   salt://templates/deployment/node_exporter_baremetal/sysconfig.jinja
+        - template: jinja
+        - context:
+            config:  {{config|json}}
+
+{{sls}}.node_exporter_baremetal.{{deployment_name}}-{{action}}.service-unit:
+    file.managed:
+        - name:     /etc/systemd/system/node_exporter.service
+        - user:     root
+        - group:    root
+        - mode:     '0644'
+        - source:   salt://templates/deployment/node_exporter_baremetal/service.jinja
+
 
 {%-     if action in [ 'all', 'activate'] %}
  

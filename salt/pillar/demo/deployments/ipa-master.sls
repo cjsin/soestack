@@ -71,6 +71,9 @@ deployments:
                             grafana-editors:
                             dev-users:
 
+                        send-email: True
+                        default-groups:
+                            - dev-users
                         users:
                             admin:
                                 groups:

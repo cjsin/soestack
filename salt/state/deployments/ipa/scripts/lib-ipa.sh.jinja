@@ -338,16 +338,11 @@ function send_password_email()
     fi
     # TODO - support half/half passwords
     # TODO - support email template from pillar
-    local data="
-        From: root@$(hostname -f)
-        To:   ${emailaddr}
-        Subject: Password reset 
-
-        Your password has been reset to ${new_pw}.
-
-    "
+    local lf=$'\n'
+    local data="Your password has been reset to ${new_pw}.${lf}Please change it immediately.${lf}"
+    
     data=$(sed 's/^[[:space:]]*//' <<< "${data}")
-    if mail -s "Password reset" "${emailaddr}" <<< "${data}"
+    if mail -s "[SENSITIVE] Password reset" "${emailaddr}" <<< "${data}"
     then 
         msg "Sent."
         return 0
@@ -407,4 +402,63 @@ function reset_user_password()
     then
         msg "The user password was set to ${new_password}"
     fi
+}
+
+
+function create_user()
+{
+    local u="${1}"
+    local email="${2}"
+    local first_name="${3}"
+    local last_name="${4}"
+    local save_it="${5}"
+
+    if ! quiet ipa user-find --login="${u}"
+    then
+        msg "Creating user ${u}"
+        if verbose ipa user-add "${u}" --email="${email}" --first="${first_name}" --last="${last_name}"
+        then
+            msg "Setting password for user ${u}"
+            set_password "${u}" "" "${save_it}"
+        else
+            err "Failed adding user ${u}"
+        fi
+    else 
+        msg "User ${u} already exists"
+    fi
+}
+
+
+function set_password()
+{
+    local u="${1}"
+    local p2="${2}"
+    local save_it="${3}"
+    local p1=$(mktemp -u XXXXXXXXXXXXXXXXX)
+    [[ -n "${p2}" ]] || p2=$(mktemp -u XXXXXXXXXXXXXXXXX)
+    
+    local lf=$'\n'
+    ipa passwd "${u}" <<< "${p1}${lf}${p1}${lf}"
+    su -c "passwd" "${u}" <<< "${p1}${lf}${p2}${lf}${p2}${lf}"
+
+    local result=$?
+
+    if [[ "${save_it}" == "save" ]]
+    then
+        mkdir -p /root/.bind-users
+        chmod ug-rwx /root/.bind-users
+        local savefile="/root/.bind-users/${u}.txt"
+        if (( result ))
+        then
+            p2="${p2} (failed)"
+        fi
+        # NOTE the construct cat > f <<< var   is used to protect the contents of the string from the commandline
+        cat > "${savefile}" <<< "${p2}"
+        chmod go-rwx "${savefile}"
+    fi
+}
+
+function check_group_member()
+{
+    ipa group-show "${1}" 2> /dev/null | egrep -q "[:,] ${2}(,|\$)"
 }
