@@ -45,7 +45,9 @@ deployments:
                                     #    - 192.168.121.101,infra.demo.com,infra
                                     #    - 192.168.121.103,nexus.demo.com,nexus
                                     #    - 192.168.121.1,gateway.demo.com,gateway
+                                # NOTE: ss_repos entries are mapped to ss.ADD_REPO on the boot commandlin
                                 ss_repos: {}
+                                # NOTE: ss_hosts entries are mapped to ss.ADD_HOST on the boot commandlin
                                 ss_hosts:
                                     # NOTE the demo lan is associated with the ethernet device, 
                                     # this gateway is for that and what clients booted on that network will use
@@ -159,7 +161,6 @@ network:
     system_domain: demo.com
     
     hostfile-additions:
-        # For now use the nexus on my host box to avoid re-downloading anything
         192.168.121.1:   gateway.demo.com gateway
         
         192.168.121.101: infra.demo.com infra ipa.demo.com ipa salt.demo.com salt ldap.demo.com ldap
@@ -208,4 +209,7 @@ postfix:
 ssh:
     authorized_keys:
         root:
-            root@infra.demo.com: ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDAHwPMVvnL0JEUjfw5dUOGTfWaec5g7qZj1pm8I0m/aZGZs/a4paD08BwzOLjc7NBF0mveYNRIdWNX9AhdbTG/d6uelNOhQ9Tmc6TwV/NVFKNntfZ3mzpy3tGKyIa+UGWttkng07eMwx1ZJFlebmYolIdZbVDo5oQhjnv/3b9gQz22t8JZibWw1YlfDYBvF2xNZ2MuJvTSSUP5lyps6CNgTiTLV0bRCeiOlRqRv1H7EUrR16vVY42DUHg4RvmuqFhwxIHFMtQcOgQ9J/MOGUlaUb8C94bytwZMpyFwdDp7dqtMII3MqsuoLbTrDH2Qsd7ZOd1zC8W4fR3aqbBMh8wD
+            # Change this after the server is built, 
+            # or alternatively set ssh:authorized_keys:root:root@infra.demo.com 
+            # in your salt/pillar/layers/private/<your-private-layer-name>/private.sls
+            root@infra.demo.com: unset
