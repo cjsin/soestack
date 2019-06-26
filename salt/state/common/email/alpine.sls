@@ -2,6 +2,7 @@
 
 .installed:
     pkg.installed:
+        - fromrepo: epel
         - pkgs:
             - alpine
 

@@ -13,5 +13,8 @@
             done
             
             #mv -f bootstrap*repo disable/
-            mv -f /etc/yum.repos.d/CentOS-{Base,Sources,Debuginfo,Vault}.repo disable/
+            for f in /etc/yum.repos.d/CentOS-{Base,Sources,Debuginfo,Vault}.repo 
+            do 
+                [[ -f "${f}" ]] && mv -f "${f}" disable/
+            done
         - onlyif: ls /etc/yum.repos.d | egrep -i '^bootstrap.*[.]repo$|CentOS-(Base|Sources|Debuginfo|Vault)[.]repo$'
