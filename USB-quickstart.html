@@ -297,7 +297,7 @@ which will be stored within <code class="docutils literal notranslate"><span cla
 <span class="go">@@</span>
 <span class="go">@@ Good luck.</span>
 <span class="go">* BUILDER ./build-boot-image.py</span>
-<span class="go">* ISO ../../bundled/iso/CentOS-7-x86_64-Everything-1810.iso</span>
+<span class="go">* ISO ../../bundled/iso/CentOS-7-x86_64-DVD-1810.iso</span>
 <span class="go">* LABEL SSBOOT</span>
 <span class="go">* VAR cmdline</span>
 <span class="go">* APPEND cmdline</span>
@@ -319,8 +319,8 @@ which will be stored within <code class="docutils literal notranslate"><span cla
 <span class="go">* APPEND cmdline ss.ROOT_PW=$1$NxR2J0fM$QS2U2lrQxpDAlb9JPWB2v/</span>
 <span class="go">* APPEND cmdline ss.STANDALONE=1</span>
 <span class="go">* APPEND cmdline ss.ADD_HOST=192.168.121.1,gateway</span>
-<span class="go">* APPEND cmdline ss.ADD_HOST=192.168.121.101,infra.demo,infra,master,salt,ipa</span>
-<span class="go">* APPEND cmdline ss.ADD_HOST=192.168.121.103,nexus.demo,nexus</span>
+<span class="go">* APPEND cmdline ss.ADD_HOST=192.168.121.101,infra.demo.com,infra,master,salt,ipa</span>
+<span class="go">* APPEND cmdline ss.ADD_HOST=192.168.121.103,nexus.demo.com,nexus</span>
 <span class="go">* APPEND cmdline ss.NAMESERVER=192.168.121.1</span>
 <span class="go">* APPEND cmdline ss.NETDEV=eth0</span>
 <span class="go">* APPEND cmdline ss.GATEWAY=192.168.121.1</span>
@@ -330,18 +330,18 @@ which will be stored within <code class="docutils literal notranslate"><span cla
 <span class="go">* APPEND cmdline ss.TIMEZONE=UTC</span>
 <span class="go">* APPEND cmdline ss.BUNDLED_SRC=/e/bundled</span>
 <span class="go">* APPEND cmdline ss.DEVELOPMENT=1 ss.INTERACTIVE=0 ss.WAIT=0 ss.INSPECT=0 ss.VERBOSE=1</span>
-<span class="go">* APPEND cmdline ss.DOMAIN=demo</span>
-<span class="go">* APPEND cmdline ss.LAYERS=soe:demo,site:demo,lan:qemu</span>
-<span class="go">* APPEND cmdline ss.NEXUS=nexus.demo:7081</span>
+<span class="go">* APPEND cmdline ss.DOMAIN=demo.com</span>
+<span class="go">* APPEND cmdline ss.LAYERS=soe:demo,site:testing,lan:qemu,private:example</span>
+<span class="go">* APPEND cmdline ss.NEXUS=nexus.demo.com:7081</span>
 <span class="go">* APPEND cmdline ss.ROLES=all-in-one-sde-server-node</span>
-<span class="go">* APPEND cmdline ss.SALT_MASTER=infra.demo</span>
+<span class="go">* APPEND cmdline ss.SALT_MASTER=infra.demo.com</span>
 <span class="go">* APPEND cmdline ss.SALT_TYPE=master</span>
 <span class="go">* APPEND cmdline ss.SKIP_CONFIRMATION=0</span>
-<span class="go">* APPEND cmdline ss.HOSTNAME=infra.demo</span>
+<span class="go">* APPEND cmdline ss.HOSTNAME=infra.demo.com</span>
 <span class="go">* APPEND cmdline rd.shell noquiet</span>
 <span class="go">127 actions of 127</span>
 <span class="go">./build-boot-image.py</span>
-<span class="go">    --iso ../../bundled/iso/CentOS-7-x86_64-Everything-1810.iso</span>
+<span class="go">    --iso ../../bundled/iso/CentOS-7-x86_64-DVD-1810.iso</span>
 <span class="go">    --img /dev/sdc</span>
 <span class="go">    --imgformat raw</span>
 <span class="go">    --verbose</span>
@@ -361,7 +361,7 @@ which will be stored within <code class="docutils literal notranslate"><span cla
 <span class="go">            Checking image file /dev/sdc against imgformat raw</span>
 <span class="go">        OK</span>
 <span class="go">        Determine partitioning</span>
-<span class="go">            Found USB/image partition /dev/sdb1</span>
+<span class="go">            Found (Guestfs) USB/image partition /dev/sdb1</span>
 <span class="go">        OK</span>
 <span class="go">        Mount</span>
 <span class="go">            Create mountpoint /usb</span>
@@ -386,7 +386,7 @@ which will be stored within <code class="docutils literal notranslate"><span cla
 <span class="go">    Update image filesystem label</span>
 <span class="go">    OK</span>
 <span class="go">OK</span>
-<span class="go">Spawning tar : [&#39;tar&#39;, &#39;cf&#39;, &#39;-&#39;, &#39;--checkpoint=1000&#39;, &#39;-C&#39;, &#39;../&#39;, &#39;.&#39;]</span>
+<span class="go">Spawning tar : [&#39;tar&#39;, &#39;cf&#39;, &#39;-&#39;, &#39;--checkpoint=10000&#39;, &#39;-C&#39;, &#39;../&#39;, &#39;.&#39;]</span>
 <span class="go">Waiting for tar process to finish</span>
 <span class="go">OK</span>
 <span class="go">Copying files from iso to ks.cfg - [&#39;../kickstart/kickstart.cfg&#39;]</span>

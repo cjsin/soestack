@@ -10,7 +10,7 @@ Nexus is a package mirror which can act as a pull-through cache.
 
 This document will not describe how to run and configure Nexus, but simply how it needs to be utilised within the demo SOE. 
 
-You'll need to configure a Sonatype ``Nexus`` instance with multiple ``repository`` instances, with properties as defined within ``salt/pillar/layers/demo.sls``.
+You'll need to configure a Sonatype ``Nexus`` instance with multiple ``repos`` instances, with properties as defined within ``salt/pillar/layers/soe/demo.sls``.
 
 To do that, configure Sonatype Nexus as per their documentation, then add instances of ``blobstore`` and ``repository``, using the types and remote URLs shown within ``salt/pillar/layers/demo.sls``.
 

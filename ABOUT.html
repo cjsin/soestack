@@ -78,17 +78,18 @@
 <li><p>in various places, you will then need to change <code class="docutils literal notranslate"><span class="pre">demo</span></code> to your new SOE name or layer name, for example:</p>
 <blockquote>
 <div><ul class="simple">
-<li><p>the variable <code class="docutils literal notranslate"><span class="pre">ss.LAYERS</span></code>, which is by default set to <code class="docutils literal notranslate"><span class="pre">soe:demo,site:demo,lan:demo</span></code></p></li>
+<li><p>the variable <code class="docutils literal notranslate"><span class="pre">ss.LAYERS</span></code>, which is by default set to <code class="docutils literal notranslate"><span class="pre">soe:demo,site:testing,lan:example</span></code></p></li>
 </ul>
 </div></blockquote>
 </li>
-<li><p>for example:</p>
+<li><p>for example to use a SOE name <code class="docutils literal notranslate"><span class="pre">example</span></code>, a site name <code class="docutils literal notranslate"><span class="pre">testsite</span></code>, a lan name <code class="docutils literal notranslate"><span class="pre">testlan</span></code>:</p>
 <blockquote>
 <div><ul class="simple">
-<li><p>copy <code class="docutils literal notranslate"><span class="pre">salt/pillar/demo</span></code> to <code class="docutils literal notranslate"><span class="pre">salt/pillar/example</span></code></p></li>
+<li><p>copy <code class="docutils literal notranslate"><span class="pre">salt/pillar/soe/demo</span></code> to <code class="docutils literal notranslate"><span class="pre">salt/pillar/soe/example</span></code></p></li>
 <li><p>copy <code class="docutils literal notranslate"><span class="pre">salt/pillar/layers/soe/demo.sls</span></code> to <code class="docutils literal notranslate"><span class="pre">salt/pillar/layers/soe/example.sls</span></code></p></li>
-<li><p>copy <code class="docutils literal notranslate"><span class="pre">salt/pillar/layers/lan/demo*</span></code> to <code class="docutils literal notranslate"><span class="pre">salt/pillar/layers/lan/testlan*</span></code></p></li>
-<li><p>copy <code class="docutils literal notranslate"><span class="pre">salt/pillar/layers/site/demo.sls</span></code> to <code class="docutils literal notranslate"><span class="pre">salt/pillar/layers/site/testsite.sls</span></code></p></li>
+<li><p>copy <code class="docutils literal notranslate"><span class="pre">salt/pillar/layers/site/testing.sls</span></code> to <code class="docutils literal notranslate"><span class="pre">salt/pillar/layers/site/testsite.sls</span></code></p></li>
+<li><p>copy <code class="docutils literal notranslate"><span class="pre">salt/pillar/layers/lan/example.sls</span></code> to <code class="docutils literal notranslate"><span class="pre">salt/pillar/layers/lan/testlan.sls</span></code></p></li>
+<li><p>copy <code class="docutils literal notranslate"><span class="pre">salt/pillar/layers/lan/example/*</span></code> to <code class="docutils literal notranslate"><span class="pre">salt/pillar/layers/lan/testlan/*</span></code></p></li>
 <li><p>change <code class="docutils literal notranslate"><span class="pre">ss.LAYERS</span></code> to <code class="docutils literal notranslate"><span class="pre">soe:example,site:testsite,lan:testlan</span></code></p></li>
 </ul>
 </div></blockquote>

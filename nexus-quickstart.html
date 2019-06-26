@@ -37,7 +37,7 @@
 <p>The Nexus repository is utilised within the SOE to avoid the same packages being downloaded again every time.</p>
 <p>Nexus is a package mirror which can act as a pull-through cache.</p>
 <p>This document will not describe how to run and configure Nexus, but simply how it needs to be utilised within the demo SOE.</p>
-<p>You’ll need to configure a Sonatype <code class="docutils literal notranslate"><span class="pre">Nexus</span></code> instance with multiple <code class="docutils literal notranslate"><span class="pre">repository</span></code> instances, with properties as defined within <code class="docutils literal notranslate"><span class="pre">salt/pillar/layers/demo.sls</span></code>.</p>
+<p>You’ll need to configure a Sonatype <code class="docutils literal notranslate"><span class="pre">Nexus</span></code> instance with multiple <code class="docutils literal notranslate"><span class="pre">repos</span></code> instances, with properties as defined within <code class="docutils literal notranslate"><span class="pre">salt/pillar/layers/soe/demo.sls</span></code>.</p>
 <p>To do that, configure Sonatype Nexus as per their documentation, then add instances of <code class="docutils literal notranslate"><span class="pre">blobstore</span></code> and <code class="docutils literal notranslate"><span class="pre">repository</span></code>, using the types and remote URLs shown within <code class="docutils literal notranslate"><span class="pre">salt/pillar/layers/demo.sls</span></code>.</p>
 <p>After that is done, you can:</p>
 <blockquote>

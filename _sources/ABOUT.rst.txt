@@ -59,17 +59,19 @@ Before you can use the files for your own purposes you will need to:
 
     - in various places, you will then need to change ``demo`` to your new SOE name or layer name, for example:
 
-        + the variable ``ss.LAYERS``, which is by default set to ``soe:demo,site:demo,lan:demo``
+        + the variable ``ss.LAYERS``, which is by default set to ``soe:demo,site:testing,lan:example``
 
-    - for example:
+    - for example to use a SOE name ``example``, a site name ``testsite``, a lan name ``testlan``:
     
-        + copy ``salt/pillar/demo`` to ``salt/pillar/example``
+        + copy ``salt/pillar/soe/demo`` to ``salt/pillar/soe/example``
 
         + copy ``salt/pillar/layers/soe/demo.sls`` to ``salt/pillar/layers/soe/example.sls``
 
-        + copy ``salt/pillar/layers/lan/demo*`` to ``salt/pillar/layers/lan/testlan*``
+        + copy ``salt/pillar/layers/site/testing.sls`` to ``salt/pillar/layers/site/testsite.sls``
 
-        + copy ``salt/pillar/layers/site/demo.sls`` to ``salt/pillar/layers/site/testsite.sls``
+        + copy ``salt/pillar/layers/lan/example.sls`` to ``salt/pillar/layers/lan/testlan.sls``
+
+        + copy ``salt/pillar/layers/lan/example/*`` to ``salt/pillar/layers/lan/testlan/*``
 
         + change ``ss.LAYERS`` to ``soe:example,site:testsite,lan:testlan``
 
