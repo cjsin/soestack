@@ -17,6 +17,7 @@ deployments:
                 fqdn:   infra.default
                 reverse_zone: 121.168.192.in-addr.arpa.
                 site:   default
+                hosts:  managed-hosts:testenv-master
                 install:
                     dns:
                         enabled: True

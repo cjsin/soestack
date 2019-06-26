@@ -17,3 +17,7 @@ bash:
             enabled:       True
             template:      less.sh.jinja
             config_pillar: less
+
+        mail:
+            enabled: True
+            contents: export MAIL=$HOME/Maildir

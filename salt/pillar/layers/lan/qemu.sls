@@ -75,7 +75,7 @@ deployments:
                         append: test-host-override
                     pxe-client1:
                         ss_settings:
-                            ROLES: basic-node
+                            ROLES: auto
 
     grafana_container:
         grafana-cont:

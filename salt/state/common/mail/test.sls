@@ -3,5 +3,5 @@
 .send-test-email:
     cmd.run:
         - name: |
-            date | mail -s test root@localhost 
+            date | MAILRC=/etc/mail.rc mailx -n -s test root@localhost 
             

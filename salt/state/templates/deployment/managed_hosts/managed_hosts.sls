@@ -5,7 +5,7 @@
 {%- set dot_domain      = '.' ~ domain if domain else '' %}
 {%- set hosts_key       = config.hosts if 'hosts' in config and config.hosts else '' %}
 {%- set use_ipa         = config.ipa   if 'ipa'   in config and config.ipa else False %}
-{%- set hosts           = salt['pillar.get'](hosts_key,[]) %}
+{%- set hosts           = salt['pillar.get'](hosts_key,{}) %}
 {%- set state_tag       = deployment_type ~ '-' ~ deployment_name %}
 {%- set prefix          = state_tag ~ '-' %}
 {%- set action          = args.action if 'action' in args else 'all' %}

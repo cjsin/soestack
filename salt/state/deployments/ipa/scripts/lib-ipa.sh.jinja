@@ -339,9 +339,9 @@ function send_password_email()
     # TODO - support half/half passwords
     # TODO - support email template from pillar
     local lf=$'\n'
-    local data="Your password has been reset to ${new_pw}.${lf}Please change it immediately.${lf}"
+    local data="Your password has been reset to:${lf}${lf}${new_pw}${lf}${lf}Please change it immediately.${lf}"
     
-    data=$(sed 's/^[[:space:]]*//' <<< "${data}")
+    #data=$(sed 's/^[[:space:]]*//' <<< "${data}")
     if mail -s "[SENSITIVE] Password reset" "${emailaddr}" <<< "${data}"
     then 
         msg "Sent."

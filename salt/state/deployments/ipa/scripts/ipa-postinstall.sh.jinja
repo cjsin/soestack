@@ -3,6 +3,8 @@
 
 . /usr/local/sbin/lib-ipa.sh 
 
+help_regex='^(h$|help.*)'
+
 {%- set init       = config['initial-setup'] %}
 {%- set accounts   = init.accounts         if 'accounts'      in init     and init.accounts         else {} %}
 {%- set groups     = accounts.groups       if 'groups'        in accounts and accounts.groups       else {} %}
@@ -11,6 +13,8 @@
 {%- set automount  = init.automount        if 'automount'     in init     and init.automount        else {} %}
 {%- set globalconf = init['global-config'] if 'global-config' in init     and init['global-config'] else {} %}
 {%- set emaildomain = globalconf.defaultemaildomain if 'defaultemaildomain' in globalconf else  pillar.network.system_domain %}
+{%- set managed_hosts_key  = config['hosts'] if 'hosts' in config else '' %}
+{%- set hosts = salt['pillar.get'](managed_hosts_key,{}) if managed_hosts_key else {} %}
 
 function quiet()
 {
@@ -31,6 +35,15 @@ function msg()
 function err()
 {
     echo "ERROR: ${*}" 1>&2
+}
+
+function usage()
+{
+    local exitcode="${1:-1}"
+    msg "Usage: ${0##*/} [--help] [--users|--groups|--hosts|--policies|--globals|--automounts]... " 1
+    msg ""
+    msg "Perform post-installation configuration of IPA server."
+    exit ${exitcode}
 }
 
 function configure_policies()
@@ -161,6 +174,18 @@ function configure_automounts()
     {%- endfor %}
 }
 
+function register_hosts()
+{
+{%- if hosts %}
+{%-     for hostid, hostitem in hosts.iteritems() %}
+{%-        if 'type' in hostitem and hostitem['type'] in ['client'] %}
+{%-            set shortname = hostid.split('.')[0] %}
+    quiet ipa host-find "{{shortname}}" || verbose host-add "{{shortname}}"
+{%-        endif %}
+{%-     endfor %}
+{%- endif %}
+}
+
 function perform_kinit()
 {
     . /root/.ipa-passwords-testenv-master 
@@ -171,29 +196,53 @@ function perform_kinit()
 
 function main()
 {
+    local arg
+    local run_all=1
+    local -a sections=()
+    local valid_sections='^(globals|policies|groups|users|automounts|hosts)$'
+    for arg in "${@}"
+    do
+        # Delete up to two hyphens
+        [[ "${arg}" =~ ^- ]] && arg="${arg#-}"
+        [[ "${arg}" =~ ^- ]] && arg="${arg#-}"
+        if [[ "${arg}" =~ ${help_regex} ]]
+        then
+            usage 0
+        elif [[ "${arg}" =~ ${valid_sections} ]]
+        then 
+            sections+=("$arg")
+            run_all=0
+            eval "run_${arg}=1"
+        else
+            usage 1
+        fi
+    done
+
     perform_kinit || exit 1
 
     {%- if globalconf %}
-    verbose configure_globals 
+    (( run_all + run_globalconf )) && verbose configure_globals 
     {%- endif %}
 
     {%- if pwpolicy %}
-    verbose configure_policies
+    (( run_all + run_policies )) && verbose configure_policies
     {%- endif %}
 
     {%- if groups %}
-    verbose create_groups 
+    (( run_all + run_groups )) && verbose create_groups 
     {%- endif %}
 
     {%- if users %}
-    verbose setup_user_accounts
+    (( run_all + run_users )) && verbose setup_user_accounts
     {%- endif %}
 
     {%- if users and groups %}
-    verbose add_group_members
+    (( run_all + run_users + run_groups )) && verbose add_group_members
     {%- endif %}
 
-    configure_automounts
+    (( run_all + run_automounts )) && configure_automounts
+
+    (( run_all + run_hosts )) && verbose register_hosts
 
     echo "Finished."
 }
