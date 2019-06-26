@@ -49,7 +49,6 @@ function switch_to_logfile()
 
 function check_ipa_host()
 {
-    set -vx
     local host_domain="$(hostname -f)"
     local host="$(hostname -s)"
     local search=""
@@ -72,7 +71,7 @@ function check_ipa_host()
     if ! egrep -q '^nameserver[[:space:]]+([0-9]+[.]){3}[0-9]' /etc/resolv.conf
     then
         # No nameserver is configured in /etc/resolv.conf
-        [[ -n "${NAME_SERVER}" ]] && server="${NAME_SERVER}"
+        [[ -n "${NAMESERVER}" ]] && server="${NAMESERVER}"
     fi
 
     local h
@@ -97,7 +96,6 @@ function check_ipa_host()
         [[ -n "${arecord}" ]] && break
     done
 
-    set +vx
     if [[ -n "${arecord}" ]]
     then
         if [[ -n "${sshfp_record}" ]]

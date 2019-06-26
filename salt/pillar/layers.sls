@@ -43,7 +43,7 @@ grain_layers: {{grains.layers|json}}
 {%-         elif grains.layers is mapping %}
 {#-             # If the layer grain is a mapping, it is expected to be a dict specifying #}
 {#-             #   names for the following keys: soe,role,role,site,lan,host which will be processed in that order #}
-{%-             do selected_layers.extend(['soe', 'role', 'site', 'lan', 'host']) %}
+{%-             do selected_layers.extend(['soe', 'role', 'site', 'lan', 'host','private']) %}
 {%-         endif %}
 {%-     endif %}
 
@@ -75,7 +75,6 @@ include:
 
 layer-include:
     {%-         for layer in selected_layers %}
-    {%-            do attempted_loads.append(layer) %}
     - layers.{{layer}}
     {%-         endfor %}
     - layers.lan-host

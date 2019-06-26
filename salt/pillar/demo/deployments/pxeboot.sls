@@ -111,7 +111,7 @@ deployments:
                                     SALT_TYPE:         minion
                                     NAMESERVER:        192.168.121.101
                                     ROLES:             basic-node
-                                    LAYERS:            soe:demo,site:testing,lan:default
+                                    LAYERS:            soe:demo,site:testing,lan:default,private:example
                                     DEVELOPMENT:       0
                                     INTERACTIVE:       0
                                     WAIT:              0

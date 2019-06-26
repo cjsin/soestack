@@ -40,7 +40,7 @@ deployments:
                                     NAMESERVER:        192.168.121.101
                                     # auto ROLES will use data from node_maps
                                     ROLES:             auto
-                                    LAYERS:            soe:demo,site:testing,lan:usb-vm
+                                    LAYERS:            soe:demo,site:testing,lan:usb-vm,private:example
                                     #ADD_HOST:
                                     #    - 192.168.121.101,infra.demo.com,infra
                                     #    - 192.168.121.103,nexus.demo.com,nexus
@@ -174,7 +174,7 @@ network:
                 DNS1: 127.0.0.1
                 DNS2: 192.168.121.1
                 DNS3: ''
-                
+
 node_maps:
     pxe-client1:
         roles: 'role-set:developer-workstation-node'
@@ -208,4 +208,4 @@ postfix:
 ssh:
     authorized_keys:
         root:
-            root@infra.demo.com: unset
+            root@infra.demo.com: ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDAHwPMVvnL0JEUjfw5dUOGTfWaec5g7qZj1pm8I0m/aZGZs/a4paD08BwzOLjc7NBF0mveYNRIdWNX9AhdbTG/d6uelNOhQ9Tmc6TwV/NVFKNntfZ3mzpy3tGKyIa+UGWttkng07eMwx1ZJFlebmYolIdZbVDo5oQhjnv/3b9gQz22t8JZibWw1YlfDYBvF2xNZ2MuJvTSSUP5lyps6CNgTiTLV0bRCeiOlRqRv1H7EUrR16vVY42DUHg4RvmuqFhwxIHFMtQcOgQ9J/MOGUlaUb8C94bytwZMpyFwdDp7dqtMII3MqsuoLbTrDH2Qsd7ZOd1zC8W4fR3aqbBMh8wD

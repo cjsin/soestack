@@ -43,7 +43,7 @@ deployments:
                                     GATEWAY:           192.168.121.101
                                     NAMESERVER:        192.168.121.101
                                     ROLES:             role-set:developer-workstation-node
-                                    LAYERS:            soe:demo,site:testing,lan:qemu
+                                    LAYERS:            soe:demo,site:testing,lan:qemu,private:example
                                 kickstart: http://%http_server%/provision/kickstart/kickstart.cfg
                                 #stage2:    nfs:%nfs_server%:/e/pxe/os/minimal/
                     qemu:
@@ -59,7 +59,7 @@ deployments:
                         #         ss_settings:
                         #             DOMAIN:            demo.com
                         #             ROLES:             role-set:developer-workstation-node
-                        #             LAYERS:            soe:demo,site:testing,lan:qemu
+                        #             LAYERS:            soe:demo,site:testing,lan:qemu,private:example
                         #         ss_hosts:
                         #             # To nodes booting within the libvirt/qemu/vagrant test network the nexus server and gateway are 10.0.2.2
                         #             192.168.121.1:     gateway gateway.demo.com

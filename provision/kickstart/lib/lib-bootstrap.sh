@@ -107,6 +107,112 @@ function update_ssh_password()
     sed "s,%SSH_PW%,${directives}," < "${KS_INC}/ssh.cfg" > "${SS_GEN}/ssh.cfg"
 }
 
+function calculate_netmask()
+{
+    local prefix="${1:-24}"
+    local netmask=""
+    local bytes=$((prefix / 8))
+    case "${bytes}" in
+        2) netmask="255.255.X.0";;
+        1) netmask="255.X.0.0";;
+        0) netmask="X.0.0.0";;
+        *) netmask="255.255.255.X";;
+    esac 
+    local nibbles=$(( prefix - ( 8*bytes) ))
+    local nibble="0"
+    case "${nibbles}" in
+        0) nibble=0;;
+        1) nibble=128;;
+        2) nibble=192;;
+        3) nibble=224;;
+        4) nibble=240;;
+        5) nibble=248;;
+        6) nibble=252;;
+        7) nibble=254;;
+    esac
+    netmask="${netmask//X/${nibble}}"
+    echo "${netmask}"
+}
+
+function generate_kickstart_networkconfig()
+{
+    local -a options=(
+        --onboot yes
+        --device "${NETDEV:-eth0}" 
+        --mtu=1500 
+        --noipv6 
+    )
+
+    if [[ -n "${NAMESERVER}" ]]
+    then
+        local item
+        for item in ${NAMESERVER//,/ }
+        do
+            options+=("--nameserver=${item}")
+        done
+    fi
+
+    if [[ -z "${DOMAIN}" ]]
+    then
+        if [[ "${HOSTNAME}" =~ [.] ]]
+        then
+            DOMAIN="${HOSTNAME#*.}"
+        elif [[ "$(hostname -f)" =~ [.] ]]
+        then
+            local hostname_f=$(hostname -f)
+            DOMAIN="${hostname_f#*.}"
+        fi
+    fi
+
+    if [[ -z "${HOSTNAME}" ]] && ! [[ "$(hostname)" =~ localhost ]]
+    then
+        hostname "${hostname}"
+    fi
+
+    if [[ -n "${HOSTNAME}" ]]
+    then
+        if [[ "${HOSTNAME}" =~ [.] ]]
+        then 
+            options+=("--hostname=${HOSTNAME}")
+        elif [[ -n "${DOMAIN}" ]]
+        then 
+            options+=("--hostname=${HOSTNAME}.${DOMAIN}")
+        else
+            options+=("--hostname=${HOSTNAME}")
+        fi
+    fi
+
+    if [[ -z "${IPADDRS}" && -n "${IPADDR}" ]]
+    then
+        IPADDRS="${IPADDR}/${IPPREFIX}"
+    fi 
+
+    if [[ -n "${IPADDRS}" && "${IPADDRS}" != "dhcp" ]]
+    then
+        local item
+        for item in ${IPADDRS//,/ }
+        do
+            local ip="${item//\/*}"
+            local prefix="24"
+            [[ "${ip}" =~ / ]] && prefix="${ip##*/}"
+
+            local netmask=$(calculate_netmask "${prefix}")
+            # I think anaconda kickstart supports only one IP address...
+            # so, break out after the first one
+            options+=("--ip=${ip}" "--netmask=${netmask}")
+            use_dhcp=0
+            break
+        done
+    fi
+
+    if (( use_dhcp )) && ! is_standalone
+    then 
+        options+=("--bootproto" "dhcp")
+    fi
+
+    echo network "${options[@]}" > "${SS_GEN}/network.cfg"
+}
+
 function generate_partitioning()
 {
     local installation_src="${1}"

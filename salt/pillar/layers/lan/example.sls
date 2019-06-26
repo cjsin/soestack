@@ -51,7 +51,7 @@ deployments:
                                     GATEWAY:           192.168.121.101
                                     NAMESERVER:        192.168.121.101
                                     ROLES:             role-set:developer-workstation-node
-                                    LAYERS:            soe:demo,site:testing,lan:demo
+                                    LAYERS:            soe:demo,site:testing,lan:example,private:example
                                 kickstart: http://%http_server%/provision/kickstart/kickstart.cfg
                                 #stage2:    nfs:%nfs_server%:/e/pxe/os/minimal/
                     demo:

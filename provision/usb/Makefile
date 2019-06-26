@@ -14,7 +14,7 @@ INSPECT      = ./build-boot-image.py --img $(IMAGE) inspect
 CAT_SYSLINUX = --cat /usb/syslinux/syslinux.cfg
 KS_FILES     = $(shell find ../kickstart -type f)
 
-.PHONY: all help bundler-help full create bundle update provision nexus check soe isos menus conf quick htdocs
+.PHONY: all help bundler-help full create bundle update provision nexus check soe isos menus conf quick htdocs private
 
 all:
 	@echo "Running with the following settings:"
@@ -130,3 +130,8 @@ conf:
 #help:quick       : update the image in quick mode
 quick: $(KS_FILES)
 	$(BUNDLER) quick
+
+#help:private     : copy the private files (a directory of gitignored private local files)
+private:
+	$(BUNDLER) private
+

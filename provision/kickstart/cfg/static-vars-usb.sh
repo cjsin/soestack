@@ -15,10 +15,10 @@ repos=(
 # by the boot-time kernel commandline.
 SALT_TYPE=master
 SALT_MASTER=infra
-DOMAIN=demo
+DOMAIN=demo.com
 NAMESERVER=gateway
 ROLES=basic-node
-LAYERS=soe:soestack,site:testing,lan:demo
+LAYERS=soe:soestack,site:testing,lan:example,private:example
 DEVELOPMENT=0
 SELINUX=permissive
 TIMEZONE=UTC

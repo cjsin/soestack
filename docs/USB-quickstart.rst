@@ -298,8 +298,8 @@ Example output is shown below:
         * APPEND cmdline ss.ROOT_PW=$1$NxR2J0fM$QS2U2lrQxpDAlb9JPWB2v/
         * APPEND cmdline ss.STANDALONE=1
         * APPEND cmdline ss.ADD_HOST=192.168.121.1,gateway
-        * APPEND cmdline ss.ADD_HOST=192.168.121.101,infra.demo,infra,master,salt,ipa
-        * APPEND cmdline ss.ADD_HOST=192.168.121.103,nexus.demo,nexus
+        * APPEND cmdline ss.ADD_HOST=192.168.121.101,infra.demo.com,infra,master,salt,ipa
+        * APPEND cmdline ss.ADD_HOST=192.168.121.103,nexus.demo.com,nexus
         * APPEND cmdline ss.NAMESERVER=192.168.121.1
         * APPEND cmdline ss.NETDEV=eth0
         * APPEND cmdline ss.GATEWAY=192.168.121.1
@@ -309,14 +309,14 @@ Example output is shown below:
         * APPEND cmdline ss.TIMEZONE=UTC
         * APPEND cmdline ss.BUNDLED_SRC=/e/bundled
         * APPEND cmdline ss.DEVELOPMENT=1 ss.INTERACTIVE=0 ss.WAIT=0 ss.INSPECT=0 ss.VERBOSE=1
-        * APPEND cmdline ss.DOMAIN=demo
-        * APPEND cmdline ss.LAYERS=soe:demo,site:testing,lan:qemu
-        * APPEND cmdline ss.NEXUS=nexus.demo:7081
+        * APPEND cmdline ss.DOMAIN=demo.com
+        * APPEND cmdline ss.LAYERS=soe:demo,site:testing,lan:qemu,private:example
+        * APPEND cmdline ss.NEXUS=nexus.demo.com:7081
         * APPEND cmdline ss.ROLES=all-in-one-sde-server-node
-        * APPEND cmdline ss.SALT_MASTER=infra.demo
+        * APPEND cmdline ss.SALT_MASTER=infra.demo.com
         * APPEND cmdline ss.SALT_TYPE=master
         * APPEND cmdline ss.SKIP_CONFIRMATION=0
-        * APPEND cmdline ss.HOSTNAME=infra.demo
+        * APPEND cmdline ss.HOSTNAME=infra.demo.com
         * APPEND cmdline rd.shell noquiet
         127 actions of 127
         ./build-boot-image.py 

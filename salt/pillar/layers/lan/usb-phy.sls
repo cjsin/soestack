@@ -39,7 +39,7 @@ deployments:
                                     GATEWAY:           192.168.0.1
                                     NAMESERVER:        192.168.121.101
                                     ROLES:             role-set:developer-workstation-node
-                                    LAYERS:            soe:demo,site:testing,lan:usb-phy
+                                    LAYERS:            soe:demo,site:testing,lan:usb-phy,private:example
                                 kickstart: http://%http_server%/provision/kickstart/kickstart.cfg
                     usb-phy:
                         kernel:                os/minimal/images/pxeboot/vmlinuz

@@ -14,10 +14,10 @@ repos=(
 # by the boot-time kernel commandline.
 SALT_TYPE=minion
 SALT_MASTER=infra
-DOMAIN=demo
+DOMAIN=demo.com
 NAMESERVER=gateway
 ROLES=basic-node
-LAYERS=soe:soestack,site:testing,lan:demo
+LAYERS=soe:soestack,site:testing,lan:example,private:example
 DEVELOPMENT=0
 INSPECT=0
 WAIT=0

@@ -54,13 +54,13 @@ bind-dynamic
 # Ignore unknown hosts
 dhcp-ignore=tag:!known
 
-{%- set nameservers = [] %}
-{%- for key in pillar.dns.nameservers.keys()|sort %}
-{%-     set val = pillar.dns.nameservers[key] %}
-{%-     if val is defined and val != '' %}
-{%-         do nameservers.append(val) %}
-{%-     endif %}
-{%- endfor %}
+{#- NOTE: the shitty NetworkManager that is used within the CentOS / RedHat install #}
+{#- environment, completely ignores the DHCP name servers, search domains, etc anyway #}
+{#- so there may be nothing actually gained from setting these here during installation #}
+{#- BUT this does make it more convenient for allowing client nodes (workstations, processors) #}
+{#- to be left configured to use DHCP and still have good DNS settings #}
+
+{%- set nameservers = [pxe_server] %}
 {%- set search = [] %}
 {%- for key in pillar.dns.search.keys()|sort %}
 {%-     set val = pillar.dns.search[key] %}
