@@ -120,12 +120,16 @@ function copy_bundled_soe()
         if [[ -d /e/bundled/soe ]]
         then 
             msg "Copy bundled SOE to /e/soestack"
-            if rsync -av /e/bundled/soe/salt/ "${SS_DIR}/salt/"
-            then 
-                msg "OK."
-            else
-                msg "Failed copying SOE."
-            fi
+            local part
+            for part in salt htdocs
+            do 
+                if rsync -av "/e/bundled/soe/${part}/" "${SS_DIR}/${part}/"
+                then 
+                    msg "OK."
+                else
+                    msg "Failed copying SOE ${part}/"
+                fi
+            done
         else 
             notice "No SOE copy is available for pre-configuration"
         fi

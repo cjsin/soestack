@@ -213,6 +213,27 @@ function generate_kickstart_networkconfig()
     echo network "${options[@]}" > "${SS_GEN}/network.cfg"
 }
 
+# EXAMPLE of using a hostname scheme to determine 
+# the node role (and falling back to 'auto' which
+# will look up the role out of pillar data).
+# To use this, call this somewhere early in the bootstrap.
+#
+# function determine_role_from_hostname()
+# {
+#     local specifier="${HOSTNAME:6:1}"
+#     local role="auto"
+#     case "${specifier}" in 
+#         w) role="role-set:developer-workstation-node"
+#            ;;
+#         p) role="role-set:login-processor-node"
+#            ;;
+#         *) echo "Unknown node role!" 1>&2      
+#            ;;
+#     esac 
+#     export ROLES="${role}"
+# }
+
+
 function generate_partitioning()
 {
     local installation_src="${1}"

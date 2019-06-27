@@ -11,7 +11,7 @@ host=192.168.121.101
 datadir="/d/local/data/nexus"
 
 set -vx
-ssh-copy-id "root@${host}"
+ssh-copy-id -i ~/.ssh/id_rsa "root@${host}"
 
 ssh "root@${host}" "cd '${datadir}/backups' && tar cf - *.bak" > db-backup.tar
 tar tvf db-backup.tar
