@@ -10,7 +10,7 @@ fi
 
 name=$(basename "${rpmfile}")
 
-url="http://nexus:7081/repository/built-rpms/soestack/demo/${name}"
+url="{{pillar.nexus.urls['built-rpms']}}/soestack/demo/${name}"
 
 echo "File ${name} will be uploaded as ${url}"
 

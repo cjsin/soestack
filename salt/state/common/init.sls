@@ -25,7 +25,9 @@ include:
     #
     - .backups
     - .browser
+    #- .banners
     - .bash
+    #- .desktop
     - .docker
     - .email
     - .hosts
@@ -40,6 +42,7 @@ include:
     - .rubygems
     - .runlevel
     - .salt
+    #- .screensaver
     - .sudoers
     - .services
     - .sysctls

@@ -35,15 +35,9 @@
 
 {{noop.error('No action defined while processing nugget')}}
 
-{%-     elif action not in nugget or not nugget[action] %}
+{%-     else %}
 
-{%- if diagnostics %}
-{{noop.notice('No '~ action ~ ' data defined while processing nugget '~ nugget_name) }}
-{%- endif %}
-
-{%-     elif action in nugget and nugget[action] %}
-
-{%-         set data = nugget[action] %}
+{%-         set data = nugget[action] if ( action in nugget and nugget[action]) else {} %}
 
 {%-         if 'nuggets-required' in data %}
 {%-             with args = { 'nugget_name': nugget_name, 'nugget': nugget, 'action': action, 'required': data['nuggets-required'] } %}
@@ -57,15 +51,19 @@
 {%                      include('templates/support/packagesets.sls') with context %}
 {%-                 endwith %}
 {%-             endif %}
+{%-         endif %}
+
+{%-         if action == 'configure' %}
 {#-             at the end of the install stage (after packages installed), process the filesystem settings #}
 {#-             # process filesystem objects that are always updated #}
 {%-             if 'filesystem' in nugget and nugget.filesystem %}
 {%-                 with args = { 'parent': nugget.filesystem, 'pillar_location' : pillar_location } %}
 {%                      include('templates/support/filesystem.sls') with context %}
 {%-                 endwith %}
+{%-             elif diagnostics %}
+{{noop.notice('No filesystem data in this nugget')}}
 {%-             endif %}
 {%-         endif %}
-
 {%-         if action == 'activate' %}
 {%-             if 'services' in data or 'service-sets' in data %}
 {%-                 with args = { 'parent': data } %}

@@ -10,7 +10,7 @@
     pkg.installed:
         - name:      gitlab-ce
         - fromrepo:  gitlab-ce
-        - version:   {{pillar.svd.cots.gitlab.version}}
+        - version:   {{pillar.versions.cots.gitlab.version}}
         - allow_updates: True
 
 {{sls}}.gitlab-baremetal-copy-original-config:

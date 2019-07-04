@@ -126,6 +126,10 @@
 {%-             endif %}
 {%                  include('templates/nugget/'~action~'.sls') with context %}
 {%-             endwith %}
+{%-         elif diagnostics %}
+{{sls}}.{{deployment_name}}.{{action}}.base-nugget-type.{{base_nugget_type}}-{{action}}--no-nuggets-or-base-nugget-type-{{base_nugget_type}}-not-in-nuggets:
+    noop.notice
+
 {%-         endif %}
 
 {#-         # Install this deployment as a nugget itself #}

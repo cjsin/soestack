@@ -1,9 +1,9 @@
 #!stateconf yaml . jinja
 
-{%- if 'svd' in pillar and 'cots' in pillar.svd and 'drawio' in pillar.svd.cots %}
-{%-     set svd     = pillar.svd.cots.drawio %}
-{%-     set version = svd.version %}
-{%-     set hash    = svd.hash if 'hash' in svd and svd.hash else '' %}
+{%- if 'versions' in pillar and 'cots' in pillar.versions and 'drawio' in pillar.versions.cots %}
+{%-     set versions     = pillar.versions.cots.drawio %}
+{%-     set version = versions.version %}
+{%-     set hash    = versions.hash if 'hash' in versions and versions.hash else '' %}
 
 {%-     if 'github' in pillar.nexus.urls %}
 {%-         set baseurl = pillar.nexus.urls['github'] %}

@@ -1,6 +1,6 @@
 
-{%- if 'svd' in pillar and 'cots' in pillar.svd and 'elasticsearch' in pillar.svd.cots %}
-{%-     set version = pillar.svd.cots.elasticsearch.version %}
+{%- if 'versions' in pillar and 'cots' in pillar.versions and 'elasticsearch' in pillar.versions.cots %}
+{%-     set version = pillar.versions.cots.elasticsearch.version %}
 
 {{sls}}.requirements:
     pkg.installed:
@@ -10,7 +10,7 @@
 {{sls}}.elasticsearch-direct-download:
     pkg.installed:
         - sources: 
-            - elasticsearch: http://nexus:7081/repository/elasticsearch/downloads/elasticsearch/elasticsearch-{{version}}.rpm
-        - hash:   {{pillar.svd.cots.elasticsearch.hash}}
+            - elasticsearch: {{pillar.nexus.urls.elasticsearch}}/downloads/elasticsearch/elasticsearch-{{version}}.rpm
+        - hash:   {{pillar.versions.cots.elasticsearch.hash}}
 
 {%- endif %}

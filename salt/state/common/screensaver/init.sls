@@ -1,0 +1,4 @@
+include:
+    - .gnome
+    - .plasma
+    - .xfce

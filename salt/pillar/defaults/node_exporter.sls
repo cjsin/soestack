@@ -2,7 +2,7 @@ deployments:
     node_exporter_baremetal:
         node_exporter:
 
-            activated: True
+            activated:       True
             activated_where: {{sls}}
 
             activate:

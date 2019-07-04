@@ -13,8 +13,7 @@ build:
             configure_flags:   --prefix=/usr/local
             make_flags:        -j8 DESTDIR=${DESTDIR}
             install_flags:     install DESTDIR=${DESTDIR}
-            required_tools:    
-            required_packages:         
+            required_packages: []
             rpm_version:       1
             rpm_vendor:        soestack
             rpm_vendorsuffix:  .el7.soestack

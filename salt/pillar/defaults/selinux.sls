@@ -6,8 +6,8 @@ selinux:
     booleans:
         # Example of setting booleans (not yet implemented)
         samba_enable_home_dirs: True 
-        use_nfs_home_dirs: True
-        samba_share_nfs: True
+        use_nfs_home_dirs:      True
+        samba_share_nfs:        True
         
         # Some possibilities:
 

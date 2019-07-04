@@ -1,9 +1,5 @@
 base:
     '*':
-        #- test-load-sequence.b
-        #- test-load-sequence.c
-        #- test-load-sequence.a
-
         # Load soestack defaults
         - defaults
 

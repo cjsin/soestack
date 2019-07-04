@@ -1,9 +1,9 @@
 #!stateconf yaml . jinja
 
-{%- if 'svd' in pillar and 'cots' in pillar.svd and 'pencil' in pillar.svd.cots %}
-{%-     set svd       = pillar.svd.cots.pencil %}
-{%-     set version   = svd.version.split('-') %}
-{%-     set hash      = svd.hash if 'hash' in svd and svd.hash else '' %}
+{%- if 'versions' in pillar and 'cots' in pillar.versions and 'pencil' in pillar.versions.cots %}
+{%-     set versions  = pillar.versions.cots.pencil %}
+{%-     set version   = versions.version.split('-') %}
+{%-     set hash      = versions.hash if 'hash' in versions and versions.hash else '' %}
 {%-     if 'interwebs' in pillar.nexus.urls %}
 {%-         set baseurl = pillar.nexus.urls['interwebs'] %}
 

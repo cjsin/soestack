@@ -28,7 +28,7 @@ dhcp:
 
 network:
     ipv6:
-        # IPA needs ipv6 enabled
+        # IPA needs ipv6 enabled, but we can do it on the lo interface only
         mode: 'lo-only'
 
 

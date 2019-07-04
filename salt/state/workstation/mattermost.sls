@@ -1,6 +1,6 @@
-{%- if 'svd' in pillar and 'cots' in pillar.svd and 'mattermost' in pillar.svd.cots %}
-{%-     set version = pillar.svd.cots.mattermost.version %}
-{%-     set hash    = pillar.svd.cots.mattermost.hash %}
+{%- if 'versions' in pillar and 'cots' in pillar.versions and 'mattermost' in pillar.versions.cots %}
+{%-     set version = pillar.versions.cots.mattermost.version %}
+{%-     set hash    = pillar.versions.cots.mattermost.hash %}
 
 .install:
     archive.extracted:

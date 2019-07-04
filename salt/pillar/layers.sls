@@ -26,6 +26,7 @@ _loaded:
 
 {%- if 'layers' in grains %}
 
+{#- Show in pillar which layers were specified, for troubleshooting #}
 grain_layers: {{grains.layers|json}}
 
 {%- endif %}
@@ -47,6 +48,7 @@ grain_layers: {{grains.layers|json}}
 {%-         endif %}
 {%-     endif %}
 
+{#- Show in pillar which layers were selected, for troubleshooting #}
 selected_layers: {{selected_layers|json}}
 
 {%-     set attempted_loads = [] %}
@@ -73,6 +75,7 @@ include:
     {%-         endfor %}
     - layers.lan-host
 
+{#- Show in pillar which layers were included, for troubleshooting #}
 layer-include:
     {%-         for layer in selected_layers %}
     - layers.{{layer}}
@@ -82,6 +85,7 @@ layer-include:
 {%-         endif %}
 {%-     endif %}
 
+{#- Show in pillar which layers were attempted, for troubleshooting #}
 attempted_layers: {{attempted_loads|json}}
 
 {%- endif %}

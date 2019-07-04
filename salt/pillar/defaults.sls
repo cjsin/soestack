@@ -40,6 +40,6 @@ include:
     - defaults.service-sets
     - defaults.services
     - defaults.sudoers
-    - defaults.svd
+    - defaults.versions
     - defaults.timezone
     - defaults.thunderbird

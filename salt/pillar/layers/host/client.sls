@@ -7,6 +7,6 @@ network:
         # 192.168.121.102: wildcard.example wildcard nginx.example nginx
         
     ipv6:
-        # IPA needs ipv6 enabled
+        # IPA needs ipv6 enabled, but on clients it is disabled
         mode: 'disabled'
 

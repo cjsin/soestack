@@ -3,9 +3,9 @@
 {%- set config          = deployment.config %}
 {%- set action = args.action if 'action' in args else 'all' %}
 
-{%- if 'svd' in pillar and 'cots' in pillar.svd and 'node_exporter' in pillar.svd.cots %}
-{%-     set version = pillar.svd.cots.node_exporter.version %}
-{%-     set hash    = pillar.svd.cots.node_exporter.hash %}
+{%- if 'versions' in pillar and 'cots' in pillar.versions and 'node_exporter' in pillar.versions.cots %}
+{%-     set version = pillar.versions.cots.node_exporter.version %}
+{%-     set hash    = pillar.versions.cots.node_exporter.hash %}
 
 {%-     if action in [ 'all', 'install' ] %}
 
@@ -82,5 +82,5 @@ include:
 
 {%-     endif %}
 
-{#- # end if in svd #}
+{#- # end if in  pillar versions #}
 {%- endif %}

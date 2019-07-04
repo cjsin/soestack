@@ -1,9 +1,9 @@
 #!stateconf yaml . jinja 
 
-{%- if 'svd' in pillar and 'cots' in pillar.svd and 'elasticsearch' in pillar.svd.cots %}
-{%-     set svd = pillar.svd.cots.elasticsearch %}
-{%-     set version = svd.version %}
-{%-     set hash    = svd.hash if 'hash' in svd else '' %}
+{%- if 'versions' in pillar and 'cots' in pillar.versions and 'elasticsearch' in pillar.versions.cots %}
+{%-     set versions = pillar.versions.cots.elasticsearch %}
+{%-     set version  = versions.version %}
+{%-     set hash     = versions.hash if 'hash' in versions else '' %}
 {%-     if 'elasticsearch' in pillar.nexus.urls %}
 {%-         set baseurl = pillar.nexus.urls.elasticsearch %}
 
@@ -31,7 +31,6 @@
         - hash:   {{hash}}
 
 {%- else %}
-
 
 .no-repository-configured:
     noop.notice:

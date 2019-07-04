@@ -1,10 +1,10 @@
 #!stateconf yaml . jinja 
 
-{%- if 'svd' in pillar and 'cots' in pillar.svd and 'helm' in pillar.svd.cots %}
+{%- if 'versions' in pillar and 'cots' in pillar.versions and 'helm' in pillar.versions.cots %}
 
-{%-     set svd = pillar.svd.cots.helm %}
-{%-     set version = svd.version %}
-{%-     set hash    = svd.hash if 'hash' in svd and svd.hash else '' %}
+{%-     set versions = pillar.versions.cots.helm %}
+{%-     set version  = versions.version %}
+{%-     set hash     = versions.hash if 'hash' in versions and versions.hash else '' %}
 
 {%-     if 'google-storage' in pillar.nexus.urls %}
 {%-         set baseurl = pillar.nexus.urls['google-storage'] %}
@@ -51,9 +51,9 @@
 
 {%- else %}
 
-.no-svd-configured:
+.no-versions-configured:
     noop.notice:
-        - text: Helm is not present with the svd version configuration area
+        - text: Helm is not present with the versions configuration area
 
 {%- endif %}
 

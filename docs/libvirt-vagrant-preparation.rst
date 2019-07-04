@@ -39,6 +39,35 @@ The following file can be used to configure libvirt to provide this network, if 
         </ip>
     </network>
 
+The vagrant / libvirt networking can interfere with DHCP provided by the server running within a 
+virtual machine (in the sense that the DHCP on the host can reply to clients before the server does). 
+A modified libvirt network configuration can be utilised to recognised the expected MAC addresses of
+the configured clients and to forward them to the internal DHCP server for PXE installation. This is done by the 
+addition of a 'bootp' entry and multiple 'host' entries, one for each client VM. The mac addresses and 
+IP addresses shown here should be set to match those configured within the salt pillar 
+configuration (``managed-hosts.testenv-master`` for the demo configuration). You'll then need
+to configure your PXE client VMs to use these MAC addresses, or alternatively, modify them here
+to match your VMs, and modify the MACs within the salt pillar configuration to match your VMs,
+and then re-run then re-run the pxeboot_server deployment (``salt-call state.sls deployments.pxeboot_server``).
+This will allow your virtual machines to boot and install:
+
+.. code-block:: xml 
+
+    <network ipv6='yes'>
+        <name>vagrant-libvirt</name>
+        <forward mode='nat'/>
+        <bridge stp='on' delay='0'/>
+        <ip address='192.168.121.1' netmask='255.255.255.0'>
+            <dhcp>
+                <range start='192.168.121.1' end='192.168.121.254'/>
+                <host mac='52:54:00:96:72:f9' name='pxe-client1' ip='192.168.121.241'/>
+                <host mac='52:54:00:b9:b8:d2' name='pxe-client2' ip='192.168.121.242'/>
+                <bootp file='pxelinux.0' server='192.168.121.101'/>
+            </dhcp>
+        </ip>
+    </network>
+
+
 Create this xml file somewhere then run:
 
 .. code-block:: console

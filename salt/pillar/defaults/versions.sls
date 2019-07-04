@@ -1,5 +1,5 @@
 
-svd:
+versions:
 
     cots:
 
@@ -25,8 +25,8 @@ svd:
             # Grafana dashboard provisioning is USELESS since v 5.1 due to a senseless change
             # that makes all provisioned dashboards readonly - so you cannot edit them
             # So we need to hold the version back to 5.0.4
-            version: 5.2.2-1
             #version: 5.0.4
+            version: 5.2.2-1
         
         helm:
             version: 2.14.0

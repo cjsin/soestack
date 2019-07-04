@@ -1,7 +1,7 @@
 
 accounts:
 
-    # TODO - consider whether these should in defaults or only in example soe 
+    # TODO - consider whether these should be in defaults or only in example soe 
     
     groups:
 

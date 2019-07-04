@@ -101,6 +101,7 @@ package-groups:
             - development-editors-group
         package-sets:
             - diff-tools-console
+            # diff-tools-gui is disabled until EPEL zchunk bug is fixed
             #- diff-tools-gui
             - development-base
             - python-development

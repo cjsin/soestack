@@ -194,4 +194,9 @@ Basic html caching repositories should be on port 8081. Docker registries to pro
 
 The systemd service above is mapping ports <8>08<x> to <7>08<x> because I had some other services running on the 808x range. So the SoeStack demo configurations utilise 708x instead of 808x. If you don't have the same limitation you can change that with a quick search/replace.
 
+Extra nexus notes
+=================
+
+    - :ref:`nexus_password_reset`
+
 

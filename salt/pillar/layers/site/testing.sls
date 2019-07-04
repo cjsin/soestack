@@ -47,7 +47,7 @@ deployments:
     grafana_container:
         grafana-cont:
             host:        infra
-            activated:   False
+            activated:   True
             activated_where: {{sls}}
             config:
                 ip:      192.168.121.108

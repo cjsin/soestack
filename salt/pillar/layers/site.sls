@@ -11,6 +11,7 @@ _loaded_layers:
 {%-    set slspath = 'layers' %}
 {%-    set prefix = '/' if slspath else '' %}
 
+{#- Record the site layer, for troubleshooting #}
 site_layer_is: {{grains.layers.site}}
 
 # attempted_load:

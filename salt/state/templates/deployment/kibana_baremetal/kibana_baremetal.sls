@@ -1,6 +1,6 @@
 
-{%- if 'svd' in pillar and 'cots' in pillar.svd and 'kibana' in pillar.svd.cots %}
-{%-     set version = pillar.svd.cots.kibana.version %}
+{%- if 'versions' in pillar and 'cots' in pillar.versions and 'kibana' in pillar.versions.cots %}
+{%-     set version = pillar.versions.cots.kibana.version %}
 
 {{sls}}.requirements:
     pkg.installed:
@@ -10,7 +10,7 @@
 {{sls}}.kibana-direct-download:
     pkg.installed:
         - sources: 
-            - kibana: http://nexus:7081/repository/elasticsearch/downloads/kibana/kibana-{{version}}-x86_64.rpm
-        - hash:   {{pillar.svd.cots.kibana.hash}}
+            - kibana: {{pillar.nexus.urls.elasticsearch}}/downloads/kibana/kibana-{{version}}-x86_64.rpm
+        - hash:   {{pillar.versions.cots.kibana.hash}}
 
 {%- endif %}

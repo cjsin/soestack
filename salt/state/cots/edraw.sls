@@ -1,9 +1,9 @@
 #!stateconf yaml . jinja
 
-{%- if 'svd' in pillar and 'cots' in pillar.svd and 'edraw' in pillar.svd.cots %}
-{%-     set svd       = pillar.svd.cots.edraw %}
-{%-     set version   = svd.version %}
-{%-     set hash      = svd.hash if 'hash' in svd and svd.hash else '' %}
+{%- if 'versions' in pillar and 'cots' in pillar.versions and 'edraw' in pillar.versions.cots %}
+{%-     set versions  = pillar.versions.cots.edraw %}
+{%-     set version   = versions.version %}
+{%-     set hash      = versions.hash if 'hash' in versions and versions.hash else '' %}
 {%-     set cachefile = '/var/lib/soestack/installers/EdrawMax-'~version~'.run' %}
 
 {%-     if 'interwebs' in pillar.nexus.urls %}

@@ -1,4 +1,4 @@
-.vagrant
+provision/vagrant/.vagrant
 *.raw
 *.tar
 *.qcow2
@@ -6,10 +6,10 @@
 __pycache__
 *.iso
 *.private.*
-venv
-build
-public .dockerignore
-nexus-prior
-obsolete
-public
-htdocs
+/venv
+/build
+.dockerignore
+/nexus-prior
+/obsolete
+/public
+/htdocs

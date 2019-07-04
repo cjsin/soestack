@@ -14,8 +14,8 @@
 {%- set user             = account_info.user if 'user' in account_info and account_info.user else 'logstash' %}
 {%- set group            = account_info.group if 'group' in account_info and account_info.group else user %}
 
-{%- if 'svd' in pillar and 'cots' in pillar.svd and 'logstash' in pillar.svd.cots %}
-{%-     set version = pillar.svd.cots.logstash.version %}
+{%- if 'versions' in pillar and 'cots' in pillar.versions and 'logstash' in pillar.versions.cots %}
+{%-     set version = pillar.versions.cots.logstash.version %}
 
 
 {%-     if action in [ 'all', 'install' ] %}
@@ -28,8 +28,8 @@
 {{sls}}.{{prefix}}{{state_tag}}-direct-download{{suffix}}:
     pkg.installed:
         - sources: 
-            - logstash: http://nexus:7081/repository/elasticsearch/downloads/logstash/logstash-{{version}}.rpm
-        - hash:   {{pillar.svd.cots.logstash.hash}}
+            - logstash: {{pillar.nexus.urls.elasticsearch}}/downloads/logstash/logstash-{{version}}.rpm
+        - hash:   {{pillar.versions.cots.logstash.hash}}
 
 {%-     endif %}
 
