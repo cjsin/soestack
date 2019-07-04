@@ -63,7 +63,7 @@ managed-hosts:
         gitlab:
             ip:       192.168.121.104
             type:     dns 
-            aliases:   gitlab.demo.com
+            aliases:  gitlab.demo.com
         mattermost.demo.com:
             ip:       192.168.121.105
             type:     dns 
@@ -115,18 +115,12 @@ network:
                 - enabled
                 - gateway
                 - defroute
-                - infra-server
                 - infra-dns
+                - infra-server-common
+                - infra-server-isolated
 
 postfix:
     mode: server
 
 layer-host-loaded: {{sls}}
 
-
-# For now the private layer files are not included, as 
-# the USB provisioning has no way currently to include them
-
-#include:
-#    - layers.private.gitlab
-#    - layers.private.timezone

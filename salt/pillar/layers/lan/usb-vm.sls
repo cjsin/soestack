@@ -55,7 +55,6 @@ deployments:
                                     192.168.121.101:   infra.demo.com infra master salt ipa ldap nfs pxe
                                     192.168.121.103:   nexus.demo.com nexus
                                 kickstart: http://%http_server%/provision/kickstart/kickstart.cfg
-                                #stage2:    nfs:%nfs_server%:/e/pxe/os/minimal/
                     usb-vm:
                         kernel:                os/minimal/images/pxeboot/vmlinuz
                         initrd:                os/minimal/images/pxeboot/initrd.img
@@ -74,14 +73,14 @@ deployments:
                 ip:     192.168.121.108
                 domain: demo.com
                 datasources:
-                    - access: 'proxy'                       # make grafana perform the requests
-                      editable: true                        # whether it should be editable
-                      isDefault: true                       # whether this should be the default DS
-                      name: 'prometheus'                    # name of the datasource
-                      orgId: 1                              # id of the organization to tie this datasource to
-                      type: 'prometheus'                    # type of the data source
-                      url: 'http://prometheus.demo.com:9090'  # url of the prom instance
-                      version: 1                            # well, versioning
+                    - access: 'proxy'                        # make grafana perform the requests
+                      editable: true                         # whether it should be editable
+                      isDefault: true                        # whether this should be the default DS
+                      name: 'prometheus'                     # name of the datasource
+                      orgId: 1                               # id of the organization to tie this datasource to
+                      type: 'prometheus'                     # type of the data source
+                      url: 'http://prometheus.demo.com:9090' # url of the prom instance
+                      version: 1                             # well, versioning
 
     ipa_client:
         testenv-client:

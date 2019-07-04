@@ -5,7 +5,11 @@ deployments:
     gitlab_baremetal:
         gitlab:
             config:
-                hostname: gitlab.demo.com
+                hostname:     gitlab.demo.com
+                # In my demo VM's I have very limited ram available, so need to set this down low
+                # The default is that it will use 1/4 of total RAM or so
+                postgres_ram: 128MB
+
     ipa_master:
         testenv-master:
             config:
@@ -31,20 +35,20 @@ managed-hosts:
     testenv-master:
         infra.demo.com:
             ip:      192.168.121.101
-            lan:     usb-phy
+            lan:     usb-sv
             aliases: ipa
             type:    dns
         pxe-client1:
             ip:       192.168.121.241
             mac:      '52:54:00:96:72:f9'
-            lan:      usb-phy
+            lan:      usb-sv
             type:     client
             hostfile:
                 - pxe-client1
         pxe-client2:
             ip:       192.168.121.242
             mac:      '52:54:00:b9:b8:d2'
-            lan:      usb-phy
+            lan:      usb-sv
             type:     client
             hostfile:
                 - pxe-client2
@@ -59,7 +63,7 @@ managed-hosts:
         gitlab:
             ip:       192.168.121.104
             type:     dns 
-            aliases:  gitlab.demo.com gitlab
+            aliases:  gitlab.demo.com
         mattermost.demo.com:
             ip:       192.168.121.105
             type:     dns 
@@ -91,6 +95,19 @@ managed-hosts:
 
 network:
     devices:
+        # Can't just ignore this device as we need to use PEERDNS=no 
+        # to stop stupid NetworkManager overwriting the resolv.conf
+        #eth0:
+        #    ignore: True 
+        # eth0:
+        #     inherit:
+        #         - no-peerdns
+        #         - ethernet
+        #         - enabled
+        #         - no-defroute
+        #         - dhcp
+        #         - no-nm-controlled
+
         eth0:
             inherit:
                 - defaults
@@ -98,41 +115,12 @@ network:
                 - enabled
                 - gateway
                 - defroute
-                - infra-server
                 - infra-dns
+                - infra-server-common
+                - infra-server-netconnected
 
-        # example eth1 connected to external network or internet
-        #eth1:
-        #    inherit:
-        #        - defaults
-        #        - ethernet
-        #        - enabled
-        #        - gateway
-        #        - defroute
-        #        - infra-dns
-        #        - home-test-environment
-
-        # example wireless network for internet connectivity on laptop
-        # note WPA is not yet successfully configured without NetworkManager.
-        # For now, private WPA keys need to be included using layers.private.wpa below
-
-        #wlan0:
-        #    inherit:
-        #        - defaults
-        #        - wireless
-        #        - enabled
-        #        - gateway
-        #        - defroute
-        #        - infra-dns
-        #        - home-test-environment
+postfix:
+    mode: server
 
 layer-host-loaded: {{sls}}
 
-
-# For now the private layer files are not included, as 
-# the USB provisioning has no way currently to include them
-
-#include:
-#    - layers.private.gitlab
-#    - layers.private.wpa
-#    - layers.private.timezone

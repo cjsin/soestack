@@ -38,10 +38,24 @@ deployments:
                                     SALT_MASTER:       infra.demo.com
                                     GATEWAY:           192.168.0.1
                                     NAMESERVER:        192.168.121.101
-                                    ROLES:             role-set:developer-workstation-node
-                                    LAYERS:            soe:demo,site:testing,lan:usb-phy,private:example
+                                    # auto ROLES will use data from node_maps
+                                    ROLES:             auto
+                                    LAYERS:            soe:demo,site:testing,lan:usb-sv,private:example
+                                    #ADD_HOST:
+                                    #    - 192.168.121.101,infra.demo.com,infra
+                                    #    - 192.168.121.103,nexus.demo.com,nexus
+                                    #    - 192.168.0.1,gateway.demo.com,gateway
+                                # NOTE: ss_repos entries are mapped to ss.ADD_REPO on the boot commandlin
+                                ss_repos: {}
+                                # NOTE: ss_hosts entries are mapped to ss.ADD_HOST on the boot commandlin
+                                ss_hosts:
+                                    # NOTE the demo lan is associated with the ethernet device, 
+                                    # this gateway is for that and what clients booted on that network will use
+                                    192.168.0.1:       gateway.demo.com gateway
+                                    192.168.121.101:   infra.demo.com infra master salt ipa ldap nfs pxe
+                                    192.168.121.103:   nexus.demo.com nexus
                                 kickstart: http://%http_server%/provision/kickstart/kickstart.cfg
-                    usb-phy:
+                    usb-sv:
                         kernel:                os/minimal/images/pxeboot/vmlinuz
                         initrd:                os/minimal/images/pxeboot/initrd.img
                         iface:                 eth0
@@ -50,7 +64,7 @@ deployments:
 
                 hosts:
                     client:
-                        lan:    usb-phy
+                        lan:    usb-sv
                         append: test-host-override
 
     grafana_container:
@@ -59,14 +73,14 @@ deployments:
                 ip:     192.168.121.108
                 domain: demo.com
                 datasources:
-                    - access: 'proxy'                       # make grafana perform the requests
-                      editable: true                        # whether it should be editable
-                      isDefault: true                       # whether this should be the default DS
-                      name: 'prometheus'                    # name of the datasource
-                      orgId: 1                              # id of the organization to tie this datasource to
-                      type: 'prometheus'                    # type of the data source
+                    - access: 'proxy'                        # make grafana perform the requests
+                      editable: true                         # whether it should be editable
+                      isDefault: true                        # whether this should be the default DS
+                      name: 'prometheus'                     # name of the datasource
+                      orgId: 1                               # id of the organization to tie this datasource to
+                      type: 'prometheus'                     # type of the data source
                       url: 'http://prometheus.demo.com:9090' # url of the prom instance
-                      version: 1                            # well, versioning
+                      version: 1                             # well, versioning
 
     ipa_client:
         testenv-client:
@@ -131,7 +145,7 @@ managed-hosts:
         infra:
             ip:       192.168.121.101
             mac:      '52:54:00:d5:19:d5'
-            lan:      usb-phy
+            lan:      usb-sv
             aliases:  infra ipa.demo.com ipa salt.demo.com salt ldap.demo.com ldap
             type:     client
             hostfile:
@@ -147,7 +161,6 @@ network:
     system_domain: demo.com
     
     hostfile-additions:
-        # For now use the nexus on my host box to avoid re-downloading anything
         192.168.0.1:     gateway.demo.com gateway
         
         192.168.121.101: infra.demo.com infra ipa.demo.com ipa salt.demo.com salt ldap.demo.com ldap
@@ -162,8 +175,49 @@ network:
                 DNS1: 127.0.0.1
                 DNS2: 192.168.0.1
                 DNS3: ''
+        infra-server-netconnected:
+            sysconfig:
+                # IP for Gateway subnet
+                IPADDR1: '192.168.0.101'
+                PREFIX1: '24'
+                # Main infra services
+                IPADDR2: '192.168.121.101'
+                PREFIX2: '24'
+
+node_maps:
+    pxe-client1:
+        roles: 'role-set:developer-workstation-node'
+    pxe-client2:
+        roles: 'role-set:login-processor-node'
+
+postfix:
+    mode: client
+    config:
+        defaults:
+            enabled:             True
+            append_dot_mydomain: no
+            inet_protocols:      ipv4
+            myorigin:            demo.com
+            home_mailbox:        ''
+            mydomain:            localhost.localdomain
+            mydestination:       localhost.$mydomain, localhost.localdomain, localhost
+        server:
+            inet_interfaces:     192.168.121.101
+            mydomain:            demo.com
+            myorigin:            demo.com
+            mydestination:       $myhostname, $mydomain, localhost.$mydomain, localhost.localdomain, localhost
+            home_mailbox:        Maildir/
+            relayhost:           ''
+            relay_domains:       ''
+        client: 
+            relayhost:           '[infra.demo.com]:25'
+            relay_domains:       demo.com
+            default_transport:   smtp
 
 ssh:
     authorized_keys:
         root:
+            # Change this after the server is built, 
+            # or alternatively set ssh:authorized_keys:root:root@infra.demo.com 
+            # in your salt/pillar/layers/private/<your-private-layer-name>/private.sls
             root@infra.demo.com: unset

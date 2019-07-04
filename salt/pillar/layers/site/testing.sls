@@ -108,10 +108,8 @@ docker:
                 # Misc (uploaded manually)
                 - nexus:7085
                 - gitlab-registry:5000
-            dns: 
-                - 192.168.121.1   # host in VM environment
-                # - 192.168.188.1   # modem / gateway in test environment
-                - 192.168.121.101 # infra server
+            # This will be set per-lan (in the lan layer)
+            dns: []
             #dns-opts:
             #    #- 'ndots:0'
             dns-search:
@@ -131,16 +129,8 @@ network:
         '::1':           localhost6.localdomain localhost6
 
     classes:
-        infra-server:
+        infra-server-common:
             sysconfig:
-                # Main IP, infastructure services etc
-                IPADDR1: '192.168.121.101'
-                PREFIX1: '24'
-
-                # Nginx frontend / proxy
-                IPADDR2: '192.168.121.102'
-                PREFIX2: '24'
-
                 # Nexus
                 IPADDR3: '192.168.121.103'
                 PREFIX3: '24'
@@ -176,3 +166,24 @@ network:
                 # SOEStack docs
                 IPADDR11: '192.168.121.111'
                 PREFIX11: '24'
+        infra-server-netconnected:
+            sysconfig:
+                # An net-connected server will set the IP address for the gateway on IPADDR2,
+                # and the 121.101 address for IPADDR2
+                # and the nginx one (currently unused) will be moved to IPADDR12
+                # This is because we desire the IP address that can communicate to the gateway,
+                # to be the first one on the interface.
+                # Nginx frontend / proxy
+                IPADDR12: '192.168.121.102'
+                PREFIX12: '24'
+        infra-server-isolated:
+            sysconfig:
+                # An isolated server will set the x.x.121.101 address for IPADDR1
+                # and the nginx one (currently unused) will be slotted onto IPADDR2
+                # Main IP, infastructure services etc
+                IPADDR1: '192.168.121.101'
+                PREFIX1: '24'
+                # Nginx frontend / proxy
+                IPADDR2: '192.168.121.102'
+                PREFIX2: '24'
+
