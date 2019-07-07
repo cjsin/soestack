@@ -112,7 +112,7 @@ def ext_pillar( minion_id, pillar, *args, **kwargs ):
 
     if CONFIG:
         config = pillar.get(CONFIG,None)
-        log.debug("Loaded config({}) = {}".format(CONFIG, pformat(config)))
+        #log.debug("Loaded config({}) = {}".format(CONFIG, pformat(config)))
     else:
         log.debug("No CONFIG specified")
     

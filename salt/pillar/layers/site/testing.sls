@@ -1,4 +1,4 @@
-{{ salt.loadtracker.load_pillar(sls) }}
+{{ salt.loadtracker.load_pillar(sls,'testing') }}
 
 # Overrides for the testing site
 
@@ -55,6 +55,7 @@ deployments:
         testenv-client:
             config:
                 site:    testing
+
     ipa_master:
         testenv-master:
             config:
