@@ -2,6 +2,36 @@
 
 [[ -n "${SS_LOADED_COMMON_LIB}" ]] || . "${SS_DIR:=${BASH_SOURCE[0]%/provision/*}}"/provision/common/lib/lib.sh
 
+function install_patcher()
+{
+    local service_name="${1}"
+    local patcher="${2}"
+    local dropins="/etc/systemd/system/${service_name}.d"
+    mkdir -p "${dropins}"
+
+    cat > "${dropins}/patches.conf" <<-EOF
+		[Service]
+		ExecStartPre=${patcher}
+	EOF
+
+}
+
+function fix_saltstack_pillar_regression_53516()
+{
+    local patcher="/usr/local/sbin/patch-saltstack.sh"
+    cat > "${patcher}" <<-'EOF'
+		#!/bin/bash
+		badfile_1='/usr/lib/python2.7/site-packages/salt/pillar/__init__.py'
+		replacement_1='s/sub_sls in set.matched_pstates.:/sub_sls in matched_pstates:/'
+		sed -i.bak -r -e "${replacement_1}" "${badfile_1}"
+	EOF
+
+    chmod +x "${patcher}"
+
+    install_patcher salt-master "${patcher}"
+    install_patcher salt-minion "${patcher}"
+}
+
 function saltstack_fixes()
 {
     # This is really not important - it just reduces some 
@@ -9,6 +39,7 @@ function saltstack_fixes()
     ensure_installed python-pip 
     preconfigure_pip
     pip list | egrep boto || pip install boto boto3
+    fix_saltstack_pillar_regression_53516
 }
 
 function install_salt_minion()

@@ -1,5 +1,4 @@
-_loaded:
-    {{sls}}:
+{{ salt.loadtracker.load_pillar(sls) }}
 
 activated-states:
     - cots.pencil

@@ -1,5 +1,4 @@
-_loaded:
-    {{sls}}:
+{{ salt.loadtracker.load_pillar(sls,'host infra') }}
 
 deployments:
     gitlab_baremetal:
@@ -12,10 +11,7 @@ deployments:
     ipa_master:
         testenv-master:
             config:
-                passwords:
-                    master: master123
-                    admin:  admin123
-                    ds:     random
+                passwords: '!!demo.passwords.ipa'
 
 # Override DNS on the infra server
 dns:
@@ -23,73 +19,70 @@ dns:
     server:      infra.demo.com
     nameservers:
         dns1:    127.0.0.1
-        dns2:    192.168.121.1 # The VM host
+        dns2:    '!!network.gateway'
         dns3:    ''
     search:
-        search1: demo.com
+        search1: '!!network.system_domain'
         search2: ''
         search3: ''
         
 managed-hosts:
     testenv-master:
         infra.demo.com:
-            ip:      192.168.121.101
-            lan:     usb-vm
+            ip:      '!!demo.ips.infra'
             aliases: ipa
             type:    dns
 
         pxe-client1:
-            ip:       192.168.121.241
+            ip:       '!!demo.ips.pxe-client1'
             mac:      '52:54:00:96:72:f9'
-            lan:      usb-vm
             type:     client
             hostfile:
                 - pxe-client1
         pxe-client2:
-            ip:       192.168.121.242
+            ip:       '!!demo.ips.pxe-client2'
             mac:      '52:54:00:b9:b8:d2'
-            lan:      usb-vm
             type:     client
             hostfile:
                 - pxe-client2
         wildcard:
-            ip:       192.168.121.102
+            ip:       '!!demo.ips.wildcard'
             type:     dns 
             aliases:  nginx.demo.com nginx wildcard
         nexus:
-            ip:       192.168.121.103
+            ip:       '!!demo.ips.nexus'
             type:     dns 
             # aliases:  nexus
         gitlab:
-            ip:       192.168.121.104
+            ip:       '!!demo.ips.gitlab'
             type:     dns 
             aliases:  gitlab.demo.com
         mattermost.demo.com:
-            ip:       192.168.121.105
+            ip:       '!!demo.ips.mattermost'
             type:     dns 
             aliases:  mattermost
         pages.demo.com:
-            ip:       192.168.121.106 
+            ip:       '!!demo.ips.pages'
             type:     dns
             aliases:  pages
         gitlab-registry.demo.com:
-            ip:       192.168.121.107 
+            ip:       '!!demo.ips.gitlab-registry'
             type:     dns
             aliases:  gitlab-registry
         grafana:
-            ip:       192.168.121.108
+            ip:       '!!demo.ips.grafana'
             type:     dns 
             aliases:  prometheus.demo.com grafana prometheus
         kibana:
-            ip:       192.168.121.109
+            ip:       '!!demo.ips.kibana'
             type:     dns 
             aliases:  elasticsearch.demo.com kibana elasticsearch
         master:
-            ip:       192.168.121.110
+            ip:       '!!demo.ips.master'
             type:     dns 
             aliases:  master.demo.com master k8s.demo.com k8s
         docs:
-            ip:       192.168.121.111
+            ip:       '!!demo.ips.docs'
             type:     dns 
             aliases:  docs.demo.com docs
 

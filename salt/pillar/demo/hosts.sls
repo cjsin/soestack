@@ -1,5 +1,4 @@
-_loaded:
-    {{sls}}:
+{{ salt.loadtracker.load_pillar(sls) }}
 
 # Example data
 ##############
@@ -9,7 +8,6 @@ _loaded:
 #         infra:
 #             ip:       192.168.121.101
 #             mac:      '52:54:00:d5:19:d5'
-#             lan:      example
 #             aliases:  infra ipa.example ipa salt.example salt ldap.example ldap
 #             type:     client
 #             hostfile:

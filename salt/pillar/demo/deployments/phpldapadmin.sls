@@ -34,9 +34,10 @@ deployments:
                                 - cn=users
                                 - cn=accounts
                                 - dc=demo
+                                - dc=com
                             auth_type: session 
                             # bind_id: ''
-                            # bind_id: 'uid=admin,cn=users,cn=accounts,dc=demo'
+                            # bind_id: 'uid=admin,cn=users,cn=accounts,dc=demo,dc=com'
                             # bind_pass: ''
                             # bind_pass: 'secret'
             filesystem:

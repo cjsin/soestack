@@ -1,3 +1,5 @@
+{{ salt.loadtracker.load_pillar(sls) }}
+
 _loaded_layers:
     {%- if 'layers' in grains and grains.layers is mapping and 'private' in grains.layers %}
     {{sls}}: {{grains.layers.private|json}}
@@ -17,5 +19,4 @@ attempted_load:
     {{attempted_load}}: 
 
 {%     include(attempted_load) ignore missing %}
-
 {%- endif %}

@@ -1,3 +1,4 @@
+#TODO: get this from pillar vars
 salt-users:
     server:    infra
     port:      389
@@ -11,14 +12,13 @@ salt-users:
     #filter:    # '(&(cn=admins,cn=groups,cn=accounts,dc=demo)(objectclass=person))'
     filter: '(objectclass=person)'
     attrs:
-      - cn
-      - displayName
-      - givenName
-      - sn
+        - cn
+        - displayName
+        - givenName
+        - sn
     lists:
-      - memberOf
+        - memberOf
   
 search_order:
     - salt-users
-  
-  
+

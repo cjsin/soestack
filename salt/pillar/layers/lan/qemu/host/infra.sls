@@ -1,6 +1,4 @@
-_loaded:
-    {{sls}}:
-
+{{ salt.loadtracker.load_pillar(sls,'host infra') }}
 
 # Overrides and data for the demo test soe lan, 
 # which is set up on a libvirt virtual network,
@@ -30,7 +28,7 @@ dns:
     server:      infra.demo.com
     nameservers:
         dns1:    127.0.0.1
-        dns2:    192.168.121.1 # The VM host
+        dns2:    '!!network.gateway'
         dns3:    ''
     search:
         search1: demo.com
@@ -41,20 +39,17 @@ managed-hosts:
     testenv-master:
         infra.demo.com:
             ip:      192.168.121.101
-            lan:     qemu
             aliases: ipa
             type:    dns
         pxe-client1:
             ip:       192.168.121.241
             mac:      '52:54:00:96:72:f9'
-            lan:      qemu
             type:     client
             hostfile:
                 - pxe-client1
         pxe-client2:
             ip:       192.168.121.242
             mac:      '52:54:00:b9:b8:d2'
-            lan:      qemu
             type:     client
             hostfile:
                 - pxe-client2

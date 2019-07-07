@@ -1,7 +1,6 @@
-# Overrides for the testing site
+{{ salt.loadtracker.load_pillar(sls) }}
 
-_loaded:
-    {{sls}}:
+# Overrides for the testing site
 
 include:
     - demo.deployments.ipa-master
@@ -21,7 +20,7 @@ cups:
             uuid:      b11e07ba-8101-4d3d-835e-0d36891faddd
             info:      Example printer
             makemodel: Example printer (recommended)
-            ip:        192.168.121.215
+            ip:        '!!demo.ips.printer'
 
 deployments:
     dovecot_server:
@@ -50,7 +49,7 @@ deployments:
             activated:   True
             activated_where: {{sls}}
             config:
-                ip:      192.168.121.108
+                ip:      '!!demo.ips.grafana'
                 domain:  demo.com
     ipa_client:
         testenv-client:
@@ -59,10 +58,8 @@ deployments:
     ipa_master:
         testenv-master:
             config:
-                passwords:
-                    master: master123
-                    admin:  admin123
-                    ds:     random
+                passwords: '!!demo.passwords.ipa'
+
                 site:   testing
                 initial-setup:
                     automount:
@@ -119,8 +116,12 @@ docker:
 
 
 ipa:
-    server_ip: 192.168.121.101
+    # NOTE: IPA uses the REALM to generate the base dn, dc=xxx, not the dns domain
+    server:    infra.demo.com
+    server_ip: '!!demo.ips.infra'
+    base_dn:   dc=demo,dc=com
     bind_user: bind-user
+    realm:     DEMO.COM
 
 network:
 
@@ -132,39 +133,39 @@ network:
         infra-server-common:
             sysconfig:
                 # Nexus
-                IPADDR3: '192.168.121.103'
+                IPADDR3: '!!demo.ips.nexus'
                 PREFIX3: '24'
 
                 # Gitlab
-                IPADDR4: '192.168.121.104'
+                IPADDR4: '!!demo.ips.gitlab'
                 PREFIX4: '24'
 
                 # Gitlab mattermost
-                IPADDR5: '192.168.121.105'
+                IPADDR5: '!!demo.ips.mattermost'
                 PREFIX5: '24'
 
                 # Gitlab pages
-                IPADDR6: '192.168.121.106'
+                IPADDR6: '!!demo.ips.pages'
                 PREFIX6: '24'
 
                 # Gitlab docker registry
-                IPADDR7: '192.168.121.107'
+                IPADDR7: '!!demo.ips.gitlab-registry'
                 PREFIX7: '24'
 
                 # Grafana and Prometheus
-                IPADDR8: '192.168.121.108'
+                IPADDR8: '!!demo.ips.dashboard'
                 PREFIX8: '24'
 
                 # Elasticsearch and Kibana
-                IPADDR9: '192.168.121.109'
+                IPADDR9: '!!demo.ips.elk'
                 PREFIX9: '24'
 
                 # Kubernetes master
-                IPADDR10: '192.168.121.110'
+                IPADDR10: '!!demo.ips.master'
                 PREFIX10: '24'
 
                 # SOEStack docs
-                IPADDR11: '192.168.121.111'
+                IPADDR11: '!!demo.ips.docs'
                 PREFIX11: '24'
         infra-server-netconnected:
             sysconfig:
@@ -174,16 +175,47 @@ network:
                 # This is because we desire the IP address that can communicate to the gateway,
                 # to be the first one on the interface.
                 # Nginx frontend / proxy
-                IPADDR12: '192.168.121.102'
+                IPADDR12: '!!demo.ips.nginx'
                 PREFIX12: '24'
         infra-server-isolated:
             sysconfig:
                 # An isolated server will set the x.x.121.101 address for IPADDR1
                 # and the nginx one (currently unused) will be slotted onto IPADDR2
                 # Main IP, infastructure services etc
-                IPADDR1: '192.168.121.101'
+                IPADDR1: '!!demo.ips.infra'
                 PREFIX1: '24'
                 # Nginx frontend / proxy
-                IPADDR2: '192.168.121.102'
+                IPADDR2: '!!demo.ips.nginx'
                 PREFIX2: '24'
 
+demo:
+    passwords: 
+        public-default: admin123
+        nexus:          '!!demo.passwords.public-default'
+        ipa:
+            master:     '!!demo.passwords.public-default'
+            admin:      '!!demo.passwords.public-default'
+            ds:         random
+    ips:
+        gateway:         192.168.121.1
+        infra:           192.168.121.101
+        wildcard:        192.168.121.102
+        nexus:           192.168.121.103
+        gitlab:          192.168.121.104
+        mattermost:      192.168.121.105
+        pages:           192.168.121.106 
+        gitlab-registry: 192.168.121.107 
+        dashboard:       192.168.121.108
+        grafana:         '!!demo.ips.dashboard'
+        prometheus:      '!!demo.ips.dashboard'
+        elk:             192.168.121.109
+        elasticsearch:   '!!demo.ips.elk'
+        kibana:          '!!demo.ips.elk'
+        master:          192.168.121.110
+        docs:            192.168.121.111
+        nginx:           192.168.121.112
+
+        printer:         192.168.121.215
+
+        pxe-client1:     192.168.121.241
+        pxe-client2:     192.168.121.242

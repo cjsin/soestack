@@ -1,3 +1,5 @@
+{{ salt.loadtracker.load_pillar(sls) }}
+
 _loaded_layers:
     {%- if 'layers' in grains and grains.layers is mapping and 'lan' in grains.layers %}
     {{sls}}: {{grains.layers.lan|json}}
@@ -17,5 +19,4 @@ attempted_load:
     {{slspath ~ '/lan/' ~ grains.layers.lan ~ '.sls'}}: 
 
 {%     include(slspath ~ prefix ~ 'lan/' ~ grains.layers.lan ~ '.sls') ignore missing %}
-
 {%- endif %}

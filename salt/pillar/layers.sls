@@ -1,5 +1,4 @@
-_loaded:
-    {{sls}}:
+{{ salt.loadtracker.load_pillar(sls) }}
 
 {#- # Allow layers to be specified as a list or a comma separated string #}
 
@@ -48,9 +47,6 @@ grain_layers: {{grains.layers|json}}
 {%-         endif %}
 {%-     endif %}
 
-{#- Show in pillar which layers were selected, for troubleshooting #}
-selected_layers: {{selected_layers|json}}
-
 {%-     set attempted_loads = [] %}
 
 {%-     if selected_layers %}
@@ -68,19 +64,21 @@ selected_layers: {{selected_layers|json}}
 
 {#-             # Hopefully using yaml include will work better #}
 
+{%- do selected_layers.append('lan-host') %}
+{#- Show in pillar which layers were selected, for troubleshooting #}
+selected_layers: {{selected_layers|json}}
+
 include:
     {%-         for layer in selected_layers %}
     {%-            do attempted_loads.append(layer) %}
     - layers.{{layer}}
     {%-         endfor %}
-    - layers.lan-host
 
 {#- Show in pillar which layers were included, for troubleshooting #}
 layer-include:
     {%-         for layer in selected_layers %}
     - layers.{{layer}}
     {%-         endfor %}
-    - layers.lan-host
 
 {%-         endif %}
 {%-     endif %}
@@ -89,3 +87,5 @@ layer-include:
 attempted_layers: {{attempted_loads|json}}
 
 {%- endif %}
+
+load-sequence: {{salt.loadtracker.loaded()|json}}

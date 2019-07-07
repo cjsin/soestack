@@ -1,3 +1,5 @@
+{{ salt.loadtracker.load_pillar(sls) }}
+
 # This is an example 'private.sls' file - to use it,
 # put it in a subdirectory, renamed to private.sls,
 # and then set ss.LAYERS (or the 'layers' grain) to

@@ -1,3 +1,5 @@
+{{ salt.loadtracker.load_pillar(sls) }}
+
 {%- if 'lan' in grains.layers %}
 _loaded_layers:
     {{sls}}: {{[grains.layers.lan, grains.host]|json}}

@@ -1,5 +1,4 @@
-_loaded:
-    {{sls}}:
+{{ salt.loadtracker.load_pillar(sls) }}
 
 # Overrides and data for the demo test soe lan, 
 # which is set up on a libvirt virtual network,
@@ -46,7 +45,7 @@ deployments:
                                     LAYERS:            soe:demo,site:testing,lan:qemu,private:example
                                 kickstart: http://%http_server%/provision/kickstart/kickstart.cfg
                                 #stage2:    nfs:%nfs_server%:/e/pxe/os/minimal/
-                    qemu:
+                    devlan:
                         kernel:                os/minimal/images/pxeboot/vmlinuz
                         initrd:                os/minimal/images/pxeboot/initrd.img
                         iface:                 eth1
@@ -71,7 +70,7 @@ deployments:
 
                 hosts:
                     client:
-                        lan:    qemu
+                        lan:    devlan
                         append: test-host-override
                     pxe-client1:
                         ss_settings:
@@ -102,7 +101,7 @@ deployments:
                 realm:   DEMO
                 domain:  demo.com
                 ldap:
-                    base-dn: dc=demo
+                    base-dn: '!!ipa.base_dn'
 
     ipa_master:
         testenv-master:
@@ -155,7 +154,6 @@ managed-hosts:
         infra:
             ip:       192.168.121.101
             mac:      '52:54:00:d5:19:d5'
-            lan:      qemu
             aliases:  infra ipa.demo.com ipa salt.demo.com salt ldap.demo.com ldap
             type:     client
             hostfile:

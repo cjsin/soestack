@@ -1,3 +1,5 @@
+{{ salt.loadtracker.load_pillar(sls) }}
+
 _loaded_layers:
     {%- if 'roles' in grains %}
     {{sls}}: {{grains.roles|json}}

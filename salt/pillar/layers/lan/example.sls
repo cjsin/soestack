@@ -1,5 +1,4 @@
-_loaded:
-    {{sls}}:
+{{ salt.loadtracker.load_pillar(sls) }}
 
 # Overrides and data for the demo test soe lan
 
@@ -82,17 +81,17 @@ deployments:
             activated_where: {{sls}}
             config:
                 server:  infra.demo.com
-                realm:   DEMO
+                realm:   DEMO.COM
                 domain:  demo.com
                 site:    testing
                 ldap:
-                    base-dn: dc=demo
+                    base-dn: dc=demo,dc=com
 
     ipa_master:
         testenv-master:
             config:
                 domain: demo.com
-                realm:  DEMO
+                realm:  DEMO.COM
                 fqdn:   infra.demo.com
                 install:
                     dns:
@@ -120,7 +119,6 @@ managed-hosts:
         infra:
             ip:       192.168.121.101
             mac:      '52:54:00:d5:19:d5'
-            lan:      demo
             aliases:  infra ipa.demo.com ipa salt.demo.com salt ldap.demo.com ldap
             type:     client
             hostfile:

@@ -1,3 +1,5 @@
+{{ salt.loadtracker.load_pillar(sls) }}
+
 _loaded_layers:
     {%- if 'layers' in grains and grains.layers is mapping and 'soe' in grains.layers %}
     {{sls}}: {{grains.layers.soe|json}}
@@ -13,9 +15,6 @@ _loaded_layers:
 
 soe_layer_is: |
     {{grains.layers.soe ~', file:' ~ slspath ~ prefix ~ 'soe/' ~ grains.layers.soe ~ '.sls'}}
-
-# attempted_load:
-#     {{slspath ~ '/soe/' ~ grains.layers.soe ~ '.sls'}}: 
 
 {%     include(slspath ~ prefix ~ 'soe/' ~ grains.layers.soe ~ '.sls') ignore missing %}
 

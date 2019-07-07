@@ -1,7 +1,9 @@
 # Overrides for the demo test soe
-
 _loaded:
-    {{sls}}:
+    {{sls}}: {{salt.loadtracker.load(sls)}} {{salt.curtime.now()}}
+
+_load-times: 
+    {{salt.seqid.next() }} {{sls}}: {{salt.trace.stack()|json}}
 
 soe:
     name:         soestack-demo
