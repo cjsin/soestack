@@ -1,4 +1,3 @@
-
 """
 :maintainer:    example
 :maturity:      new
@@ -8,6 +7,7 @@
 
 from __future__ import absolute_import
 import uuid
+from salt.utils.decorators.jinja import jinja_filter, JinjaFilter
 
 import logging
 
@@ -46,3 +46,7 @@ def ids(args=None):
         prefix = prefix +'.' 
         
     return prefix, suffix 
+
+#@jinja_filter('blah')
+#def blah(args=None):
+#    return "blah fo' real"
