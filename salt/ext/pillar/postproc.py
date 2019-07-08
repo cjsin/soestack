@@ -285,28 +285,21 @@ def getdata(pillar):
         #  a.z : [['a','z'],'a.c']
         #  m.o : [['m','o'],'m.n']
 
-        #diag("expand is {}".format(pformat(expand)))
         while True:
             changes = 0
             for target_ref, item in expand.iteritems():
-                #diag("expanding.. target_ref=",target_ref)
+                
                 target_path = item[0]
-                #diag("expanding.. target_path=",target_path)
                 src_ref = item[1]
-                #diag("expanding.. src_ref=",src_ref)
-                #diag("Updating expand for cyclics - target_ref=",target_ref, "src_ref=",src_ref)
+                
                 if src_ref == target_ref:
-                    #diag("Dropping cyclic reference {}.".format(src_ref))
                     pass
                 if src_ref in expand:
                     # Replace the cyclic reference
-                    #diag("Update",target_ref,"in expand to",expand[src_ref])
                     expand[target_ref] = expand[src_ref]
                     changes += 1
             if not changes:
                 break
-        
-        #diag("after processing cyclics, expand is",expand)
 
         # Now generate a map of all paths that have been referenced, 
         # and where they were referenced
@@ -314,12 +307,10 @@ def getdata(pillar):
         for target_ref, item in expand.iteritems():
             target_path = item[0]
             src_ref = item[1]
-            #diag("Process epaxnd item:",target_ref,"=",item)
+            
             if src_ref in referenced:
-                #diag("Append to array for src_ref",src_ref,"with existing array",referenced[src_ref])
                 referenced[src_ref].append(target_ref)
             else:
-                #diag("Add new array for src_ref",src_ref)
                 referenced[src_ref]=[target_ref]
 
         # Now 'referenced will look like:
@@ -329,26 +320,24 @@ def getdata(pillar):
         #     m.n : [ 'm.o' ]              # pillar object m.n needs to be filled in with pillar value m.o
         #     a.d : [ 'a.z' ]
         #     a.z : [ 'a.c' ]
+
         c = copy.deepcopy(pillar)
-        #diag("referenced=",referenced)
+        
         for src_ref in referenced.keys():
             src_path = split_ref(src_ref)
             src_value, status = lookup(c, src_path)
             if status == "OK":
-                #diag("Generating extract - src_ref={}, src_path={}, src_value={}".format ( src_ref, ",".join(src_path), pformat(src_value) ) )
                 extract[src_ref] = src_value
             else:
                 extract[src_ref] = stringify("Error:", status, "for ref", src_ref)
 
         count = 0
 
-        #diag("Extract = {}".format(extract))
-
         for src_ref, target_refs in referenced.iteritems():
             src_value = extract[src_ref]
             for t in target_refs:
                 t_path = split_ref(t) # TODO - maybe look up in path_mapping
-                #diag("Process update for ",t,"with t_path=",t_path,"and src_value=",src_value)
+                
                 update(c, t_path, src_value)
                 count += 1
 
