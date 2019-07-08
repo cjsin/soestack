@@ -25,7 +25,7 @@ cups:
 deployments:
     dovecot_server:
         dovecot:
-            host:        infra
+            host: infra
             activated:   True
             activated_where: {{sls}}
     elasticsearch_container:
@@ -35,8 +35,9 @@ deployments:
             activated_where: {{sls}}
     gitlab_runner_baremetal:
         gitlab-runner:
-            host:        infra
-            activated:   False
+            hosts:
+                - infra
+            activated:       False
             activated_where: {{sls}}
     gitlab_baremetal:
         gitlab:
