@@ -16,3 +16,10 @@ network:
                 - no-peerdns
                 - no-zeroconf
 
+deployments:
+    gitlab_runner_baremetal:
+        gitlab-runner:
+            hosts:
+                - {{grains.host}}
+            activated:       True
+
