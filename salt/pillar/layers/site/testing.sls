@@ -35,8 +35,7 @@ deployments:
             activated_where: {{sls}}
     gitlab_runner_baremetal:
         gitlab-runner:
-            hosts:
-                - infra
+            hosts: []
             activated:       False
             activated_where: {{sls}}
     gitlab_baremetal:
