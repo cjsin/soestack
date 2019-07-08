@@ -25,12 +25,13 @@ DEBUG = False
 def arrjoin(s,arr):
     return s.join([str(x) for x in arr])
 
-def __init__( __opts__ ):
-    log.debug("postproc init was called.")
-    if 'postproc.separator' in __opts__:
-        SEPARATOR1 = __opts__['postproc.separator']
-    if 'postproc.ref_prefix' in __opts__:
-        REF_PREFIX = __opts__['postproc.ref_prefix']
+def __init__( opts ):
+    if 'ext_pillar' in opts and 'postproc' in opts['ext_pillar']:
+        opts = opts['ext_pillar']['postproc']
+        if 'separator' in opts:
+            SEPARATOR1 = opts['separator']
+        if 'postproc.ref_prefix' in opts:
+            REF_PREFIX = opts['ref_prefix']
 
     # try:
     #     REF_PREFIX_LEN=len(REF_PREFIX)
@@ -42,7 +43,6 @@ def __init__( __opts__ ):
     pass
 
 def __virtual__():
-    log.debug("postproc virtual was called.")
     return __virtualname__
 
 def _str_number(s):
@@ -99,47 +99,37 @@ def canonicalize_path(path):
 
 def extract_reference(v):
     if v.startswith(REF_PREFIX) and len(v) > REF_PREFIX_LEN:
-        diag("Found a reference in {}".format(v))
+        #diag("Found a reference in {}".format(v))
         return canonicalize_ref(v[REF_PREFIX_LEN:])
     else:
-        #diag("value {} does not start with {}".format(v, REF_PREFIX))
         return None
 
 def search_list(obj, path):
     ret = []
     idx=0
     for item in obj:
-        #diag("search another item in list obj {} with path {}".format(pformat(item), pformat(path+[idx])))
         found = search_for_refs(item, path+ [idx])
         if found:
-            #diag("extend with found")
             ret.extend(found)
         idx+=1
-    #diag("list search returning an array of size {}".format(len(ret)))
     return ret
 
 def search_mapping(obj, path):
-    #diag('search mapping at path',path)
     ret = []
     for k, v in obj.iteritems():
-        #diag("search key ",k, {} in dict, v={}, path="format(k, pformat(v), pformat(path+[k])))
         newpath = path+[k] 
-        #diag("newpath = {}".format(pformat(newpath)))
+        
         found = search_for_refs(v, newpath)
         if found:
-            #diag("extend with found")
             ret.extend(found)
-    #diag("dict search returning an array of size {}".format(len(ret)))
     return ret
 
 _diag = []
 
 def search_for_refs(obj, path):
-    #diag("path is {}".format(pformat(path)))
     ret = []
-    #diag('search for refs in obj starting at path {}'.format(arrjoin(",",path)))
+    
     if obj is None:
-        #diag("object is None")
         return []
     if isinstance(obj, dict):
         found = search_mapping(obj, path)
@@ -153,63 +143,49 @@ def search_for_refs(obj, path):
 
         ref = extract_reference(obj)
         if ref:
-            #diag('found reference {}'.format(ref))
-            #diag("Returning an array with a single array in it")
             ret.append([path, ref])
 
-    #diag('value for path {} (value {}) is not a {} reference'.format(",".join(path),obj, REF_PREFIX))
-    #diag("Returning an array of size {}".format(len(ret)))
     return ret
 
 def _lookup(obj, prior_path, remaining_path):
     if not remaining_path:
-        #diag("Returning final object {} and ok".pformat(obj))
         return obj, "OK"
     elif obj is None:
-        #diag("Returning None and not-found")
         return None, "Not found!"
     else:
         key = remaining_path[0]
         next_path = remaining_path[1:]
-        #diag("Looking up key {} in obj {}".format(key, pformat(obj)))
 
         found, ok = _lookup_key(obj, key)
-        #diag("lookup key {} returns ok={}, found={}".format(key, ok, pformat(found)))
+        
         if ok != "OK":
             return None, ok
         elif not next_path:
-            #diag("Returning final object {}".format(pformat(found)))
             return found, "OK"
         else:
-            return _lookup( found, prior_path + [key], next_path ) 
-            #return None, "Disabled"
+            return _lookup( found, prior_path + [key], next_path )
 
 def lookup(obj, path):
     return _lookup(obj,[], path)
 
 def update(obj, path, value, traversed=[]):
     if not path:
-        #diag("no path")
         pass
     elif len(path) == 1:
-        #diag("final part of path = {}".format(path[0]))
         key = path[0]
         if isinstance(obj, list):
-            #diag("Updating as list")
             obj[_str_number(key)] = value
         else:
             obj[key] = value
-            #diag("Updating as dict")
     else:
         key = path[0]
-        #diag("Recursing for key",key,"with remaining path",path[1:], "and value",value)
+        
         child = None
         if isinstance(obj, list):
-            #diag("Updating as list")
             child = obj[_str_number(key)]
         else:
             child = obj[key]
-            #diag("Updating as dict")
+        
         update(child, path[1:], value, traversed+[key])
 
 def ellipsize(s,maxlen=90):
@@ -269,12 +245,10 @@ def getdata(pillar):
 
         # Create a dict of { <refpath>: [path, refpath] }
 
-        #diag("processing {}".format(refs))
         for r in refs:
             r_path = r[0]
             r_ref  = r[1]
-            #diag("r_path is {}".format(pformat(r_path)))
-            #diag("r_ref is {}".format(r_ref))
+            
             target_ref = canonicalize_path(r_path)
             if target_ref is None:
                 msg = stringify("path",path,"cannot be canonicalized! All the separator tokens are used within keys along the path")
@@ -283,9 +257,9 @@ def getdata(pillar):
                 pass
             expand[target_ref] = r
             path_mapping[target_ref] = r_path
-            #diag("r_path={}, r_ref={}, target_ref={}, expand[(that)]={}".format(r_path, r_ref, target_ref,pformat(expand[target_ref])))
+            
 
-        diag("Completed processing refs")
+        #diag("Completed processing refs")
         # Just say we have pillar:
         #   a:
         #      b: !!a.d
