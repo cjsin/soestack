@@ -572,7 +572,7 @@ nexus:
         prometheus:
             type:           proxy
             format:         yum
-            remote_url:     
+            #remote_url:     
             blobstore:      prometheus
 
         pypi:

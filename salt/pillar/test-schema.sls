@@ -35,10 +35,6 @@ pillar-schema:
                         $ref: '#/definitions/filesystem'
                     config: 
                         type: object
-            
-                required:
-                    - config
-                    - filesystem
 
             filesystem:
                 type: object
