@@ -36,15 +36,11 @@ errors          = []
 def __init__( opts ):
     global SUPPORTED, CHECK, SCHEMA, DEFAULTS
 
-    #log.debug("schema pillar opts:{}".format(pformat(opts)))
-    #log.debug("minion opts:{}".format(pformat(__opts__)))
-
     if 'ext_pillar' in opts and __virtualname__ in opts['ext_pillar']:
         opts = opts['ext_pillar'][__virtualname__]
 
     if opts:
 
-        log.debug("schema init was called.")
         global SCHEMA, CHECK
         #SCHEMA = opts.get('schema', DEFAULTS['schema'])
         #CHECK = opts.get('check', DEFAULTS['check'])
@@ -61,7 +57,6 @@ def __init__( opts ):
 
 def __virtual__():
     global SUPPORTED
-    log.debug("schema __virtual__ was called.")
     if SUPPORTED:
         return __virtualname__
     else:
@@ -112,12 +107,10 @@ def ext_pillar( minion_id, pillar, *args, **kwargs ):
 
     if CONFIG:
         config = pillar.get(CONFIG,None)
-        #log.debug("Loaded config({}) = {}".format(CONFIG, pformat(config)))
     else:
         log.debug("No CONFIG specified")
     
     if config:
-        log.debug(pformat(config))
         schema = config.get('schema',SCHEMA)
         check  = config.get('check',CHECK)
     else:
@@ -137,9 +130,7 @@ def ext_pillar( minion_id, pillar, *args, **kwargs ):
         warnings.append('No pillar paths to check were found')
         status = 'nothing-to-do'
     else:
-
         to_check = process_checklist(pillar, check, schema)
-        log.debug("Will validate {} against schema {}".format(" ".join([pformat(x) for x in to_check]), pformat(schema) ))
 
         if not to_check:
             warnings.append('None of the pillar paths specified for checking were found in the pillar')
@@ -148,13 +139,13 @@ def ext_pillar( minion_id, pillar, *args, **kwargs ):
             status = 'success'
             try:
                 for c in to_check:
-                    #log.debug("c = {}".format(pformat(c)))
+                    
                     path, typename, val, base_schema = c
-                    #log.debug("Create validator for object of type " + typename)
+                    
                     validator = copy.deepcopy(base_schema)
-                    #log.debug(pformat(validator))
-                    #log.debug({"$ref":"#/definitions/"+typename})
+                    
                     validator.update({"$ref":"#/definitions/"+typename})
+
                     result, message = validate_object(validator, val)
                     if result:
                         count += 1
