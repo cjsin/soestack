@@ -1,5 +1,4 @@
-_loaded:
-    {{sls}}:
+{{ salt.loadtracker.load_pillar(sls) }}
 
 deployments:
     pxeboot_server:
@@ -108,6 +107,9 @@ deployments:
                                     #WAIT:              1
                                     DOMAIN:            default
                                     SALT_MASTER:       infra.default
+                                    # NOTE that the admin email is mandatory for having a working Salt/GPG integration
+                                    # for private data storage
+                                    ADMIN_EMAIL:       admin@demo.soestack.example.com
                                     SALT_TYPE:         minion
                                     NAMESERVER:        192.168.121.101
                                     ROLES:             basic-node

@@ -1,3 +1,5 @@
+{{ salt.loadtracker.load_pillar(sls) }}
+
 nuggets:
     firewalld-firewall:
         description: |

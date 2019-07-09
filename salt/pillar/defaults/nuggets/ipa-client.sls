@@ -1,3 +1,5 @@
+{{ salt.loadtracker.load_pillar(sls) }}
+
 nuggets:
     ipa-client:
         description: |

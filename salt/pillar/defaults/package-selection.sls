@@ -1,3 +1,5 @@
+{{ salt.loadtracker.load_pillar(sls) }}
+
 # Individual hosts or layers can install package sets in 4 ways:
 #   1. Select them globally here
 #   2. Add to the package-selection in another pillar file in another layer (included based on host or some other grain)

@@ -1,3 +1,5 @@
+{{ salt.loadtracker.load_pillar(sls) }}
+
 cups:
     # Override with 0.0.0.0:631 to provide printing services to your network 
     listen_address: 127.0.0.1:631

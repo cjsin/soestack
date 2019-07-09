@@ -1,3 +1,5 @@
+{{ salt.loadtracker.load_pillar(sls) }}
+
 build:
     rpm: {} # Note the empty dict is required here, or else salt will delete pre-existing data
         # Example package build data

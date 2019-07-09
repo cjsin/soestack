@@ -1,3 +1,5 @@
+{{ salt.loadtracker.load_pillar(sls) }}
+
 # Defaults for selinux. Note this may be overridden by the security mode (security.<high|low|mid>)
 
 selinux:

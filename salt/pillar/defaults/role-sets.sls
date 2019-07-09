@@ -1,61 +1,68 @@
+{{ salt.loadtracker.load_pillar(sls) }}
+
 # Sets of roles which are used to initialise a server's roles list
 # Once applied, most states would use the individual roles only
 
 role-sets:
 
+    # NOTE that the order of the roles within a role-set 
+    # CAN affect the resulting merged data in a counter-intuitive way.
+    # In short, more important roles should appear later, so that their data
+    # can override that specified for less important roles
+    
     all-in-one-sde-server-node:
         purpose: |
             all-in-one-sde server role type is one which provides all the basic functions 
             of a software development environment in one node
         combine:
-            - primary-server-node
-            ## - kubernetes-node
+            - kubernetes-node
+            - workstation-node
+            - software-development-node
             - docker-node
-            - email-server-node
-            - homedir-server-node
-            - processor-node
+            - login-processor-node
             - login-node
+            - processor-node
             - jumpserver-node
             ## - elasticsearch-node
+            - email-server-node
             - service-node
-            - login-processor-node
             - nexus-node
-            - software-development-node
-            - workstation-node
+            - homedir-server-node
+            - primary-server-node
 
     usb-infra-server-node:
         purpose: |
             slightly cut-back usb infrastructure server node for
             quicker USB install testing
         combine:
-            - primary-server-node
             - docker-node
-            - email-server-node
-            - homedir-server-node
-            - processor-node
-            - login-node
-            - jumpserver-node
-            - service-node
             - login-processor-node
+            - login-node
+            - processor-node
+            - jumpserver-node
+            - email-server-node
+            - service-node
             - nexus-node
+            - homedir-server-node
+            - primary-server-node
 
     quickstart-infra-server-node:
         purpose: |
             an infrastructure server with a connection to the internet - uses regular repos
             instead of a configuring a nexus server
         combine:
-            - primary-server-node
-            - kubernetes-node
             - docker-node
-            - email-server-node
-            - homedir-server-node
-            - processor-node
-            - software-development-node
-            - login-node
-            - jumpserver-node
-            - service-node
-            - login-processor-node
             - workstation-node
+            - software-development-node
+            - kubernetes-node
+            - login-processor-node
+            - login-node
+            - processor-node
+            - jumpserver-node
+            - email-server-node
+            - service-node
+            - homedir-server-node
+            - primary-server-node
 
     login-processor-node:
         purpose: |
@@ -69,6 +76,6 @@ role-sets:
             developer-workstation role type is one which supports regular
             workstation functions as well as having software development tools
         combine:
-            - workstation-node
             - software-development-node
+            - workstation-node
 

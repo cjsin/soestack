@@ -1,3 +1,5 @@
+{{ salt.loadtracker.load_pillar(sls) }}
+
 # Package groups which represent roles (share a name with a role)
 
 package-groups:
@@ -36,6 +38,7 @@ package-groups:
             - minimal-node
         package-sets:
             - net-tools
+            - clamav-antivirus
 
     desktop-node:
         package-groups:
@@ -66,6 +69,7 @@ package-groups:
         package-sets:
             - nfs-server
             - disk-quotas
+            - clamav-antivirus-server
 
     kubernetes-node:
         package-groups:

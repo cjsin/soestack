@@ -1,3 +1,5 @@
+{{ salt.loadtracker.load_pillar(sls) }}
+
 service-sets:
     dhcp-server:
         centos,rhel,fedora:

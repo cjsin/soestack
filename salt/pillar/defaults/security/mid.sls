@@ -1,3 +1,5 @@
+{{ salt.loadtracker.load_pillar(sls) }}
+
 selinux:
     mode:    permissive
 
@@ -14,4 +16,3 @@ legal:
     banners:
         login: |
             Hey please don't do anything nasty on this system.
-

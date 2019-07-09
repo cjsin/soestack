@@ -1,3 +1,5 @@
+{{ salt.loadtracker.load_pillar(sls) }}
+
 nugget_data:
     firewall:
         dhcp-server:

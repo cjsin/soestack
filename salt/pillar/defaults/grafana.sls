@@ -1,3 +1,4 @@
+{{ salt.loadtracker.load_pillar(sls) }}
 
 firewall:
     grafana:

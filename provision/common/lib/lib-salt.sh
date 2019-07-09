@@ -139,6 +139,96 @@ function best_hostname()
     echo_return "$(hostname -f)"
 }
 
+function initialise_rng()
+{
+    local rngdev="/dev/hwrandom"
+    [[ -e "${rngdev}" ]] || rngdev="/dev/urandom"
+    rngd -r "${rngdev}"
+}
+
+# NOTE this function uses a subshell () not a block {} so that
+# the working directory is not changed in the calling routine.
+# And also so that the 'set -e' can be used to bail out on any
+# error.
+function prepare_salt_gpg_keys()
+(
+    ensure_installed gnupg2 rng-tools
+    msg "Initialising random seed data"
+
+    # NOTE this is the default location that salt expects
+    local keystore="/etc/salt/gpgkeys"
+    local savedir="/var/log/build/salt-gpgkeys"
+    local -a opts=( --homedir "${keystore}" )
+    local keyconfig_file="${keystore}/keyconfig"
+    local savefile="${savedir}/soestack.key"
+    local pubkey="${keystore}/soestack.gpg"
+
+    if [[ -d "${keystore}" ]]
+    then
+        err "Salt GPG keys appear to have already been generated - refusing to overwrite them"
+        return
+    fi
+
+    mkdir -p "${keystore}" "${savedir}"
+    chmod 0700 "${keystore}" "${savedir}"
+
+    if [[ -z "${ADMIN_EMAIL}" ]]
+    then
+        err "Cannot generate GPG keys for saltstack private pillar data"
+        err "without an ADMIN_EMAIL specified!"
+        return
+    fi
+
+    if ! cd "${keystore}"
+    then 
+        err "Could not enter/create '${keystore}'"
+        return
+    fi
+
+    set -e
+    msg "Generating gpg keys for salt"
+    set -vx
+    cat <<-EOF > "${keyconfig_file}"
+		%echo Generating a basic OpenPGP key
+		Key-Type: default
+		#Key-Length: default
+		Subkey-Type: default
+		#Subkey-Length: 2048
+		Name-Real: SoeStack
+		Name-Comment: SoeStack GPG key for Salt
+		Name-Email: ${ADMIN_EMAIL}
+		Expire-Date: 0
+		# NOTE this option will stop working for gnupg 2.1 and later
+		%no-ask-passphrase
+		%no-protection
+		#%pubring pubring.kbx
+		#%secring trustdb.gpg
+		%commit
+		%echo done
+	EOF
+
+    gpg2 --verbose "${opts[@]}" --batch  --gen-key "${keyconfig_file}" < /dev/null
+    gpg2 --verbose "${opts[@]}" --list-secret-keys
+
+    gpg2 "${opts[@]}" --armor --output "${savefile}" --export-secret-keys 
+    chmod 700 "${savefile}"
+
+    gpg2 "${opts[@]}" --armor --output "${pubkey}" --export # "${ADMIN_EMAIL}"
+
+    # Import the key for the root user configs, so that
+    # the root user can encrypt data with these keys
+    gpg2 --import "${pubkey}"
+
+    local encrypt_script="/usr/local/sbin/salt-gpg-encrypt-stdin"
+    cat <<-EOF > 
+		#!/bin/bash 
+		gpg --armor --batch --trust-model always --encrypt -r "${ADMIN_EMAIL}"
+	EOF
+    chmod u+rx "${encrypt_script}"
+
+
+)
+
 function configure_etc_salt()
 {
     local minion_type="${1}" # client or master
@@ -159,6 +249,8 @@ function configure_etc_salt()
         export SALT_MASTER="$(best_hostname)"
         # Copy some static configuration
         cp "${SS_INC}"/master.d/* /etc/salt/master.d/
+
+        salt_configure_for_development
     fi
     
     echo_data "master: ${SALT_MASTER:-salt}" > /etc/salt/minion.d/master.conf

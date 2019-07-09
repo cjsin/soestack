@@ -16,10 +16,12 @@ base:
 
         # Override with mid level security just during early development
         # - defaults.security.low
+        - ignore_missing: True
 
     'roles:primary-server':
         - match: grain
         - defaults.security.mid
+        - ignore_missing: True
 
     'E@.*':
 
@@ -35,3 +37,4 @@ base:
 
         # Dump a list of all tracked layer files that were loaded, with sequence numbers and timing
         - load-tracing
+        - ignore_missing: True

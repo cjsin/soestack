@@ -1,5 +1,4 @@
-_loaded:
-    {{sls}}:
+{{ salt.loadtracker.load_pillar(sls) }}
 
 deployments:
     gitlab_runner_baremetal:
@@ -10,6 +9,21 @@ deployments:
                 service:
                     enabled:
                         - gitlab-runner
+            filesystem:
+                dirs:
+                    /d/local/data/gitlab-runners:
+                        user: root
+                        group: root
+                    /d/local/data/gitlab-runners/docker:
+                        user: root
+                        group: root
+                    /d/local/data/gitlab-runners/kubernetes:
+                        user: root
+                        group: root
+                    /d/local/data/gitlab-runners/shell:
+                        user: gitlab-runner
+                        group: gitlab-runner
+
             config:
                 # Replace this with the correct token after gitlab installation
                 registration_token: unset 
@@ -19,7 +33,6 @@ deployments:
                     - --env REGISTER_LOCKED=false 
                     - --run-untagged                                          # Register to run untagged builds; defaults to 'true' when 'tag-list' is empty [$REGISTER_RUN_UNTAGGED]
                     - --locked=false                                          # Lock Runner for current project, defaults to 'true' [$REGISTER_LOCKED]
-        
                 executors:
                     docker:
                         registration_flags:
@@ -33,11 +46,14 @@ deployments:
                             - --tag-list docker
                             - --docker-pull-policy if-not-present 
                             - --docker-volume-driver overlay2
+                            - --working-directory /d/local/data/gitlab-runners/docker
 
                     shell:
                         registration_flags:
                             - --tag-list shell
+                            - --working-directory /d/local/data/gitlab-runners/shell
                     kubernetes:
                         registration_flags:
                             - --tag-list k8s
                             - --kubernetes-host infra
+                            - --working-directory /d/local/data/gitlab-runners/kubernetes

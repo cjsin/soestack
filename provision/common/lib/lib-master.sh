@@ -35,6 +35,17 @@ function configure_salt_api()
     chmod 700 /var/lib/salt-enrol/.ssh 
 }
 
+function salt_configure_for_development()
+{
+    local devconfig="/etc/salt/master.d/development.conf"
+    if is_development 
+    then
+        echo "pillar_safe_render_error: False" > "${devconfig}"
+    else
+        rm -f "${devconfig}"
+    fi
+}
+
 function salt_master_enrol_self()
 {
     local h="$(hostname -s)"

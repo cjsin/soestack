@@ -1,5 +1,8 @@
 {{ salt.loadtracker.load_pillar(sls) }}
 
+include:
+    - demo.deployments.gitlab-runner
+
 runlevel: graphical
 
 network:
@@ -22,4 +25,6 @@ deployments:
             hosts:
                 - {{grains.host}}
             activated:       True
+            activated_where: {{sls}}
+
 

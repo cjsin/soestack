@@ -1,3 +1,5 @@
+{{ salt.loadtracker.load_pillar(sls) }}
+
 nuggets:
 
     nginx:
@@ -13,4 +15,3 @@ nuggets:
                 package-sets:
                     - nginx
         activate: {}
-        

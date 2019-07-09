@@ -8,12 +8,14 @@ include:
     - defaults.accounts
     - defaults.backups
     - defaults.bash
+    - defaults.branding
     - defaults.build-defaults
     - defaults.build-packages
     - defaults.cups
     - defaults.docker
     - defaults.firewall
     - defaults.gitlab
+    - defaults.example-gpgdata
     - defaults.grafana
     - defaults.ipa
     - defaults.ipv6

@@ -43,7 +43,7 @@ _loaded_layers:
 
 x-included:
     {%- for x in found %}
-    - {{x}}
+    - {{x|json}}
     {%- endfor %}
 
 include:

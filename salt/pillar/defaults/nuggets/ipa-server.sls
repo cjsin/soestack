@@ -1,3 +1,5 @@
+{{ salt.loadtracker.load_pillar(sls) }}
+
 nugget_data:
 
     # Firewall rules installation not configured yet

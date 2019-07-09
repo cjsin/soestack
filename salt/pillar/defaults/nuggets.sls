@@ -1,3 +1,5 @@
+{{ salt.loadtracker.load_pillar(sls) }}
+
 include:
 
     - defaults.nuggets.firewall-implementations

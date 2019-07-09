@@ -1,4 +1,4 @@
-
+{{ salt.loadtracker.load_pillar(sls) }}
 
 # No nodes are defined by default.
 # 

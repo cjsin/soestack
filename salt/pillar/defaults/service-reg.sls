@@ -1,3 +1,5 @@
+{{ salt.loadtracker.load_pillar(sls) }}
+
 service-reg: {}
     # Example of setting service addresses on your lan for using
     # within configuration templates or states:

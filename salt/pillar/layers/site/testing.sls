@@ -2,12 +2,6 @@
 
 # Overrides for the testing site
 
-include:
-    - demo.deployments.ipa-master
-    - demo.deployments.managed-hosts
-    - demo.deployments.node-exporter
-    - demo.hosts
-
 cups:
     listen_address: 0.0.0.0:631
 
@@ -25,23 +19,8 @@ cups:
 deployments:
     dovecot_server:
         dovecot:
-            host: infra
+            host:        infra
             activated:   True
-            activated_where: {{sls}}
-    elasticsearch_container:
-        elasticsearch-testdev:
-            host:        infra
-            activated:   False
-            activated_where: {{sls}}
-    gitlab_runner_baremetal:
-        gitlab-runner:
-            hosts: []
-            activated:       False
-            activated_where: {{sls}}
-    gitlab_baremetal:
-        gitlab:
-            host:        infra
-            activated:   False
             activated_where: {{sls}}
     grafana_container:
         grafana-cont:
@@ -66,6 +45,24 @@ deployments:
                     automount:
                         locations:
                             - testing
+
+    # Override and Disable various deployments here (override some activated by node roles) until I have more RAM
+    #gitlab_runner_baremetal:
+    #    gitlab-runner:
+    #        hosts: []
+    #        activated:       False
+    #        activated_where: {{sls}}
+    #gitlab_baremetal:
+    #    gitlab:
+    #        host:        infra
+    #        activated:   False
+    #        activated_where: {{sls}}
+
+    elasticsearch_container:
+        elasticsearch-testdev:
+            host:        infra
+            activated:   False
+            activated_where: {{sls}}
     kibana_container:
         kibana-frontend:
             host:        infra

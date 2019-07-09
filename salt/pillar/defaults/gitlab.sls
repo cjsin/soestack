@@ -1,3 +1,5 @@
+{{ salt.loadtracker.load_pillar(sls) }}
+
 # TODO - rework filewall configuration
 firewall:
     ports:

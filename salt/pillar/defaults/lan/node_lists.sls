@@ -1,3 +1,4 @@
+{{ salt.loadtracker.load_pillar(sls) }}
 
 # Node lists are by default empty
 

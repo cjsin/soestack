@@ -1,3 +1,5 @@
+{{ salt.loadtracker.load_pillar(sls) }}
+
 # The convention used here is that groups should end with the '-group' suffix
 # unless they match a role name (and roles generally end in '-node')
 package-groups:

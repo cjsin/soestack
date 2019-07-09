@@ -1,3 +1,5 @@
+{{ salt.loadtracker.load_pillar(sls) }}
+
 package-sets:
 
     alternative-desktops:
@@ -30,6 +32,25 @@ package-sets:
                 - chromium-libs-media
             #rpmfusion-free-updates:
             #    - chromium-libs-media-freeworld
+
+    clamav-antivirus:
+        purpose: |
+            provide antivirus support for scanning files obtained from untrusted sources
+        centos,redhat-fedora:
+            epel:
+                - clamav
+                - clamav-data
+                - clamav-milter
+                - clamav-scanner-systemd
+                - clamav-scanner-systemd
+                - clamav-unofficial-sigs
+
+    clamav-antivirus-server:
+        purpose: |
+            provide antivirus support for scanning files obtained from untrusted sources - the server component
+        centos,redhat-fedora:
+            epel:
+                - clamav-server-systemd
 
     console-tools:
         purpose: |

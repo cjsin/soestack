@@ -23,7 +23,9 @@ include:
     #
     # Other items - order doesn't matter too much
     #
+    - .antivirus
     - .backups
+    - .branding
     - .browser
     #- .banners
     - .bash
