@@ -40,6 +40,10 @@ In its current state, it is primarily designed to support:
 
     - Building nodes via USB, network (PXE) or virtual machines (via Vagrant).
 
+    - Clamav antivirus
+
+    - Schema checking for important configuration data
+
 .. _about_getting_started:
 
 Getting Started
