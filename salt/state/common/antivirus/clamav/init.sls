@@ -25,8 +25,10 @@
         - regex: ^LocalSocket
 
 .freshclam-conf:
-    cmd.run:
-        - name: sed -i -e ‘/^Example/d’ /etc/freshclam.conf
+    file.replace:
+        - name: /etc/freshclam.conf
+        - pattern: ^Example.*
+        - repl: ''
 
 .freshclam-cron-job:
     file.managed:
