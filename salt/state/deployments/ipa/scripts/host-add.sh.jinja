@@ -1,14 +1,17 @@
 #!/bin/bash
 
+. /usr/local/bin/soestack-lib.sh
+. /usr/local/bin/lib-ipa.sh || die "Failed loading ipa lib"
+# . /usr/local/bin/soestack-crypto.sh
+
 fqdn=""
 mac=""
 host_ip=""
 site=""
 
-register=1
+mode="register"
 reregister="ask"
-
-. /usr/local/sbin/lib-ipa.sh 
+special=""
 
 function usage()
 {
@@ -21,6 +24,8 @@ function usage()
     echo ""
     echo "Options:"
     echo ""
+    echo "  --replica     Allow this host to become a replica"
+    echo "  --update      Do not create - only update (for use with --replica)"
     echo "  --dns-only    Perform DNS updates only (no enrollment)."
     echo "  -m <MAC>      Specify the MAC address."
     echo "  -i <IP>       Specify the IP address."
@@ -48,7 +53,16 @@ function process_argv()
                 exit 0
                 ;;
             -dns-only|--dns-only)
-                register=0
+                mode="dns"
+                ;;
+            -replica|--replica)
+                mode="register"
+                allow_replica=1
+                special="replica"
+                ;;
+            -promote|--promote)
+                mode="promote"
+                special="replica"
                 ;;
             --re-register)
                 reregister=1
@@ -149,7 +163,11 @@ function process_argv()
     #   host_ip 
     # and if the host is to be registered (not dns-only):
     #   mac
+}
 
+function create_keystore_for_host()
+{
+    : ;
 }
 
 main()
@@ -158,13 +176,19 @@ main()
 
     local kind="host"
 
-    if ! (( register ))
-    then
-        msg "Performing DNS additions only (no host enrollment)"
-        kind="dns"
-    fi
-
-    host_add "${kind}" "${reregister}" "${fqdn}" "${host_ip}" "${mac}" "${site}" "{{enrol}}"
+    case "${mode}" in
+        promote)
+            msg "Prepping host ${fqdn} for promotion"
+            host_promote "${fqdn}"
+            ;;
+        dns)
+            msg "Performing DNS additions only (no host enrollment)"
+            dns_add "${fqdn}" "${host_ip}"
+            ;;
+        register)
+            host_add "${kind}" "${reregister}" "${fqdn}" "${host_ip}" "${mac}" "${special}" "${site}" 
+            ;;
+    esac 
 }
 
 main "${@}"

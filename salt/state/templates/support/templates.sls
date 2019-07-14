@@ -9,7 +9,7 @@
 #
 #}
 
-{%- set prefix, suffix = salt.uuid.ids(args) %}
+{%- set prefix, suffix = salt.uuids.ids(args) %}
 {%- set pillar_location = args.pillar_location if 'pillar_templates' in args and args.pillar_location else '' %}
 {%- set templates = args.templates if ('templates' in args and args.templates) else (salt['pillar.get'](pillar_location,{}) if pillar_location else {}) %}
 

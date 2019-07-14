@@ -109,7 +109,7 @@ date
 # NOTE, the build configuration and user rebuild confirmation are 
 # performed now, prior to writing configuration files which could
 # cause disk partitioning to happen.
-display_build_configuration
+provisioning_display_build_configuration
 
 if ! is_standalone
 then

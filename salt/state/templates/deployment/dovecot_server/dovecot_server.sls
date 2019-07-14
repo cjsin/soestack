@@ -1,5 +1,5 @@
 {%- set diagnostics      = False %}
-{%- set prefix, suffix   = salt.uuid.ids(args) %}
+{%- set prefix, suffix   = salt.uuids.ids(args) %}
 {%- set deployment       = args.deployment %}
 {%- set deployment_name  = args.deployment_name %}
 {%- set deployment_type  = args.deployment_type %}

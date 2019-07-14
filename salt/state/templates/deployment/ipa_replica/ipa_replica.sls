@@ -1,49 +1,20 @@
-{#- save the deployment args for reuse when including ipa_common #}
-{%- set deployment_args = args %}
-{%- set deployment_name = args.deployment_name %}
-{%- set deployment      = args.deployment %}
-
 {#  this should be ipa_replica - IPA does not have masters, just equal replicas #}
 {#  however we are using the term master for an 'initial' server deployment #}
 {#  and replica for another server which is joined with an existing master #}
+{#  The process for this these days is to install it as a client and then #}
+{#  'promote' it by adding it to an 'ipaservers' host group, and then #}
+{#  run the ipa-replica-install script (no passwords required) #}
+{#  however the firewall and selinux still need to be configured during that process #}
 
-{%- set deployment_type = args.deployment_type %}
+{#- first make sure the client is configured and installed #}
+{%  include('templates/deployment/ipa_client/ipa_client.sls') with context %}
 
-{#- install required packages #}
-{%- set args = { 'package-set': 'ipa-server' } %}
-{%  include('templates/package/sets.sls') with context %}
+{#- then prep it for becoming a server #}
+{%  include('templates/deployment/ipa_server/ipa_server.sls') with context %}
 
-{%- set replica_key_file = '/root/ipa-replica-'~deployment_name~'.gpg' %}
+{#- perform the promotion if necessary #}
+{%  include('templates/deployment/ipa_replica/ipa_replica_promote.sls') with context %}
 
-#ipa-replica-deploy-{{deployment_name}}-prepare-joining-key:
-#    file.managed:
-#        - name:     {{replica_key_file}}
-#        - user:     root
-#        - group:    root
-#        - mode:     '600'
-#        - unless:   test -f "{{replica_key_file}}"
-#        - contents: |
-#            TODO - this data is obtained from the master
+{#- activate it / make sure services are running, etc #}
+{%  include('templates/deployment/ipa_server_activation/ipa_server_activation.sls') with context %}
 
-{{sls}}.ipa-replica-install-script-{{deployment_name}}:
-    file.managed:
-        - name:         /usr/local/sbin/ipa-replica-deploy-{{deployment_name}}
-        - source:       salt://{{slspath}}/deploy-ipa-replica.sh.jinja
-        - user:         root
-        - group:        root
-        - mode:         '0755'
-        - template:     jinja
-        - context:
-            name:             {{deployment_name}}
-            replica_key_file: {{replica_key_file}}
-            config:           {{config|json}}
-        
-{{sls}}.ipa-replica-join-{{deployment_name}}:
-    cmd.run:
-        - name:    /usr/local/sbin/ipa-replica-deploy-{{deployment_name}}
-        # TODO - check the log file names
-        - unless:  test -f /var/log/ipaserver-install.log
-        - creates: /var/log/ipaserver-install.log
-
-{%- set args = deployment_args %}
-{%  include('templates/deployment/ipa_common/ipa_common.sls') with context %}

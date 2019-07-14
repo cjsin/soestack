@@ -5,6 +5,7 @@ base:
         # Load soestack defaults
         - defaults
         - layers
+        - secrets
         
         # Testing schema validation
         #- test-schema

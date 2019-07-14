@@ -5,7 +5,7 @@
 {%-         do recursion.append(name) %}
 {%-     endif %}
 
-{%-     set prefix, suffix = salt.uuid.ids(args) %}
+{%-     set prefix, suffix = salt.uuids.ids(args) %}
 {%-     set firewall        = args.firewall if 'firewall' in args and args.firewall else {} %}
 
 {%-     if 'firewall-rule-sets' in firewall and 'nugget_data' in pillar and 'firewall-rule-sets' in pillar.nugget_data %}

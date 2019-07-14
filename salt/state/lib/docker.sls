@@ -1,6 +1,6 @@
 {% macro image_present(image,image_prefix='') -%}
 
-{%-     set prefix, suffix  = salt.uuid.ids() %}
+{%-     set prefix, suffix  = salt.uuids.ids() %}
 
 {%-     if not image %}
 

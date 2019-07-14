@@ -1,6 +1,6 @@
 {% macro notice(msg) -%}
 
-NOTICE-{{salt.uuid.short()}}:
+NOTICE-{{salt.uuids.short()}}:
     noop.notice:
         - name: |-
             {{ msg|indent(12) }}
@@ -9,7 +9,7 @@ NOTICE-{{salt.uuid.short()}}:
 
 {% macro log(msg) -%}
 
-LOG-{{salt.uuid.short()}}:
+LOG-{{salt.uuids.short()}}:
     noop.log:
         - name: |-
             {{ msg|indent(12) }}
@@ -18,7 +18,7 @@ LOG-{{salt.uuid.short()}}:
 
 {% macro warning(msg) -%}
 
-WARNING-{{salt.uuid.short()}}:
+WARNING-{{salt.uuids.short()}}:
     noop.warning:
         - name: |-
             {{ msg|indent(12) }}
@@ -27,7 +27,7 @@ WARNING-{{salt.uuid.short()}}:
 
 {% macro error(msg) -%}
 
-ERROR-{{salt.uuid.short()}}:
+ERROR-{{salt.uuids.short()}}:
     noop.error:
         - name: |-
             {{ msg|indent(12) }}
@@ -36,7 +36,7 @@ ERROR-{{salt.uuid.short()}}:
 
 {% macro pprint(name,obj) -%}
 
-PPRINT-{{name}}-{{salt.uuid.short()}}:
+PPRINT-{{name}}-{{salt.uuids.short()}}:
     noop.pprint:
         - data: {{ obj | json }}
 

@@ -108,18 +108,23 @@ docker:
             #dns-opts:
             #    #- 'ndots:0'
             dns-search:
-                - demo
+                - '!!network.system_domain'
             
             # disable-legacy-registry: True
 
 
 ipa:
     # NOTE: IPA uses the REALM to generate the base dn, dc=xxx, not the dns domain
-    server:    infra.demo.com
-    server_ip: '!!demo.ips.infra'
-    base_dn:   dc=demo,dc=com
-    bind_user: bind-user
-    realm:     DEMO.COM
+    server:       infra.demo.com
+    server_ip:    '!!demo.ips.infra'
+    base_dn:      dc=demo,dc=com
+    bind_user:    bind-user
+    realm:        DEMO.COM
+    domain:       '!!network.system_domain'
+    #primary_zone: 192.168.121.0/24
+    reverse_zone: 121.168.192.in-addr.arpa.
+    default_site: testing
+    site:         testing
 
 network:
 
@@ -187,6 +192,9 @@ network:
                 PREFIX2: '24'
 
 demo:
+    vars:
+        infra: infra.demo.com
+
     passwords: 
         public-default: admin123
         nexus:          '!!demo.passwords.public-default'
@@ -194,6 +202,7 @@ demo:
             master:     '!!demo.passwords.public-default'
             admin:      '!!demo.passwords.public-default'
             ds:         random
+
     ips:
         gateway:         192.168.121.1
         infra:           192.168.121.101

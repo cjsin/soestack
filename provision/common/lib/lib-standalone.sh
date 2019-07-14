@@ -491,15 +491,6 @@ function obtain_bundled_file()
     fi
 }
 
-function require_docker()
-{
-    if ! command_is_available docker
-    then
-        err "Docker is not available - perhaps it is not installed"
-        return 1
-    fi
-}
-
 function load_container_file()
 {
     local name="${1}"

@@ -7,8 +7,8 @@ deployments:
             activated:   True
             activated_where: {{sls}}
             config:
-                server:  infra.default
-                realm:   DEFAULT
-                domain:  default
+                server:  '!!ipa.server'
+                realm:   '!!ipa.realm'
+                domain:  '!!ipa.domain'
                 site:    default
                 ldap:    {}

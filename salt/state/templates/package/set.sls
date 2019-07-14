@@ -1,4 +1,4 @@
-{%- set prefix, suffix  = salt.uuid.ids() %}
+{%- set prefix, suffix  = salt.uuids.ids() %}
 {%- set package_set_name = args.package_set_name %}
 {%- set package_set = args.package_set %}
 

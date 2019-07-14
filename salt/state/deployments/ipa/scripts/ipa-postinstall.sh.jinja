@@ -1,7 +1,8 @@
 #!/bin/bash
 {%- if 'initial-setup' in config %}
 
-. /usr/local/sbin/lib-ipa.sh 
+. /usr/local/bin/soestack-lib.sh
+. /usr/local/bin/lib-ipa.sh
 
 help_regex='^(h$|help.*)'
 
@@ -188,10 +189,12 @@ function register_hosts()
 
 function perform_kinit()
 {
-    . /root/.ipa-passwords-testenv-master 
-
-    export KRB5CCNAME=/var/cache/salt/master/salt.krb
-    kinit admin <<< "${admin_password}"
+    load_admin_passwords
+    if [[ -n "${admin_password}" ]]
+    then
+        export KRB5CCNAME=/var/cache/salt/master/salt.krb
+        kinit admin <<< "${admin_password}"
+    fi
 }
 
 function main()

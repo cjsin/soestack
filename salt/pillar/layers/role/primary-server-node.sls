@@ -24,6 +24,7 @@ include:
     - demo.deployments.grafana
     - demo.deployments.prometheus
     - demo.deployments.simple-http
+    - demo.deployments.pgp-keyserver
     - demo.hosts
 
 deployments:

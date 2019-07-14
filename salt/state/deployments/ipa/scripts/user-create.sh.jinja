@@ -1,5 +1,8 @@
 #!/bin/bash
 
+. /usr/local/bin/soestack-lib.sh
+. /usr/local/bin/lib-ipa.sh
+
 {%- set init       = config['initial-setup'] if 'initial-setup' in config else {} %}
 {%- set accounts   = init.accounts           if 'accounts'      in init     and init.accounts         else {} %}
 {%- set globalconf = init['global-config']   if 'global-config' in init     and init['global-config'] else {} %}
@@ -14,8 +17,6 @@ default_groups="{{default_groups|join(" ")}}"
 send_email="{{send_email}}"
 
 valid_username='^[a-z]([-_][A-Za-z0-9]+)*[a-zA-Z0-9]+$'
-
-. /usr/local/sbin/lib-ipa.sh 
 
 function usage()
 {

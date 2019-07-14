@@ -2,7 +2,7 @@
 {#-    a mapping with the following keys #}
 {#-        - suffix (optional) - for generating unique keys  #}
 {#-        - pillar_location   - a pillar key containing 'files','dirs','symlinks','templates' #}
-{%- set prefix, suffix = salt.uuid.ids(args) %}
+{%- set prefix, suffix = salt.uuids.ids(args) %}
 
 {%- set pillar_location = args.pillar_location if 'pillar_location' and args.pillar_location else '' %}
 {%- set pillar_data     = salt['pillar.get'](pillar_location,{}) if pillar_location else {} %}

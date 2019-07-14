@@ -132,6 +132,9 @@ installed_scripts:
             - systemd-bugfix-change-runlevel
             - uuid4
             - yum-refresh
+            - soestack-lib.sh
+            - salt-secret
+            - generate-passwords
 
 # This data is not used yet but I am just recording the
 # configuration which is performed, so it can be automated

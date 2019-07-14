@@ -1,0 +1,118 @@
+#!/bin/bash
+
+# Load routines such as msg,die,notice
+. /usr/local/bin/soestack-lib.sh
+. /usr/local/bin/lib-ipa.sh
+
+{%- set hostname = grains.fqdn %}
+{%- set hostname_components = hostname.split('.') %}
+{%- set hostname_domain = '.'.join(hostname_components[0:-1]) %}
+
+{%- set install   = config.install %}
+{%- set ip        = config.ip if 'ip' in config else grains.fqdn_ip4[0] %}
+{%- set fqdn      = grains.fqdn if 'fqdn' not in config or config.fqdn == 'auto' else config.fqdn %}
+
+DEBUG="{{'echo' if 'debug' in install and install.debug else ''}}"
+TIMESTAMP=$(date +%s)
+logprefix="/var/log/ipaserver-install"
+
+function uninstall_failed_first()
+{
+    local logfile="${logprefix}.log"
+    if [[ -f "${logfile}" ]]
+    then
+        if [[ -f "${logprefix}.FAILED" ]]
+        then
+            notice "Uninstalling failed ipa server (replica) installation"
+            # NOTE that this uninstalls 'server', the replica uninstallation is handled by the same script
+            ipa-server-install --uninstall -U 
+            local timestamp=$(stat -c %Z "${logfile}")
+            mv "${logfile}" "${logprefix}.FAILED.${TIMESTAMP}.log"
+        else
+            echo "The IPA service seems to have already been installed successfully" 1>&2
+        fi
+    fi
+}
+
+function promote_to_replica()
+{
+    local -a options=(
+        # TODO - add options such as dns, etc that are useful for replica also
+    )
+
+    # The installation is performed with selinux disabled 
+    # and the firewall rules flushed, because it has troubles otherwise.
+    # The rules it requires can be configured after
+    msg "Preparing server for ipa server install (temporarily disable firewall, selinux)"
+
+    local selinux_state=$(getenforce)
+    if [[ "${selinux_state}" =~ Enforcing ]]
+    then
+        msg "SELinux is enforcing - going Permissive..."
+        setenforce 0
+    fi
+
+    msg "Flush firewall"
+    iptables -F
+    iptables -nvL
+
+    msg "OK - continuing with unattended install"
+    local result
+    ${DEBUG} ipa-replica-install -U "${options[@]}"
+    result=$?
+    
+    msg "Installation result is ${result}"
+    if (( result ))
+    then
+        msg "The installation failed."
+    fi
+
+    msg "Re-enabling selinux, firewall as required"
+
+    if [[ "${selinux_state}" =~ Enforcing ]]
+    then
+        msg "Set selinux Enforcing again"
+        setenforce 1
+    fi
+
+    msg "Restart firewall"
+    systemctl restart iptables
+    
+    # Return the ipa-server-install exit code 
+    return ${result}
+}
+
+function main()
+{
+    uninstall_failed_first
+    
+    rm -f "${logprefix}.FAILED"
+
+    if promote_to_server
+    then
+
+        mkdir -p /var/cache/salt/master
+        export KRB5CCNAME=/var/cache/salt/master/salt.krb
+
+        local admin_password ds_password master_password
+        load_admin_passwords
+        notice "Installation was successful. Preparing salt/IPA integration ticket (${KRB5CCNAME})."
+        kinit admin <<< "${admin_password}"
+        local result=$?
+        # Set up root profile to use the same ticket
+        echo "export KRB5CCNAME=/var/cache/salt/master/salt.krb" >> /root/.profile
+
+        notice "Salt ipa ticket can be renewed during installation phase, using 'salt-ipa-ticket --renew'."
+
+        return ${result}
+    else
+
+        local saved="${logprefix}.FAILED.${TIMESTAMP}.log"
+        cp -f "${logprefix}.log" "${saved}"
+        touch -f "${logprefix}.FAILED"
+        err "IPA replica promotion failed - log file is ${saved}"
+        return 1
+    fi
+}
+
+main "${@}"

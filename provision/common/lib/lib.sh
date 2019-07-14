@@ -1,213 +1,24 @@
 #!/bin/bash
 
+[[ -n "${SS_LOADED_SS_LIB}" ]] || . "${SS_DIR:=${BASH_SOURCE[0]%/provision/*}}"/provision/common/lib/lib-soestack.sh
+
+# NOTE: This script will override some vars and functions which were initialised in the file included above.
+
 # Set SS_DIR if not set already, using the path of this script
 SS_DIR="${SS_DIR:-${BASH_SOURCE[0]%/provision/*}}"
-
 export PROVISION_DIR="${SS_DIR}/provision"
 export SS_INC="${PROVISION_DIR}/common/inc"
 export SS_LIB="${PROVISION_DIR}/common/lib"
 export SS_GEN="/etc/ss"
 export BS_VARS="${SS_GEN}/0-bs-vars.sh"
+
 outline_level=3
 
-#BEGIN_COLOR=$'\u001b['
-COLOR_BEGIN=$'\e['
-COLOR_RED=31m
-COLOR_GREEN=32m
-COLOR_GRAY=30m
-COLOR_BLUE=34m
-COLOR_YELLOW=33m
-COLOR_CYAN=36m
-COLOR_PURPLE=35m
-COLOR_WHITE=37m
-COLOR_ERR=${COLOR_RED}
-COLOR_WARN=${COLOR_YELLOW}
-COLOR_NOTICE=${COLOR_BLUE}
-COLOR_INFO=${COLOR_GRAY}
-#COLOR_RESET=$'\u001b[0m'
-COLOR_RESET=$'\e[0m'
-
+# NOTE this provides a different msg() implementation than soestack-lib.sh
 function msg()
 {
     local funcname=$(interesting_frame 2)
     echo "${funcname}:" "${@}" 1>&2
-}
-
-function bmsg()
-{
-    echo "${*}"
-}
-
-function interesting_frame()
-{
-    local frame="${1:-2}"
-    local nframes="${#FUNCNAME[@]}"
-    local funcname=""
-    local skip_func='^(|colored|spam|notice|info|err|warn|die|echo_stage)$'
-    while [[ "${frame}" -lt "${nframes}" ]]
-    do
-        funcname="${FUNCNAME[${frame}]}"
-        ((frame++))
-        if [[ ! "${funcname}" =~ ${skip_func} ]]
-        then
-            echo "${funcname}"
-            return 0
-        fi
-    done
-    if [[ -n "${BASH_SOURCE[1]}" ]]
-    then 
-        echo "${BASH_SOURCE[1]}"
-    fi
-}
-
-function colored()
-{
-    local color="${1}"
-    local text="${2}"
-    shift 2
-    local funcname=$(interesting_frame 2)
-    echo "${COLOR_BEGIN}${color}${funcname}:${text}${COLOR_RESET}" "${@}" 1>&2
-}
-
-function err()
-{
-    colored ${COLOR_RED} ERROR: "${@}"
-}
-
-function notice()
-{
-    colored ${COLOR_NOTICE} NOTICE: "${@}"
-}
-
-function warn()
-{
-    colored ${COLOR_WARN} WARN: "${@}"
-}
-
-function info()
-{
-    colored ${COLOR_INFO} INFO: "${@}"
-}
-
-# Spam a message to standard output as well as various TTYs, to
-# make sure that it can be seen even when output is redirected to a log file.
-# WARNING: This will execute the parameters twice so should be used just
-# with functions that produce echoe'd output.
-function spam()
-{
-    "${@}" 
-    "${@}" > /dev/tty1 2>&1
-    "${@}" > /dev/tty2 2>&1
-    "${@}" > /dev/tty3 2>&1
-}
-
-function echo_stage()
-{
-    local level="${1:-0}"
-    shift
-    local spaces=$(printf " %.0s" {0..${level}})
-    if [[ "${level}" -ge "${outline_level}" ]]
-    then 
-        echo "${spaces}########################################" 1>&2
-        echo "${spaces}# ${*}" 1>&2
-        echo "${spaces}########################################" 1>&2
-    fi
-}
-
-# Echo some text as an explicit return value within the calling function
-function echo_return()
-{
-    echo "${@}"
-}
-
-# Echo some text, but explicitly with it being as returned data from a function
-# or being prodocued / generated into a file or other artifact
-function echo_data()
-{
-    echo "${@}"
-}
-
-function echo_progress()
-{
-    echo "$(date) ${*}" 1>&2
-}
-
-auto_level="${auto_level:-1}"
-export auto_level
-
-function echo_start()
-{
-    spam echo_stage "${auto_level}" "$(date) Start ${FUNCNAME[1]} ${*}"
-    ((auto_level++))
-}
-
-function echo_done()
-{
-    ((auto_level--))
-    spam echo_stage "${auto_level}" "$(date) Done ${FUNCNAME[1]} ${*}"
-}
-
-function die()
-{
-    msg "FATAL:" "${*}"
-    exit 1
-}
-
-function indent()
-{
-    sed 's/^/    /'
-}
-
-function indented()
-{
-    local heading="${1}"
-    shift
-    echo_return "${heading}:"
-    "${@}" | indent
-}
-
-# Override cp with a function so that functions in this library are called
-# from ain interactive shell, it does not use the 'cp -i' alias.
-function cp()
-{
-    /bin/cp "${@}"
-}
-
-# Override cp with a function so that functions in this library are called
-# from ain interactive shell, it does not use the 'mv -i' alias.
-function mv()
-{
-    /bin/mv "${@}"
-}
-
-function yum_install()
-{
-    yum -y install "${@}"
-}
-
-function is_installed()
-{
-    rpm -q "${1}" > /dev/null 2> /dev/null
-}
-
-function is_docker()
-{
-    # The status of this routine is cached and exported in CONTAINER_DETECTED
-    if [[ -z "${CONTAINER_DETECTED}" ]]
-    then 
-        # This works for docker
-        if egrep -q '/docker|/lxc' /proc/1/cgroup
-        then 
-            msg "Detected running within docker or lxc container"
-            export CONTAINER_DETECTED=1
-        elif [[ -n "${PROVISION_TYPE}" && "${PROVISION_TYPE}" =~ docker|vagrant ]]
-        then
-            export CONTAINER_DETECTED=1
-        else
-            export CONTAINER_DETECTED=0
-        fi
-    fi
-    (( CONTAINER_DETECTED ))
 }
 
 function update_mlocate()
@@ -222,46 +33,10 @@ function install_utils()
     unless_installed bind-utils yum_install bind-utils
 }
 
-function unless_installed()
-{
-    local what="${1}"
-    shift
-    is_installed "${what}" || "${@}" 2>&1 | indent
-}
-
-function ensure_installed()
-{
-    msg "${*}"
-    local p
-    for p in "${@}"
-    do
-        unless_installed "${p}" yum_install "${p}"
-    done 
-}
-
-# Append lines to a file
-# arg 1: outfile - a filename
-# arg 2: mode - 'create' (create or overwrite file) or other (will append)
-function append_lines()
-{
-    local outfile="${1}"
-    local mode="${2}"
-    shift 2
-    if [[ "${mode}" == "create" ]]
-    then
-        > "${outfile}"
-    fi
-    local n
-    for n in "${@}"
-    do
-        grep -q "${n}" < "${outfile}" || echo_data "${n}" 
-    done >> "${outfile}"
-}
-
 # Requires an array variable 'hosts' to be set
 function add_hosts()
 {
-    append_lines /etc/hosts               append "${hosts[@]}"
+    append_lines /etc/hosts append "${hosts[@]}"
 }
 
 function add_nameserver()
@@ -271,44 +46,6 @@ function add_nameserver()
     [[ -n "${NAMESERVER}" ]] &&  append_lines /etc/resolv.conf append "nameserver ${NAMESERVER}"
 }
 
-function display_build_configuration()
-{
-    {
-        #display_bar "######" 
-        #echo "                     Static build configuration:"
-        #cat "${STATICVARS}" | egrep '^[a-zA-Z].*=' | egrep -v '=[(]' | sed -r 's/^([^=]*)=/\1 /' | indent_vars
-        #display_bar "######" 
-
-        echo 1>&2
-        echo "                       Dynamic build configuration:" 1>&2
-        
-        display_bar "######"
-
-        local var_names=( $( egrep --no-filename '^[a-zA-Z].*=($|[^(])' "${SS_GEN}"/*-vars.sh  | cut -d= -f1 | sort | uniq ) )
-
-        local n v
-        for n in "${var_names[@]}"
-        do 
-            v="${!n}"
-            [[ -n "${v}" ]] && echo "${n} ${v}"
-        done | indent_vars
-
-        if ! (( ${#var_names[@]} ))
-        then 
-            echo "No dynamic vars generated in ${f} - generation may have failed." 1>&2
-        fi
-
-        display_bar "######"
-        echo "                              Repositories:" 1>&2
-        display_bar "######"
-        display_repos 
-        display_bar "######"
-        echo "                            Well known hosts:" 1>&2
-        display_bar "######"
-        display_well_known_hosts
-        display_bar "######"
-    } | while IFS='' read line ; do bmsg "${line}" ; done
-}
 
 function display_well_known_hosts()
 {
@@ -335,26 +72,6 @@ function get_kickstart_commandline_settings()
     local -a ss_vars
     readarray -t ss_vars <<< "${lines}"
     echo_return "${ss_vars[@]}"
-}
-
-function dump_array()
-{
-    local name="${1}"
-    local quoted="${2:-}"
-    shift 2
-    echo_return "${name}=("
-    local item
-    local qt=""
-    case "${quoted}" in
-        single|sq|quoted|single-quoted) qt="'";;
-        double|dq|double-quoted) qt='"';;
-        *) qt="${quoted}";;
-    esac 
-    for item in "${@}" 
-    do
-        echo_return "    ${qt}${item}${qt}"
-    done
-    echo_return ")"
 }
 
 function process_commandline_vars()
@@ -449,110 +166,6 @@ function process_commandline_vars()
 
 }
 
-function indent_vars()
-{
-    local line
-    local token0 remainder
-    #sed -e 's/^/\t/' | tr '=' '\t'
-    while read line 
-    do 
-        read token0 remainder <<< "${line}"
-        printf " %-20s  %s\n" "${token0}" "${remainder}" # | tr ' ' '_'
-    done
-}
-
-function display_bar()
-{
-    echo_return " $(printf "######%.0s" {1..13})"
-}
-
-function display_array()
-{
-    local col1_width="${1}"
-    local col2_width="${2}"
-    shift 2
-    local line a b x remainder len
-    local lines=()
-    local longest=0
-    for x in "${@}"
-    do
-        line="${x}"
-        read a b remainder <<< "${line}"
-        line=$(printf " %-${col1_width}s  %-${col2_width}s %s" "${a}" "${b}" "${remainder}")
-        lines+=("${line}")
-        len="${#line}"
-        [[ "${len}" -gt "${longest}" ]] && longest="${len}"
-    done
-
-    local indent_len=$(( (78 - longest) / 2))
-
-    if [[ "${indent_len}" -lt 0 ]]
-    then 
-        indent_len=0
-    fi 
-
-    for line in "${lines[@]}"
-    do
-        printf "%${indent_len}s%s\n" "" "${line}"
-    done
-}
-
-function determine_network_devices()
-{
-    # TODO: update this to cater for vagrant situation in which
-    # there are two network devices
-    ip a | egrep -A2 ': (eno|enp|eth|wlan|wlo)' | egrep -v link/ether | egrep -B1 inet' ' | egrep '^[0-9]' | tr ':' ' '| awk '{print $2}'
-}
-
-function determine_network_device()
-{
-    local devs=( $(determine_network_devices) )
-    local d
-    for d in "${devs[@]}"
-    do 
-        if [[ -n "${SKIP_NETDEV}" && "${d}" == "${SKIP_NETDEV}" ]]
-        then
-            continue
-        fi 
-        echo_return "${d}"
-        return 0
-    done
-    # Fall back to eth0
-    echo_return "eth0"
-    return 1
-}
-
-function determine_current_ipaddr_prefix()
-{
-    # TODO: update this to cater for vagrant situation in which
-    # there are two network devices
-    local dev="${NETDEV:-eno|enp|eth|wlan|wlo}"
-    ip a | egrep -A2 ": (${dev})" | egrep -A1 link/ether|grep inet' '| awk '{print $2}' | head -n1 
-}
-
-function determine_vm_or_baremental()
-{
-    if [[ -e /dev/vda ]]
-    then
-        echo_return "vm"
-    elif [[ -e /dev/sda ]]
-    then
-        echo_return "baremetal"
-    else
-        echo_return "unknown"
-    fi
-}
-
-function determine_vagrant_or_kickstart()
-{
-    if grep -q vagrant /etc/passwd
-    then
-        echo_return "vagrant"
-    else
-        echo_return "kickstart"
-    fi
-}
-
 function generate_bootstrap_vars()
 {
     echo_return "set -e"
@@ -604,148 +217,7 @@ function generate_bootstrap_vars()
 
     echo_return "set +e"
 }
-
-function load_bootstrap_vars()
-{
-    if [[ ! -f "${BS_VARS}" ]]
-    then
-        mkdir -p "${SS_GEN}"
-        generate_bootstrap_vars > "${BS_VARS}"
-    fi
-
-    . "${BS_VARS}"
-}
-
-function load_dyn_vars()
-{
-    local f
-    set -a
-    for f in "${SS_GEN}"/*-vars.sh 
-    do 
-        . "${f}"
-    done
-    set +a
-}
-
-function is_standalone()
-{
-    [[ -n "${STANDALONE}" ]] && (( STANDALONE ))
-}
-
-function is_verbose()
-{
-    [[ -n "${VERBOSE}" ]] && (( VERBOSE ))
-}
-
-function is_skip_confirmation()
-{
-    [[ -n "${SKIP_CONFIRMATION}" ]] && (( SKIP_CONFIRMATION ))
-}
-
-function is_interactive()
-{
-    [[ -n "${INTERACTIVE}" ]] && (( INTERACTIVE ))
-}
-
-function is_wait()
-{
-    [[ -n "${WAIT}" ]] && (( WAIT ))
-}
-
-function is_inspect()
-{
-    [[ -n "${INSPECT}" ]] && (( INSPECT ))
-}
-
-function is_wireless_simulated()
-{
-    [[ -n "${WLAN_SIM}" ]] && (( WLAN_SIM ))
-}
-
-function is_development()
-{
-    if [[ -n "${DEVELOPMENT}" ]] && (( DEVELOPMENT ))
-    then
-        notice "Development mode features being enabled."
-        return 0
-    else
-        return 1
-    fi
-}
-
-
-function array_to_json()
-{
-    local i="" s=""
-    for i in "${@}"
-    do 
-        s+="\"${i}\", "
-    done
-    echo_return "[ ${s%, } ]" # NOTE the final comma is stripped off
-}
-
-function pairs_to_json()
-{
-    local k="" v="" s=""
-    while (( $# ))
-    do
-        k="${1}"
-        v="${2}"
-        shift 2
-        s+="\"${k}\": ${v}, "
-    done
-    echo_return "{ ${s%, } }" # NOTE the final comma is stripped off
-}
-
-function interactive_prompt()
-{
-    local prompt="${*}"
-    local answer
-    
-    while [ 1 ] 
-    do 
-        spam notice "${prompt}" 
-        spam notice "Hit enter to continue, skip to skip this step, shell for a shell: "
-        read answer
-        case "${answer,,}" in 
-            skip)
-                spam notice "OK - skipping this step"
-                return 1
-                ;;
-            shell)
-                spam notice "OK - dropping into a shell. Use 'exit 1' to skip the step, and 'exit 0' to continue."
-                spam_notice "Shell will be on TTY1."
-                bash -i < /dev/tty1 > /dev/tty1 2> /dev/tty1
-                ;;
-            "")
-                spam notice "OK - continuing with [${prompt}]"
-                return 0
-                ;;
-            *)
-                err "Invalid answer."
-                ;;
-        esac 
-    done
-}
-
-function step()
-{
-    if is_interactive
-    then
-        spam notice "Interactive prompt enabled - enter response on TTY1."
-        if ! interactive_prompt "STEP: ${*}"
-        then
-            # The user chose to skip
-            return 0
-        fi 
-    elif is_verbose
-    then
-        msg "${*}"
-    fi
-
-    "${@}"
-}
-
+ 
 function configure_wireless()
 {
     local devname="${1}"
@@ -839,11 +311,6 @@ function simulate_wireless()
     fi
 }
 
-function command_is_available()
-{
-    command -v "${1}" > /dev/null 2> /dev/null
-}
-
 function bootstrap_repos()
 {
     msg "Bootstrap repos."
@@ -885,4 +352,20 @@ function bootstrap_repos()
     fi
 }
 
-export SSL_LOADED_COMMON_LIB=1
+function provisioning_display_build_configuration()
+{
+    display_build_configuration
+    {
+        display_bar "######"
+        echo "                              Repositories:" 1>&2
+        display_bar "######"
+        display_repos 
+        display_bar "######"
+        echo "                            Well known hosts:" 1>&2
+        display_bar "######"
+        display_well_known_hosts
+        display_bar "######"
+    } | while IFS='' read line ; do bmsg "${line}" ; done
+}
+
+export SS_LOADED_COMMON_LIB=1

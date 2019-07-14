@@ -1,5 +1,6 @@
 base:
     '*':
+        - secrets
         - common
         - activated
         - deployments

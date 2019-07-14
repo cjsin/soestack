@@ -1,6 +1,5 @@
 #!/bin/bash
 
-pwfile="{{pwfile}}"
 ticket_dir="/var/cache/salt/master"
 KRB5CCNAME="${ticket_dir}/salt.krb"
 HELP_REGEX='(^|[[:space:]])(-h|-help|--help|help)([[:space:]]|$)'
@@ -45,13 +44,13 @@ function renew_ticket()
 {
     mkdir -p "${ticket_dir}"
 
-    if [[ -f "${pwfile}" ]]
+    local admin_password=$(salt-secret pw-ipa-admin)
+
+    if [[ -n "${admin_password}" ]]
     then 
         msg "Using randomly generated IPA passwords during install."
-        msg "The file ${pwfile} should be deleted after install is finished successfully."
 
         # Load pregenerated passwords
-        . "{{pwfile}}"
         kinit admin <<< "${admin_password}"
     elif [[ -t 0 ]]
     then

@@ -1,18 +1,16 @@
 #!/bin/bash
 
 # Load routines such as msg,die,notice
-. /soestack/provision/common/lib/lib.sh
+. /usr/local/bin/soestack-lib.sh
+. /usr/local/bin/lib-ipa.sh
 
 {%- set hostname = grains.fqdn %}
 {%- set hostname_components = hostname.split('.') %}
 {%- set hostname_domain = '.'.join(hostname_components[0:-1]) %}
 
 {%- set install   = config.install %}
-{%- set passwords = {'ds': 'ds', 'master': 'master', 'admin': 'admin'} %}
 {%- set ip        = config.ip if 'ip' in config else grains.fqdn_ip4[0] %}
 {%- set fqdn      = grains.fqdn if 'fqdn' not in config or config.fqdn == 'auto' else config.fqdn %}
-{%- set realm     = config.realm if 'realm' in config else 'IPA' %}
-{%- set domain    = config.domain if 'domain' in config else hostname_domain %}
 
 DEBUG="{{'echo' if 'debug' in install and install.debug else ''}}"
 TIMESTAMP=$(date +%s)
@@ -38,9 +36,11 @@ function uninstall_failed_first()
 function install_server()
 {
     # Load pre-generated passwords
-    . "{{pwfile}}"
+    
+    local admin_password master_password ds_password
+    load_admin_passwords
 
-    [[ -n "${master_password}" ]] || die "No random ipa passwords generated!"
+    [[ -n "${master_password}" ]] || die "No IPA secrets have been created! Run salt-call state.sls secrets first (and make sure the pw-ipa-* passwords are set to be generated and distributed in pillar.secrets "
 
     local -a options=(
         # Skip dns check
@@ -51,8 +51,8 @@ function install_server()
         "--mkhomedir"
         "--ssh-trust-dns"
 
-        "--realm={{realm}}"
-        "--domain={{domain}}"
+        "--realm=${IPA_REALM}"
+        "--domain=${IPA_DOMAIN}"
         "--hostname={{fqdn}}"
         "--ip-address={{ip}}"
         "--no-host-dns"
@@ -70,7 +70,9 @@ function install_server()
         {%- endif %}
         # "--reverse-zone={{''}}"
         # "--auto-reverse"
-        "--reverse-zone=$(echo "{{ip}}" | tr '.' '\n' | head -n3 | tac|tr '\n' '.' )in-addr.arpa."
+        # TODO - change to use IPA_REVERSE_ZONE from sysconfig
+        #"--reverse-zone=$(echo "{{ip}}" | tr '.' '\n' | head -n3 | tac|tr '\n' '.' )in-addr.arpa."
+        "--reverse-zone=${IPA_REVERSE_ZONE}"
         {%- endif %} 
 
         # "--master-password=${master_password}"
@@ -133,12 +135,12 @@ function main()
         export KRB5CCNAME=/var/cache/salt/master/salt.krb
 
         notice "Installation was successful. Preparing salt/IPA integration ticket (${KRB5CCNAME})."
-        kinit admin <<< "${admin_password}"
+        kinit admin <<< "$(salt-secret pw-ipa-admin)"
 
         # Set up root profile to use the same ticket
         echo "export KRB5CCNAME=/var/cache/salt/master/salt.krb" >> /root/.profile
 
-        notice "Salt ipa ticket can be renewed during installation phase, using 'salt-ipa-ticket-<deployment-name> --renew'."
+        notice "Salt ipa ticket can be renewed during installation phase, using 'salt-ipa-ticket --renew'."
 
         msg "Running IPA post-install"
         /usr/local/sbin/ipa-postinstall-{{deployment_name}}

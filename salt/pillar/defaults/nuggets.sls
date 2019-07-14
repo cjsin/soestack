@@ -20,4 +20,4 @@ include:
     - defaults.nuggets.managed-hosts
     - defaults.nuggets.dnsmasq
     - defaults.nuggets.dovecot-server
-
+    - defaults.nuggets.pgp-keyserver

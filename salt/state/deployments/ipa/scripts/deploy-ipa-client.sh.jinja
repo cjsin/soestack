@@ -1,11 +1,12 @@
 #!/bin/bash
 
+. /usr/local/bin/soestack-lib.sh
+. /usr/local/bin/lib-ipa.sh
+
 CLIENT_HOSTNAME="{{grains.fqdn}}"
-IPA_SERVER="{{grains.ipa.server}}"
-IPA_DOMAIN="{{grains.ipa.domain}}"
-IPA_REALM="{{grains.ipa.realm}}"
 IPA_SITE="{{grains.ipa.site}}"
-IPA_CONFIG="{{grains.ipa.config}}"
+IPA_SITE="${IPA_SITE:-${IPA_DEFAULT_SITE}}"
+DEBUG='{{DEBUG}}'
 
 function die()
 {
@@ -48,7 +49,6 @@ install_client()
     --automount-location="${IPA_SITE}"
 
     --verbose 
-    -w "${IPA_CONFIG}"
     )
 
     # The installation is performed with selinux disabled 
@@ -59,7 +59,7 @@ install_client()
     iptables -F
     iptables -nvL
 
-    {{DEBUG}} ipa-client-install -U "${options[@]}"
+    ${DEBUG} ipa-client-install -U "${options[@]}" -w "$(salt-secret ipa_client_enrol)"
 
     setenforce 1
     systemctl restart iptables

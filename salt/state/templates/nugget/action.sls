@@ -1,7 +1,7 @@
 {%- import 'lib/noop.sls' as noop %}
 
 {%- set diagnostics     = False %}
-{%- set prefix, suffix  = salt.uuid.ids(args) %}
+{%- set prefix, suffix  = salt.uuids.ids(args) %}
 {%- set required_by     = '-by-' ~ args.required_by if 'required_by' in args else '-by-none' %}
 {%- set nugget_name     = args.nugget_name if 'nugget_name' in args else '' %}
 {%- set suffix          = nugget_name ~ required_by ~ suffix %}

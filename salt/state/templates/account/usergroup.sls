@@ -1,6 +1,6 @@
 {#- this template requires an 'args' mapping with some of the following data in it #}
 
-{%- set prefix, suffix  = salt.uuid.ids(args) %}
+{%- set prefix, suffix  = salt.uuids.ids(args) %}
 
 {%- set username  = args.user %}
 {%- set uid       = args.uid      if 'uid'      in args and args.uid      else '' %}

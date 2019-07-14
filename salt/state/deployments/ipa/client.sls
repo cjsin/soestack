@@ -5,4 +5,6 @@
 {%- endwith %}
 
 include:
+    # Make sure ipa client enrolment secret is distributed
+    - secrets
     - deployments.managed_hosts

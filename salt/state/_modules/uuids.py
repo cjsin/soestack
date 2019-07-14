@@ -11,7 +11,7 @@ from salt.utils.decorators.jinja import jinja_filter, JinjaFilter
 
 import logging
 
-__virtualname__ = 'uuid'
+__virtualname__ = 'uuids'
 
 __outputter__ = {
     'run': 'txt'

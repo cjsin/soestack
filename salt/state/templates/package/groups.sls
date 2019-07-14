@@ -29,7 +29,7 @@
 #
 #}
 
-{%- set prefix, suffix  = salt.uuid.ids() %}
+{%- set prefix, suffix  = salt.uuids.ids() %}
 {%- set diagnostics     = False %}
 
 {%- if diagnostics %}

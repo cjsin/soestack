@@ -1,5 +1,5 @@
 {%- set name = args.name %}
-{%- set prefix, suffix  = salt.uuid.ids(args) %}
+{%- set prefix, suffix  = salt.uuids.ids(args) %}
 
 {%- set dstip0 = args.ip if 'ip' in args else '' %}
 {%- set srcip0 = args.from if 'from' in args else '' %}

@@ -8,7 +8,7 @@
 #
 #}
 
-{%- set prefix, suffix = salt.uuid.ids(args) %}
+{%- set prefix, suffix = salt.uuids.ids(args) %}
 {%- set defaults        = args.defaults if 'defaults' in args else {} %}
 
 {%- if 'dirs' in args and args.dirs %}

@@ -2,34 +2,18 @@
 
 [[ -n "${SS_LOADED_COMMON_LIB}" ]] || . "${SS_DIR:=${BASH_SOURCE[0]%/provision/*}}"/provision/common/lib/lib.sh
 
-function install_patcher()
-{
-    local service_name="${1}"
-    local patcher="${2}"
-    local dropins="/etc/systemd/system/${service_name}.d"
-    mkdir -p "${dropins}"
-
-    cat > "${dropins}/patches.conf" <<-EOF
-		[Service]
-		ExecStartPre=${patcher}
-	EOF
-
-}
-
 function fix_saltstack_pillar_regression_53516()
 {
     local patcher="/usr/local/sbin/patch-saltstack.sh"
-    cat > "${patcher}" <<-'EOF'
+    create_script "${patcher}" <<-'EOF'
 		#!/bin/bash
 		badfile_1='/usr/lib/python2.7/site-packages/salt/pillar/__init__.py'
 		replacement_1='s/sub_sls in set.matched_pstates.:/sub_sls in matched_pstates:/'
 		sed -i.bak -r -e "${replacement_1}" "${badfile_1}"
 	EOF
 
-    chmod +x "${patcher}"
-
-    install_patcher salt-master "${patcher}"
-    install_patcher salt-minion "${patcher}"
+    install_systemd_service_patcher salt-master "${patcher}"
+    install_systemd_service_patcher salt-minion "${patcher}"
 }
 
 function saltstack_fixes()
@@ -125,26 +109,6 @@ function write_layer_grains()
     fi
 }
 
-function best_hostname()
-{
-    local h
-    for h in "$(hostname -s)" "$(hostname -f)"
-    do 
-        if egrep -q "[[:space:]]${h}([[:space:]]|\$)" /etc/hosts
-        then 
-            echo_return "${h}"
-            return 0
-        fi
-    done
-    echo_return "$(hostname -f)"
-}
-
-function initialise_rng()
-{
-    local rngdev="/dev/hwrandom"
-    [[ -e "${rngdev}" ]] || rngdev="/dev/urandom"
-    rngd -r "${rngdev}"
-}
 
 # NOTE this function uses a subshell () not a block {} so that
 # the working directory is not changed in the calling routine.
@@ -152,26 +116,6 @@ function initialise_rng()
 # error.
 function prepare_salt_gpg_keys()
 (
-    ensure_installed gnupg2 rng-tools
-    msg "Initialising random seed data"
-
-    # NOTE this is the default location that salt expects
-    local keystore="/etc/salt/gpgkeys"
-    local savedir="/var/log/build/salt-gpgkeys"
-    local -a opts=( --homedir "${keystore}" )
-    local keyconfig_file="${keystore}/keyconfig"
-    local savefile="${savedir}/soestack.key"
-    local pubkey="${keystore}/soestack.gpg"
-
-    if [[ -d "${keystore}" ]]
-    then
-        err "Salt GPG keys appear to have already been generated - refusing to overwrite them"
-        return
-    fi
-
-    mkdir -p "${keystore}" "${savedir}"
-    chmod 0700 "${keystore}" "${savedir}"
-
     if [[ -z "${ADMIN_EMAIL}" ]]
     then
         err "Cannot generate GPG keys for saltstack private pillar data"
@@ -179,54 +123,7 @@ function prepare_salt_gpg_keys()
         return
     fi
 
-    if ! cd "${keystore}"
-    then 
-        err "Could not enter/create '${keystore}'"
-        return
-    fi
-
-    set -e
-    msg "Generating gpg keys for salt"
-    set -vx
-    cat <<-EOF > "${keyconfig_file}"
-		%echo Generating a basic OpenPGP key
-		Key-Type: default
-		#Key-Length: default
-		Subkey-Type: default
-		#Subkey-Length: 2048
-		Name-Real: SoeStack
-		Name-Comment: SoeStack GPG key for Salt
-		Name-Email: ${ADMIN_EMAIL}
-		Expire-Date: 0
-		# NOTE this option will stop working for gnupg 2.1 and later
-		%no-ask-passphrase
-		%no-protection
-		#%pubring pubring.kbx
-		#%secring trustdb.gpg
-		%commit
-		%echo done
-	EOF
-
-    gpg2 --verbose "${opts[@]}" --batch  --gen-key "${keyconfig_file}" < /dev/null
-    gpg2 --verbose "${opts[@]}" --list-secret-keys
-
-    gpg2 "${opts[@]}" --armor --output "${savefile}" --export-secret-keys 
-    chmod 700 "${savefile}"
-
-    gpg2 "${opts[@]}" --armor --output "${pubkey}" --export # "${ADMIN_EMAIL}"
-
-    # Import the key for the root user configs, so that
-    # the root user can encrypt data with these keys
-    gpg2 --import "${pubkey}"
-
-    local encrypt_script="/usr/local/sbin/salt-gpg-encrypt-stdin"
-    cat <<-EOF > 
-		#!/bin/bash 
-		gpg --armor --batch --trust-model always --encrypt -r "${ADMIN_EMAIL}"
-	EOF
-    chmod u+rx "${encrypt_script}"
-
-
+    prepare_gpg_keystore "salt" "/etc/salt/gpgkeys" "${ADMIN_EMAIL}" "/var/log/build/salt-gpgkeys" "/usr/local/sbin"
 )
 
 function configure_etc_salt()

@@ -22,9 +22,9 @@ deployments:
                         enabled: True
                         forwarders: []
                 passwords:
-                    master: random
-                    admin:  random
-                    ds:     random
+                    master: salt-secret:pw-ipa-master
+                    admin:  salt-secret:pw-ipa-admin
+                    ds:     salt-secret:pw-ipa-ds
                 bind_ips:
                     httpd: 192.168.121.101
                     named: 192.168.121.101

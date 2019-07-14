@@ -1,4 +1,4 @@
-{%- set prefix, suffix  = salt.uuid.ids(args) %}
+{%- set prefix, suffix  = salt.uuids.ids(args) %}
 {{sls}}.{{prefix}}firewall-rule-{{args.name}}{{suffix}}:
     iptables.insert:
         - position:  1

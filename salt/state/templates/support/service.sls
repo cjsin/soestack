@@ -1,4 +1,4 @@
-{%- set prefix, suffix  = salt.uuid.ids(args) %}
+{%- set prefix, suffix  = salt.uuids.ids(args) %}
 {%- set service_name    = args.service_name %}
 {%- set action          = args.action if 'action' in args and args.action else '' %}
 

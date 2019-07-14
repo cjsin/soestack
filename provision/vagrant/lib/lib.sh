@@ -310,7 +310,7 @@ function vagrant_provision()
     load_vagrant_vars
     load_dyn_vars
 
-    display_build_configuration
+    provisioning_display_build_configuration
 
     vagrant_provision_common
 
