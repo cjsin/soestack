@@ -2,7 +2,7 @@
 
 # NOTE that these vars at the top are set for the provisioning
 # scripts, but the rest of the script below that, should be 
-# kept in sync with the (almost) identical script within soestack/salt/state/scripts/soestack-lib.sh
+# kept in sync with the (almost) identical script within soestack/salt/state/scripts/lib-ss.sh
 # Set SS_DIR if not set already, using the path of this script
 SS_DIR="${SS_DIR:-${BASH_SOURCE[0]%/provision/*}}"
 export PROVISION_DIR="${SS_DIR}/provision"
@@ -11,8 +11,8 @@ export SS_LIB="${PROVISION_DIR}/common/lib"
 outline_level=3
 
 # NOTE that these two files should be kept mostly identical below this point
-#    provision/common/lib/lib-soestack.sh
-#    soestack/salt/state/scripts/soestack-lib.sh
+#    provision/common/lib/lib-ss.sh
+#    soestack/salt/state/scripts/lib-ss.sh
 
 export SS_GEN="/etc/ss"
 export BS_VARS="${SS_GEN}/0-bs-vars.sh"
@@ -53,7 +53,7 @@ function bmsg()
 function interesting_frame()
 {
     local frame="${1:-2}"
-    local nframes="${#FUNCNAME[@]}"
+    local nframes=$(array_length "${FUNCNAME[@]}")
     local funcname=""
     local skip_func='^(|colored|spam|notice|info|err|warn|die|echo_stage)$'
     while [[ "${frame}" -lt "${nframes}" ]]
@@ -304,7 +304,8 @@ function display_build_configuration()
             [[ -n "${v}" ]] && echo "${n} ${v}"
         done | indent_vars
 
-        if ! (( ${#var_names[@]} ))
+        local var_count=$(array_length "${var_names[@]}")
+        if ! (( var_count ))
         then 
             echo "No dynamic vars generated in ${f} - generation may have failed." 1>&2
         fi
@@ -362,7 +363,7 @@ function display_array()
         read a b remainder <<< "${line}"
         line=$(printf " %-${col1_width}s  %-${col2_width}s %s" "${a}" "${b}" "${remainder}")
         lines+=("${line}")
-        len="${#line}"
+        len=$(string_length "${line}")
         [[ "${len}" -gt "${longest}" ]] && longest="${len}"
     done
 
@@ -880,9 +881,9 @@ function prepare_node_keystore()
     msg "Copy to node"
     if scp "${archive}.sig" "${node}:/etc/salt/"
     then
-        scp "/usr/local/bin/soestack-lib.sh" "${node}:/usr/local/sbin/"
+        scp "/usr/local/bin/lib-ss.sh" "${node}:/usr/local/sbin/"
         msg "Unpack on node"
-        ssh "${node}" ". /usr/local/bin/soestack-lib.sh && import_signed_keystore"
+        ssh "${node}" ". /usr/local/bin/lib-ss.sh && import_signed_keystore"
     fi
 )
 
@@ -939,7 +940,8 @@ function ask_password_twice()
         then
             read -s -p "Enter the password for ${name} :" answer1 1>&2
             msg ""
-            if [[ -n "${min_length}" && "${answer1}" -lt "${min_length}" ]]
+            local answer_len=$(string_length "${answer1}")
+            if [[ -n "${min_length}" && "${answer_len}" -lt "${min_length}" ]]
             then 
                 err "Password for ${secret_name} was rejected as too short. Minimum length is ${min_length}."
                 answer1=""
@@ -970,6 +972,19 @@ function ask_password_twice()
     done 
     msg "Read password for ${name} successfully."
     echo_return "${answer1}"
+}
+
+# array_length and string_length are used, to avoid
+# problems with jinja comments (in scripts deployed using salt)
+# ie so that the raw/endraw jinja tags don't need to be scattered everywhere
+function array_length()
+{
+    echo "${#}"
+}
+
+function string_length()
+{
+    echo "${#1}"
 }
 
 export SS_LOADED_SS_LIB=1

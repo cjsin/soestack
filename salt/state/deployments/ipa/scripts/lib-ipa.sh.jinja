@@ -1,12 +1,15 @@
 #!/bin/bash
 
-. /usr/local/bin/soestack-lib.sh 
-. /etc/sysconfig/ipa-tools
+. /usr/local/bin/lib-ss.sh
+for _x in tools server
+do 
+    [[ -f "/etc/sysconfig/ipa-${_x}" ]] && . "/etc/sysconfig/ipa-${_x}"
+done
 
 {%- set secret_name = 'ipa_client_enrol' %}
 {% do salt.secrets.check_or_generate(secret_name) %}
 
-deployment_name="{{deployment_name}}"
+deployment_name="${IPA_DEPLOYMENT}"
 managed_hosts_key="managed-hosts:${deployment_name}"
 registered_hosts_file="/etc/ss-hosts-${deployment_name}"
 ipa_realm="${IPA_REALM}"

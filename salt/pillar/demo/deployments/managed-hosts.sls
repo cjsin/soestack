@@ -3,20 +3,20 @@
 deployments:
     managed_hosts:
 
-        testenv-master:
+        demo-ipa-master:
             host:      infra
             activated:   True
             activated_where: {{sls}}
             config:
                 domain: demo # NOTE, this domain may be overridden on a different lan
-                hosts:  managed-hosts:testenv-master
+                hosts:  managed-hosts:demo-ipa-master
                 ipa:    True 
 
-        testenv-client:
+        demo-ipa-client:
             host:      '.*'
             activated:   True
             activated_where: {{sls}}
             config:
                 domain: demo # NOTE, this domain may be overridden on a different lan
-                hosts:  managed-hosts:testenv-client
+                hosts:  managed-hosts:demo-ipa-client
                 ipa:    False

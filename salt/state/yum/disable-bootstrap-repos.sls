@@ -2,8 +2,9 @@
 
 .:
     cmd.run:
+        - onlyif: ls /etc/yum.repos.d | egrep -i '^bootstrap.*[.]repo$|CentOS-(Base|Sources|Debuginfo|Vault)[.]repo$'
         - name: |
-            set -e
+            #set -e
             cd /etc/yum.repos.d
             mkdir -p disable
             # Care is taken not to disable epel bootstrap repo since the nexus epel repo is broken
@@ -17,4 +18,3 @@
             do 
                 [[ -f "${f}" ]] && mv -f "${f}" disable/
             done
-        - onlyif: ls /etc/yum.repos.d | egrep -i '^bootstrap.*[.]repo$|CentOS-(Base|Sources|Debuginfo|Vault)[.]repo$'

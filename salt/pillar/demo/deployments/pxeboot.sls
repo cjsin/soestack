@@ -20,16 +20,16 @@ deployments:
                 firewall:
                     basic:
                         pxebooting:
-                            ip: 192.168.121.101
+                            ip: '!!demo.ips.infra'
                             accept:
                                 udp:
                                     dhcp: 67:69
 
             config:
                 clients:
-                    - pxe-client1
-                    - pxe-client2
-                    - client
+                    - replica1
+                    - processor2
+                    - workstation3
 
                 isos:
                     #netinstall: CentOS-7-x86_64-NetInstall-1810.iso
@@ -45,9 +45,9 @@ deployments:
                     os:    os
                     isos:  /e/iso
                 
-                hostdata:            managed-hosts:testenv-master
-                server:              '192.168.121.101'
-                nfs_server:          '192.168.121.101'
+                hostdata:            managed-hosts:demo-ipa-master
+                server:              '!!demo.ips.infra'
+                nfs_server:          '!!demo.ips.infra'
                 http_server:         '192.168.121.101:9001'
 
                 provisioning:
@@ -66,7 +66,7 @@ deployments:
                         kernel:        os/minimal/images/pxeboot/vmlinuz
                         initrd:        os/minimal/images/pxeboot/initrd.img
                         ss_provisioning: os/minimal/provision
-                        nfs_server:    '192.168.121.101'
+                        nfs_server:    '!!demo.ips.infra'
                         http_server:   '192.168.121.101:9001'
                         append:
                             - rd.shell ip=dhcp inst.sshd=1
@@ -111,7 +111,7 @@ deployments:
                                     # for private data storage
                                     ADMIN_EMAIL:       admin@demo.soestack.example.com
                                     SALT_TYPE:         minion
-                                    NAMESERVER:        192.168.121.101
+                                    NAMESERVER:        '!!demo.ips.infra'
                                     ROLES:             basic-node
                                     LAYERS:            soe:demo,site:testing,lan:default,private:example
                                     DEVELOPMENT:       0
@@ -127,5 +127,5 @@ deployments:
                                     updates:           'http://$NEXUS/repository/centos/centos/$releaselong/updates/$basearch'
                                 ss_hosts: {}
                                 kickstart: http://%http_server%/os/minimal/provision/kickstart/kickstart.cfg
-                                stage2:    nfs:%nfs_server%:/e/pxe/os/minimal/
+                                stage2:    nfs:nfsvers=4:%nfs_server%:/pxe/os/minimal/
 

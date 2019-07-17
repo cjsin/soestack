@@ -17,8 +17,8 @@ docker:
     config:
         daemon:
             dns: 
-                - 192.168.121.1   # host in VM environment
-                - 192.168.121.101 # infra server
+                - '!!demo.ips.gateway'    # host in VM environment
+                - '!!demo.ips.infra'  # infra server
             dns-search:
                 - demo.com
 
@@ -39,12 +39,12 @@ deployments:
                                 ss_settings:
                                     DOMAIN:            demo.com
                                     SALT_MASTER:       infra.demo.com
-                                    GATEWAY:           192.168.121.101
-                                    NAMESERVER:        192.168.121.101
+                                    GATEWAY:           '!!demo.ips.infra'
+                                    NAMESERVER:        '!!demo.ips.infra'
                                     ROLES:             role-set:developer-workstation-node
                                     LAYERS:            soe:demo,site:testing,lan:qemu,private:example
                                 kickstart: http://%http_server%/provision/kickstart/kickstart.cfg
-                                #stage2:    nfs:%nfs_server%:/e/pxe/os/minimal/
+                                #stage2:    nfs:nfsvers=4:%nfs_server%:/e/pxe/os/minimal/
                     devlan:
                         kernel:                os/minimal/images/pxeboot/vmlinuz
                         initrd:                os/minimal/images/pxeboot/initrd.img
@@ -66,20 +66,20 @@ deployments:
                         #             192.168.121.103:   nexus.demo.com nexus
                         #         append:    noquiet custom-test
                         #         kickstart: http://%http_server%/provision/kickstart/kickstart-custom.cfg
-                        #         stage2:    nfs:%nfs_server%:/e/pxe/os/custom/
+                        #         stage2:    nfs:nfsvers=4:%nfs_server%:/e/pxe/os/custom/
 
                 hosts:
                     client:
                         lan:    devlan
                         append: test-host-override
-                    pxe-client1:
+                    replica1:
                         ss_settings:
                             ROLES: auto
 
     grafana_container:
         grafana-cont:
             config:
-                ip:     192.168.121.108
+                ip:     '!!demo.ips.grafana'
                 domain: demo.com
                 datasources:
                     - access: 'proxy'                       # make grafana perform the requests
@@ -92,7 +92,7 @@ deployments:
                       version: 1                            # well, versioning
 
     ipa_client:
-        testenv-client:
+        demo-ipa-client:
             host:        '.*'
             activated:   True
             activated_where: {{sls}}
@@ -104,26 +104,26 @@ deployments:
                     base-dn: '!!ipa.base_dn'
 
     ipa_master:
-        testenv-master:
+        demo-ipa-master:
             config:
                 domain: demo.com
                 realm:  DEMO
                 fqdn:   infra.demo.com
-                ip:     192.168.121.101
+                ip:     '!!demo.ips.infra'
                 install:
                     dns:
                         forwarders:
-                            - 192.168.121.1 # virtual machine host
+                            - '!!demo.ips.gateway' # virtual machine host
                 initial-setup:
                     global-config:
                         defaultemaildomain:  demo.com
 
     managed_hosts:
-        testenv-master:
+        demo-ipa-master:
             config:
                 domain: demo.com
 
-        testenv-client:
+        demo-ipa-client:
             config:
                 domain: demo.com
 
@@ -131,8 +131,8 @@ dns:
     # if is_server is set, the server will have a customised dns configuration
     server:      infra.demo.com
     nameservers:
-        dns1:    192.168.121.101
-        dns2:    192.168.121.1
+        dns1:    '!!demo.ips.infra'
+        dns2:    '!!demo.ips.gateway'
         dns3:    ''
     search:
         search1: demo.com
@@ -150,9 +150,9 @@ ipa-configuration:
             2.0.10.in-addr.arpa: 
 
 managed-hosts:
-    testenv-client:
+    demo-ipa-client:
         infra:
-            ip:       192.168.121.101
+            ip:       '!!demo.ips.infra'
             mac:      '52:54:00:d5:19:d5'
             aliases:  infra ipa.demo.com ipa salt.demo.com salt ldap.demo.com ldap
             type:     client
@@ -165,7 +165,7 @@ network:
     subnet:  192.168.121/24
     netmask: 255.255.255.0
     prefix:  24
-    gateway: 192.168.121.1
+    gateway: '!!demo.ips.gateway'
     system_domain: demo.com
     
     hostfile-additions:
@@ -178,11 +178,11 @@ network:
     classes:
         gateway:
             sysconfig:
-                GATEWAY: 192.168.121.1
+                GATEWAY: '!!demo.ips.gateway'
         infra-dns:
             sysconfig:
                 DNS1: 127.0.0.1
-                DNS2: 192.168.121.1
+                DNS2: '!!demo.ips.gateway'
                 DNS3: ''
 
 ssh:

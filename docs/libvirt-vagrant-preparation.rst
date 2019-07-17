@@ -45,7 +45,7 @@ A modified libvirt network configuration can be utilised to recognised the expec
 the configured clients and to forward them to the internal DHCP server for PXE installation. This is done by the 
 addition of a 'bootp' entry and multiple 'host' entries, one for each client VM. The mac addresses and 
 IP addresses shown here should be set to match those configured within the salt pillar 
-configuration (``managed-hosts.testenv-master`` for the demo configuration). You'll then need
+configuration (``managed-hosts.demo-ipa-master`` for the demo configuration). You'll then need
 to configure your PXE client VMs to use these MAC addresses, or alternatively, modify them here
 to match your VMs, and modify the MACs within the salt pillar configuration to match your VMs,
 and then re-run then re-run the pxeboot_server deployment (``salt-call state.sls deployments.pxeboot_server``).

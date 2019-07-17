@@ -11,7 +11,7 @@ deployments:
                 firewall:
                     basic:
                         nexus-mirror-frontend:
-                            ip: 192.168.121.103
+                            ip: '!!demo.ips.nginx'
                             accept:
                                 tcp:
                                     http: 80

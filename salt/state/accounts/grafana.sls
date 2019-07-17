@@ -4,7 +4,7 @@
 {%- set group = pillar.accounts.groups[groupname] %}
 {%- set username = 'grafana' %}
 {%- set user = pillar.accounts.users[username] %}
-{%- set diagnostics = False %}
+{%- set diagnostics = 'diagnostics' in pillar and sls in pillar.diagnostics %}
 
 {# # Create groups manually until I can get the jinja template include to find the right path  #}
 

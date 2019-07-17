@@ -1,6 +1,7 @@
 base:
     '*':
         - secrets
+        - yum
         - common
         - activated
         - deployments

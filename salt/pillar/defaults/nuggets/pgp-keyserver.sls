@@ -212,7 +212,9 @@ nuggets:
                         cd /srv/sks
                         sks build
                         ln -s ../DB_CONFIG KDB/DB_CONFIG
-                        master_key=/etc/salt/minion-gpg/soestack-master.gpg
+                        ss_key=/etc/salt/gpgkeys/soestack-pub.gpg
+                        master_key=/etc/salt/gpgkeys/pubring.gpg
+                        sks merge ${ss_key}
                         sks merge ${master_key}
 
                 /etc/systemd/system-preset/99-sks-start-disabled.preset:

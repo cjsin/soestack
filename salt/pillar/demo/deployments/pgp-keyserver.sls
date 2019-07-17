@@ -10,7 +10,7 @@ deployments:
                 firewall:
                     basic:
                         sks-pgp-keyserver:
-                            ip: 192.168.121.101
+                            ip: '!!demo.ips.infra' 
                             accept:
                                 tcp:
                                     sks: 11371
@@ -18,7 +18,7 @@ deployments:
             config:
                 debuglevel: 3
                 hostname: '!!demo.vars.infra'
-                contact:  {{salt['cmd.shell']("gpg /etc/salt/minion-gpg/soestack-master.gpg |grep ^pub|head -n1|tr -s  / ' ' |cut -d' ' -f3") }}
+                contact:  {{salt['cmd.shell']("gpg /etc/salt/gpgkeys/soestack-pub.gpg |grep ^pub|head -n1|tr -s  / ' ' |cut -d' ' -f3") }}
                 nginx:
                     bind_ip: '!!demo.ips.infra'
 

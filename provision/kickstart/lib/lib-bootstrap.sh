@@ -233,7 +233,6 @@ function generate_kickstart_networkconfig()
 #     export ROLES="${role}"
 # }
 
-
 function generate_partitioning()
 {
     local installation_src="${1}"

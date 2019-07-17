@@ -132,9 +132,10 @@ installed_scripts:
             - systemd-bugfix-change-runlevel
             - uuid4
             - yum-refresh
-            - soestack-lib.sh
+            - lib-ss.sh
             - salt-secret
             - generate-passwords
+            - lib-ss-crypto.sh
 
 # This data is not used yet but I am just recording the
 # configuration which is performed, so it can be automated
@@ -272,27 +273,28 @@ nexus:
     urls:
         centos:          http://nexus:7081/repository/centos
         docker:          nexus:7082
-        dockerce:        http://nexus:7081/repository/dockerce
-        epel:            http://nexus:7081/repository/epel
-        fedora:          http://nexus:7081/repository/dl-fedora
+        #dockerce:        http://nexus:7081/repository/dockerce
+        #epel:            http://nexus:7081/repository/epel
+        epel:            http://infra.demo.com:9002/
+        #fedora:          http://nexus:7081/repository/dl-fedora
         github:          http://nexus:7081/repository/github
-        gitlab:          http://nexus:7081/repository/gitlab
-        grafana:         http://nexus:7081/repository/grafana
-        ius:             http://nexus:7081/repository/ius
-        nodesource:      http://nexus:7081/repository/nodesource
+        #gitlab:          http://nexus:7081/repository/gitlab
+        #grafana:         http://nexus:7081/repository/grafana
+        #ius:             http://nexus:7081/repository/ius
+        #nodesource:      http://nexus:7081/repository/nodesource
         npmjs:           http://nexus:7081/repository/npmjs
         pypi:            http://nexus:7081/repository/pypi
-        rpmfusion:       http://nexus:7081/repository/rpmfusion
-        saltstack:       http://nexus:7081/repository/saltstack
-        kubernetes:      http://nexus:7081/repository/kubernetes 
-        vscode:          http://nexus:7081/repository/vscode
+        #rpmfusion:       http://nexus:7081/repository/rpmfusion
+        #saltstack:       http://nexus:7081/repository/saltstack
+        #kubernetes:      http://nexus:7081/repository/kubernetes 
+        #vscode:          http://nexus:7081/repository/vscode
         elasticsearch:   http://nexus:7081/repository/elasticsearch
-        elastic-docker:  http://nexus:7081/repository/elastic-docker
+        #elastic-docker:  http://nexus:7081/repository/elastic-docker
         #elastic-docker: nexus:7082
         rubygems:        http://nexus:7081/repository/rubygems
         interwebs:       http://nexus:7081/repository/interwebs
-        built-rpms:      http://nexus:7081/repository/built-rpms
-        google-storage:  http://nexus:7081/repository/google-storage
+        #built-rpms:      http://nexus:7081/repository/built-rpms
+        #google-storage:  http://nexus:7081/repository/google-storage
 
     blobstores:
         dockerhub:
@@ -447,21 +449,21 @@ nexus:
         # currently does not support that, so nexus is incapable of proxying for EPEL now.
         # see Sonatype issue tracker bug url: https://issues.sonatype.org/browse/NEXUS-20078
         #
-        #epel:
-        #    type:           proxy
-        #    format:         yum
-        #    blobstore:      epel
-        #    remote_url:     https://dl.fedoraproject.org/
-        #    yum:
-        #        centos:
-        #            enabled:     1
-        #            gpgcheck:    1
-        #            gpgkey_url:  https://dl.fedoraproject.org/pub/epel/RPM-GPG-KEY-EPEL-$releasever
-        #            gpgkey:      RPM-GPG-KEY-EPEL-7
-        #            repos:
-        #                epel:
-        #                    description: EPEL for Centos $releasever
-        #                    path:        pub/epel/$releasever/$basearch
+        epel:
+            type:           proxy
+            format:         yum
+            blobstore:      epel
+            remote_url:     https://dl.fedoraproject.org/
+            yum:
+                centos:
+                    enabled:     1
+                    gpgcheck:    1
+                    gpgkey_url:  https://dl.fedoraproject.org/pub/epel/RPM-GPG-KEY-EPEL-$releasever
+                    gpgkey:      RPM-GPG-KEY-EPEL-7
+                    repos:
+                        epel:
+                            description: EPEL for Centos $releasever
+                            path:        pub/epel/$releasever/$basearch
 
         github:
             type:                proxy
@@ -492,7 +494,7 @@ nexus:
                             path:        gitlab/gitlab-ce/el/$releasever/$basearch
                         gitlab-runner:
                             description: "Gitlab Community Edition - runner"
-                            path:        runner/gitlab-runner/el/$releasever/$basearch
+                            path:        runner/gitlab-runner/el/$releaseshort/$basearch
                 # fedora:
                 #     repos:
                 #         gitlab-ce:
@@ -715,10 +717,11 @@ node_lists:
     prometheus:
         primary:
             - infra
-        #secondary:
-        #    #- pxe-client1
-        #    #- pxe-client2
-        workstations: []
+            - replica1
+        secondary:
+            - processor2
+        workstations:
+            - workstation3
 
 npm:
     host_config:
@@ -836,6 +839,7 @@ ssh:
             AcceptEnv LC_IDENTIFICATION LC_ALL LANGUAGE
             AcceptEnv XMODIFIERS
             Subsystem	sftp	/usr/libexec/openssh/sftp-server
+            MaxAuthTries 10
 
 sudoers:
     files:

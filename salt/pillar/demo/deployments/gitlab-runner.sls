@@ -26,7 +26,8 @@ deployments:
 
             config:
                 # Replace this with the correct token after gitlab installation
-                registration_token: unset 
+                registration_token: salt-secret:fuckgitlab-runner-registration-tokenbla
+
                 gitlab_host:        gitlab
                 registration_flags: 
                     - --env TEST_ENV=test                                      # Custom environment variables injected to build environment [$RUNNER_ENV]
@@ -46,14 +47,14 @@ deployments:
                             - --tag-list docker
                             - --docker-pull-policy if-not-present 
                             - --docker-volume-driver overlay2
-                            - --working-directory /d/local/data/gitlab-runners/docker
+                            - --builds-dir /d/local/data/gitlab-runners/docker
 
                     shell:
                         registration_flags:
                             - --tag-list shell
-                            - --working-directory /d/local/data/gitlab-runners/shell
+                            - --builds-dir /d/local/data/gitlab-runners/shell
                     kubernetes:
                         registration_flags:
                             - --tag-list k8s
                             - --kubernetes-host infra
-                            - --working-directory /d/local/data/gitlab-runners/kubernetes
+                            - --builds-dir /d/local/data/gitlab-runners/kubernetes

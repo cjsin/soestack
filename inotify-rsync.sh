@@ -28,6 +28,7 @@ RSYNC=(
 RSYNC_SRC="./salt/"
 RSYNC_DST="/soestack/salt/"
 SERVER=""
+REMOTE=""
 
 function usage()
 {
@@ -112,7 +113,7 @@ function indent()
 
 function perform_sync()
 {
-    ${DEBUG} run rsync "${RSYNC[@]}" "${RSYNC_SRC}" "root@${SERVER}:${RSYNC_DST}" 2>&1 | indent 
+    ${DEBUG} run rsync "${RSYNC[@]}" "${RSYNC_SRC}" "${REMOTE}:${RSYNC_DST}" 2>&1 | indent 
 }
 
 function run()
@@ -233,6 +234,24 @@ function sleep_loop()
     done
 }
 
+function ssh_check()
+{
+    local test=$(date +%s)
+    local result
+    result=$(ssh -o BatchMode=yes "${REMOTE}" "echo ${test}")
+    if ! (( result ))
+    then 
+        if [[ "${result}" == "${test}" ]]
+        then 
+            return 0
+        else
+            return 1
+        fi
+    else 
+        return 0
+    fi
+}
+
 function main()
 {
     if [[ "${*}" =~ ${HELP_REGEX} ]]
@@ -243,12 +262,18 @@ function main()
         usage 1
 		else
         SERVER="${1}"
+        REMOTE="root@${SERVER}"
         shift
     fi
 
     if ! enter_script_dir
     then
         die "Could not determine script dir!"
+    fi
+
+    if ! ssh_check
+    then
+        die "SSH key is not set up."
     fi
 
     method="watch"

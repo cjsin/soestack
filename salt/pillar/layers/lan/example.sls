@@ -2,6 +2,10 @@
 
 # Overrides and data for the demo test soe lan
 
+demo:
+    ips:
+        gateway: 192.168.188.1
+
 cups:
 
     local_subnet: 192.168.121.*
@@ -13,8 +17,8 @@ dns:
     # if is_server is set, the server will have a customised dns configuration
     server:      infra.demo.com
     nameservers:
-        dns1:    192.168.121.101
-        dns2:    192.168.188.1
+        dns1:    '!!demo.ips.infra' 
+        dns2:    '!!demo.ips.gateway' 
         dns3:    ''
     search:
         search1: demo.com
@@ -26,8 +30,8 @@ docker:
     config:
         daemon:
             dns: 
-                - 192.168.121.101 # infra server
-                - 192.168.188.1   # internet gateway in demo environment
+                - '!!demo.ips.infra'  # infra server
+                - '!!demo.ips.gateway'    # internet gateway in demo environment
             dns-search:
                 - demo.com
 
@@ -47,12 +51,12 @@ deployments:
                                 ss_settings:
                                     DOMAIN:            demo.com
                                     SALT_MASTER:       infra.demo.com
-                                    GATEWAY:           192.168.121.101
-                                    NAMESERVER:        192.168.121.101
+                                    GATEWAY:           '!!demo.ips.infra'
+                                    NAMESERVER:        '!!demo.ips.infra'
                                     ROLES:             role-set:developer-workstation-node
                                     LAYERS:            soe:demo,site:testing,lan:example,private:example
                                 kickstart: http://%http_server%/provision/kickstart/kickstart.cfg
-                                #stage2:    nfs:%nfs_server%:/e/pxe/os/minimal/
+                                #stage2:    nfs:nfsvers=4:%nfs_server%:/e/pxe/os/minimal/
                     demo:
                         # For whatever reason  (probably routing) 
                         # since both these network devices ar using the same subnet,
@@ -65,7 +69,7 @@ deployments:
                                 ss_settings:
                                     DOMAIN:            demo.com
                                     ROLES:             basic-node
-                                    NAMESERVER:        192.168.121.101
+                                    NAMESERVER:        '!!demo.ips.infra'
                                 ss_hosts:
                                     # NOTE the demo lan is associated with the ethernet device, 
                                     # this gateway is for that and what clients booted on that network will use
@@ -75,7 +79,7 @@ deployments:
 
 
     ipa_client:
-        testenv-client:
+        demo-ipa-client:
             host:        '.*'
             activated:   True
             activated_where: {{sls}}
@@ -88,7 +92,7 @@ deployments:
                     base-dn: dc=demo,dc=com
 
     ipa_master:
-        testenv-master:
+        demo-ipa-master:
             config:
                 domain: demo.com
                 realm:  DEMO.COM
@@ -96,17 +100,18 @@ deployments:
                 install:
                     dns:
                         forwarders:
-                            - 192.168.188.1 # modem / wifi
+                            # modem / wifi
+                            - '!!demo.ips.gateway' 
                 initial-setup:
                     global-config:
                         defaultemaildomain:  demo.com
 
     managed_hosts:
-        testenv-master:
+        demo-ipa-master:
             config:
                 domain: demo.com
 
-        testenv-client:
+        demo-ipa-client:
             config:
                 domain: demo.com
 
@@ -115,9 +120,9 @@ ipa:
     base_dn:   dc=demo
 
 managed-hosts:
-    testenv-client:
+    demo-ipa-client:
         infra:
-            ip:       192.168.121.101
+            ip:       '!!demo.ips.infra' 
             mac:      '52:54:00:d5:19:d5'
             aliases:  infra ipa.demo.com ipa salt.demo.com salt ldap.demo.com ldap
             type:     client
@@ -129,7 +134,7 @@ network:
     subnet:  192.168.121/24
     netmask: 255.255.255.0
     prefix:  24
-    gateway: 192.168.188.1
+    gateway: '!!demo.ips.gateway' 
     system_domain: demo.com
 
     hostfile-additions:
@@ -143,14 +148,14 @@ network:
     classes:
         gateway:
             sysconfig:
-                GATEWAY: 192.168.188.1
+                GATEWAY: '!!demo.ips.gateway' 
         lan-wired-gateway:
             sysconfig:
-                GATEWAY: 192.168.121.1
+                GATEWAY: '!!demo.ips.gateway' 
         infra-dns:
             sysconfig:
                 DNS1: 127.0.0.1
-                DNS2: 192.168.188.1
+                DNS2: '!!demo.ips.gateway' 
                 DNS3: ''
 
 ssh:

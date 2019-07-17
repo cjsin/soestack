@@ -17,7 +17,7 @@ deployments:
                 firewall:
                     basic:
                         grafana-frontend:
-                            ip: 192.168.121.108
+                            ip: '!!demo.ips.grafana'
                             accept:
                                 tcp:
                                     http: 80

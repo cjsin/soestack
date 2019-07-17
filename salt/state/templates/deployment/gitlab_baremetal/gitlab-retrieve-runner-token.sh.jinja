@@ -1,0 +1,40 @@
+#!/bin/bash
+
+function retrieve_token_from_gitlab()
+{
+    if command -v gitlab-rails 2> /dev/null
+    then 
+        gitlab-rails runner -e production \
+            "puts Gitlab::CurrentSettings.current_application_settings.runners_registration_token"
+    else
+        echo "The token can only be retrieved on the gitlab server."
+    fi
+}
+
+function main()
+{
+    if [[ -z "${1}" ]]
+    then
+        echo "Usage: ${0} secret-name" 1>&2
+        exit 1
+    fi
+    
+    local secret_name="${1}"
+
+    local token=$(salt-secret "${secret_name}" 2> /dev/null)
+    if [[ -z "${token}" ]]
+    then
+        token=$(retrieve_token_from_gitlab)
+        if [[ -n "${token}" ]]
+        then
+            salt-secret "${secret_name}" -save -stdin <<< "${token}"
+            echo "The gitlab registration is as follows. Please update pillar on the master: ${token}"
+        else
+            echo "Failed getting the token"
+        fi
+    else
+        echo "The token is stored"
+    fi
+}
+
+main "${@}"

@@ -31,12 +31,12 @@ deployments:
                 ip:      '!!demo.ips.grafana'
                 domain:  demo.com
     ipa_client:
-        testenv-client:
+        demo-ipa-client:
             config:
                 site:    testing
 
     ipa_master:
-        testenv-master:
+        demo-ipa-master:
             config:
                 passwords: '!!demo.passwords.ipa'
 
@@ -46,17 +46,41 @@ deployments:
                         locations:
                             - testing
 
+    ipa_replica:
+        demo-ipa-replica:
+            host:            replica
+            activated:       True
+            activated_where: {{sls}}
+            install:
+                nuggets-required:
+                    - ipa-server
+
+            config:
+                domain: demo.com
+                realm:  DEMO.DOM
+                fqdn:   replica.demo.com
+                reverse_zone: 121.168.192.in-addr.arpa.
+                site:   testing
+                hosts:  managed-hosts:demo-ipa-replica
+                install:
+                    dns:
+                        enabled: True
+                        forwarders: []
+                bind_ips:
+                    httpd: 192.168.121.241
+                    named: 192.168.121.241
+
     # Override and Disable various deployments here (override some activated by node roles) until I have more RAM
     #gitlab_runner_baremetal:
     #    gitlab-runner:
     #        hosts: []
     #        activated:       False
     #        activated_where: {{sls}}
-    #gitlab_baremetal:
-    #    gitlab:
-    #        host:        infra
-    #        activated:   False
-    #        activated_where: {{sls}}
+    gitlab_baremetal:
+        gitlab:
+            host:        infra
+            activated:   True
+            activated_where: {{sls}}
 
     elasticsearch_container:
         elasticsearch-testdev:
@@ -226,3 +250,7 @@ demo:
 
         pxe-client1:     192.168.121.241
         pxe-client2:     192.168.121.242
+        pxe-client3:     192.168.121.243
+        replica1:        '!!demo.ips.pxe-client1'
+        processor2:      '!!demo.ips.pxe-client2'
+        workstation3:    '!!demo.ips.pxe-client3'

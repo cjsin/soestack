@@ -8,7 +8,7 @@
 
 {%- if action in [ 'all', 'configure' ] %}
 
-{{sls}}.{{deployment_name}}.ipa-master-deploy-ipa-tools-{{suffix}}:
+{{sls}}.{{deployment_name}}.ipa-common-sysconfig-{{suffix}}:
     file.managed:
         - name:     /etc/sysconfig/ipa-tools
         - user:     root

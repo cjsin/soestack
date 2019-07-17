@@ -20,7 +20,7 @@
 
 {{sls}}.{{deployment_name}}.simple-http-script:
     file.managed:
-        - name:  /usr/local/sbin/simple-http-{{deployment_name}}
+        - name:  /usr/local/bin/simple-http-{{deployment_name}}
         - user:  root
         - group: root
         - mode:  '0755'
@@ -60,7 +60,7 @@
             After=NetworkManager-wait-online.service network.target
 
             [Service]
-            ExecStart=/usr/local/sbin/simple-http-{{deployment_name}}
+            ExecStart=/usr/local/bin/simple-http-{{deployment_name}}
             Type=simple
             User={{config.user if 'user' in config else 'nobody'}}
             Group={{config.user if 'user' in config else 'nobody'}}

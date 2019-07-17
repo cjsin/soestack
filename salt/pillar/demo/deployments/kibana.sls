@@ -11,7 +11,7 @@ deployments:
                 firewall:
                     basic:
                         kibana-frontend:
-                            ip: 192.168.121.109
+                            ip: '!!demo.ips.kibana'
                             accept:
                                 tcp:
                                     http: 80

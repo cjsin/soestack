@@ -7,6 +7,15 @@
 {#  however we are using the term master for an 'initial' server deployment #}
 {#  and replica for another server which is joined with an existing master #}
 
+{{sls}}.{{deployment_name}}.ipa-replica-sysconfig:
+    file.managed:
+        - name:     /etc/sysconfig/ipa-server
+        - user:     root
+        - group:    root
+        - mode:     '0644'
+        - contents: |
+            IPA_DEPLOYMENT="{{deployment_name}}"
+
 {{sls}}.ipa-replica-install-script-{{deployment_name}}:
     file.managed:
         - name:         /usr/local/bin/ipa-replica-deploy

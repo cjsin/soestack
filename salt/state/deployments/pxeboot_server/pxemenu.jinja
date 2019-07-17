@@ -16,7 +16,7 @@ MENU TITLE SoeStack
 {#- the same path within the install repo. #}
 {#- So for example with install repo path /e/pxe/os/minimal, and kickstart path /e/pxe/os/minimal/kickstart/kickstart.cfg #}
 {#- then it would try to copy the kickstart file to (or from?) /e/pxe/os/minimal/e/pxe/os/minimal/kickstart/kickstart.cfg #}
-{#- #initrd=%initrd% inst.ks=http://%server%/os/minimal/kickstart/kickstart.cfg inst.stage2=nfs:%server%:/e/pxe/os/minimal/ #}
+{#- #initrd=%initrd% inst.ks=http://%server%/os/minimal/kickstart/kickstart.cfg inst.stage2=nfs:nfsvers=4:%server%:/e/pxe/os/minimal/ #}
 {%- for  entry in entries %}
 {%-     set entry_name = entry.name if 'name' in entry else 'Network Install' %}
 {%-     set title      = entry.title if 'title' in entry and entry.title else entry_name %}

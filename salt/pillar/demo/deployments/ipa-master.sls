@@ -2,7 +2,7 @@
 
 deployments:
     ipa_master:
-        testenv-master:
+        demo-ipa-master:
             host:      infra
             activated: True
             activated_where: {{sls}}
@@ -16,7 +16,7 @@ deployments:
                 fqdn:   infra.default
                 reverse_zone: 121.168.192.in-addr.arpa.
                 site:   default
-                hosts:  managed-hosts:testenv-master
+                hosts:  managed-hosts:demo-ipa-master
                 install:
                     dns:
                         enabled: True
@@ -26,8 +26,8 @@ deployments:
                     admin:  salt-secret:pw-ipa-admin
                     ds:     salt-secret:pw-ipa-ds
                 bind_ips:
-                    httpd: 192.168.121.101
-                    named: 192.168.121.101
+                    httpd: '!!demo.ips.infra'
+                    named: '!!demo.ips.infra'
 
                 initial-setup:
 

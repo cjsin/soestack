@@ -12,14 +12,18 @@ package-groups:
     #   \
     #    \+-basic-node
     #       \
+    #        |
+    #        +-processor-node
+    #        |
     #        |     +--workstation-node
     #        |    /                    \
-    #        +-desktop-node----------   \
-    #        |    \                  \   \  
-    #        |     \                  \   \ 
-    #        |      +-processor-node   \   \ 
-    #        |      |                   \   \
-    #        |      +--------------------+---+-developer-workstation-node
+    #        +-desktop-node---------    \
+    #        |    \                 \    \  
+    #        |     \                 \    \ 
+    #        |      |                 \    \
+    #        |      +------------------+----+-developer-workstation-node
+    #        |      |                   \
+    #        |      +-processor-node     \
     #        |     /                      \
     #        |    /                        \
     #        +-software-development-node    \
@@ -39,16 +43,20 @@ package-groups:
         package-sets:
             - net-tools
             - clamav-antivirus
+            - basic-tools
 
     desktop-node:
         package-groups:
             - basic-node
         package-sets:
-            - gnome-desktop
-            - kde-desktop
-            - alternative-desktop
+            #- gnome-desktop
+            #- kde-desktop
+            #- alternative-desktop
             #- xfce-desktop
+            - minimal-desktop
             - browsers-group
+            - development-editors-group
+            - terminator
 
     docker-node:
         package-groups:
@@ -94,20 +102,23 @@ package-groups:
 
     processor-node:
         package-groups:
-            - desktop-node
             - software-development-node
+
+    login-processor-node:
+        package-groups:
+            - desktop-node
+            - processor-node
 
     software-development-node:
         package-groups:
             - basic-node
-            - browsers-group
             - development-tools-group
-            - development-editors-group
         package-sets:
             - diff-tools-console
             # diff-tools-gui is disabled until EPEL zchunk bug is fixed
             #- diff-tools-gui
-            - development-base
+            #- development-base
+            - development-minimal
             - python-development
             - git-standard-uninstall
             - git-newer

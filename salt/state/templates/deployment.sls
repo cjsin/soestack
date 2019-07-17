@@ -65,7 +65,7 @@
 #             <deployment-specific-key>:
 #}
 
-{%- set diagnostics      = False %}
+{%- set diagnostics = 'diagnostics' in pillar and sls in pillar.diagnostics %}
 {%- set deployment_type  = args.deployment_type %}
 {%- set deployment_name  = args.deployment_name %}
 {%- set deployment       = args.deployment %}
@@ -78,18 +78,25 @@
 
 {%- for act in multiple_actions+single_action %}
 {%-     if act == 'auto' %}
+
 {%-         if 'install' not in actions %}
 {%-             do actions.append('install') %}
 {%-         endif %}
+
 {%-         if 'configure' not in actions %}
 {%-             do actions.append('configure') %}
 {%-         endif %}
+
+{#-         In auto mode, the activate step is only added if the deployment hasn't been explicitly de-activated #}
 {%-         if activated and 'activate' not in actions %}
+{%-             set activated = 'activated' not in deployment or deployment.activated %}
 {%-             do actions.append('activate') %}
 {%-         endif %}
+
 {%-     elif act not in actions %}
 {%-         do actions.append(act) %}
 {%-     endif %}
+
 {%- endfor %}
 
 {%- if diagnostics %}

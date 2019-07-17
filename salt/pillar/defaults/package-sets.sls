@@ -2,7 +2,7 @@
 
 package-sets:
 
-    alternative-desktops:
+    alternative-desktop:
         purpose: |
             provide other desktop
         centos,redhat,fedora:
@@ -11,6 +11,12 @@ package-sets:
             #- '@General Purpose Desktop'
             - openbox
             - fluxbox
+
+    basic-tools:
+        purpose: |
+            tools desired on all boxes
+        centos,redhat,fedora:
+            - rsync 
 
     alternative-toolchains:
         purpose: | 
@@ -40,8 +46,7 @@ package-sets:
             epel:
                 - clamav
                 - clamav-data
-                - clamav-milter
-                - clamav-scanner-systemd
+                #- clamav-milter
                 - clamav-scanner-systemd
                 - clamav-unofficial-sigs
 
@@ -65,6 +70,17 @@ package-sets:
             provide the centos/redhat development group
         centos,redhat,fedora:
             - '@Development and Creative Workstation'
+
+
+    development-minimal:
+        purpose: |
+            smaller set of packages for development, to serve
+            as an example but without taking ages to install
+            while testing
+        centos,redhat,fedora:
+            - gcc
+            - make
+            - libtool
 
     dhcp-server:
         purpose: |
@@ -207,6 +223,23 @@ package-sets:
                 - cri-tools
                 - kubernetes-cni
 
+    minimal-desktop:
+        purpose: |
+            provide minimal desktop install to keep install time down during testing
+        centos,redhat,fedora:
+            - openbox
+            #- fluxbox
+            #- terminator
+            - lightdm
+            - xorg-x11-xinit-session
+            - xfce4-session
+            - xfce4-panel
+            - xfce4-settings
+            - xfce4-terminal
+            - xfdesktop
+            - xfwm4
+            - xfconf
+
     net-tools:
         purpose: |
             provide basic network tools (for example 'route', 'ip')
@@ -270,6 +303,21 @@ package-sets:
             - policycoreutils-python
         fedora:
             - policycoreutils-python-utils
+
+    terminator:
+        purpose: |
+            provide a better terminal than crappy gnome terminal
+        centos,redhat,fedora:
+            order: os,epel
+            os:
+                - gnome-python2-gconf
+                - gnome-python2-bonobo
+            epel:
+                - terminator
+                #- vte
+                - terminus-fonts
+                - terminus-fonts-console
+                - python-keybinder
 
     tftp-server-dnsmasq:
         purpose: |

@@ -14,6 +14,15 @@
 
 {%- if action in [ 'all', 'configure' ] %}
 
+{{sls}}.{{deployment_name}}.ipa-master-sysconfig:
+    file.managed:
+        - name:     /etc/sysconfig/ipa-server
+        - user:     root
+        - group:    root
+        - mode:     '0644'
+        - contents: |
+            IPA_DEPLOYMENT="{{deployment_name}}"
+
 {%-     set scripts = { '' : [ 'deploy-ipa-server','ipa-pw-upgrade' ] } %}
 {%-     for script_suffix, script_names in scripts.iteritems() %}
 {%-         for script_prefix in script_names %}
@@ -51,7 +60,7 @@
 
 {{sls}}.{{deployment_name}}.ipa-master-deploy-passwords-store-as-secrets:
     cmd.run:
-        - name:   /usr/local/bin/ipa-password-upgrade
+        - name:   /usr/local/bin/ipa-pw-upgrade
         - onlyif: grep -sv '=salt-secret:' '{{pwfile}}'
 
 {#- # configure action #}

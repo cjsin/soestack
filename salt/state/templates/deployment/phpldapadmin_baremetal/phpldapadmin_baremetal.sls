@@ -1,4 +1,4 @@
-{%- set suffix          = args.suffix if 'suffix' in args else salt['uuid.short']() %}
+{%- set suffix          = args.suffix if 'suffix' in args else salt['uuids.short']() %}
 {%- set deployment_name = args.deployment_name %}
 {%- set deployment_type = args.deployment_type %}
 {%- set deployment      = args.deployment %}

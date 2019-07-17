@@ -20,9 +20,16 @@ function saltstack_fixes()
 {
     # This is really not important - it just reduces some 
     # salt log file error messages
-    ensure_installed python-pip 
+    ensure_installed python2-pip
     preconfigure_pip
     pip list | egrep boto || pip install boto boto3
+    pip list | egrep attrdict || pip install attrdict 
+    if ! pip list | egrep attrdict
+    then 
+        # Install bootstrap-pkgs pypi copy of attrdict
+        local files=( /e/bundled/bootstrap-pkgs/pypi/{attrdict,six}-*)
+        pip install "${files[@]}"
+    fi
     fix_saltstack_pillar_regression_53516
 }
 
@@ -120,9 +127,12 @@ function prepare_salt_gpg_keys()
     then
         err "Cannot generate GPG keys for saltstack private pillar data"
         err "without an ADMIN_EMAIL specified!"
-        return
+        # This is not treated as an error
+        return 0
     fi
 
+    ensure_installed gpg rngd
+    mkdir -p "/var/log/build/salt-gpgkeys"
     prepare_gpg_keystore "salt" "/etc/salt/gpgkeys" "${ADMIN_EMAIL}" "/var/log/build/salt-gpgkeys" "/usr/local/sbin"
 )
 
@@ -148,6 +158,7 @@ function configure_etc_salt()
         cp "${SS_INC}"/master.d/* /etc/salt/master.d/
 
         salt_configure_for_development
+        prepare_salt_gpg_keys
     fi
     
     echo_data "master: ${SALT_MASTER:-salt}" > /etc/salt/minion.d/master.conf

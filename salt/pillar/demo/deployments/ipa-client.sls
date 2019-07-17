@@ -2,7 +2,7 @@
 
 deployments:
     ipa_client:
-        testenv-client:
+        demo-ipa-client:
             host:        '.*'
             activated:   True
             activated_where: {{sls}}

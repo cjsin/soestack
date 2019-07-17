@@ -329,19 +329,6 @@ function configure_yum()
     sed -i '/enabled=/ s/=1/=0/' /etc/yum/pluginconf.d/fastestmirror.conf
 }
 
-function create_ssh_key_file()
-{
-    local keyfile="${1}"
-
-    if command_is_available ssh-keygen 
-    then 
-        [[ ! -f "${keyfile}" ]] && ssh-keygen -t rsa -N '' -q -f "${keyfile}"
-    else
-        msg "No ssh client tools available in this environment (cannot create ${keyfile})"
-        : TODO - perhaps install ssh client here ;
-    fi 
-}
-
 function setup_root_ssh()
 {
     # Set up ssh for root

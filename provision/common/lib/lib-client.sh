@@ -56,9 +56,10 @@ function salt_delete_key()
 {
     if [[ -n "${SALT_MASTER}" ]]
     then  
-        curl -sSk "https://${SALT_MASTER}:9009/run" -d client=wheel -d username=salt-enrol -d 'tgt=*' -d password=d62da93aecc94bd6363d0c7d5fbea7248e8e0c9e15dfca0fb92c1e665760de9a -d eauth=pam -d fun=key.delete -d match="$(hostname -s)"
+        # This doesn't work with salt 2019.2 (tgt is an invalid keyword)
+        #curl -sSk "https://${SALT_MASTER}:9009/run" -d client=wheel -d username=salt-enrol -d 'tgt=*' -d password=d62da93aecc94bd6363d0c7d5fbea7248e8e0c9e15dfca0fb92c1e665760de9a -d eauth=pam -d fun=key.delete -d match="$(hostname -s)"
     else 
-        msg "NO salt master is configured."
+        msg "No salt master is configured."
     fi
 }
 

@@ -16,12 +16,22 @@ secrets:
         # You should set it to 'token' to set a random value if utilising in 
         # a real situation
         pw-ipa-admin:     str:admin123
+
     distribute:
+        pw-ipa-ds:
+            replica1:
+        pw-ipa-master:
+            replica1:
+        pw-ipa-admin:
+            replica1:
         ipa_client_enrol: 
             # Send to every minion
             {{grains.id}}:
         
         replica_enrol:
-            # replica testing is for pxe-client1
-            pxe-client1:
+            # replica testing is for replica1
+            replica1:
 
+        # Distribute the runner registration token to all nodes
+        gitlab-runner-registration-token:
+            {{grains.id}}:

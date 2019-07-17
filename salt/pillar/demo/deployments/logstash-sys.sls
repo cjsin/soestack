@@ -14,7 +14,7 @@ deployments:
                         - logstash-sys
 
             config:
-                listen_address:          "192.168.121.101"
+                listen_address:          '{{grains.fqdn_ip4}}'
                 server_host:             "0"
                 elasticsearch_url:       http://192.168.121.109:9200
                 xpack_elasticsearch_url: http://192.168.121.109:9200

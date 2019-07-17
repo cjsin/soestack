@@ -1,6 +1,6 @@
 {%- import 'lib/noop.sls' as noop %}
 
-{%- set diagnostics     = False %}
+{%- set diagnostics     = 'diagnostics' in pillar and sls in pillar.diagnostics %}
 {%- set prefix, suffix  = salt.uuids.ids(args) %}
 {%- set required_by     = '-by-' ~ args.required_by if 'required_by' in args else '-by-none' %}
 {%- set nugget_name     = args.nugget_name if 'nugget_name' in args else '' %}
@@ -64,6 +64,8 @@
 {{noop.notice('No filesystem data in this nugget')}}
 {%-             endif %}
 {%-         endif %}
+
+
 {%-         if action == 'activate' %}
 {%-             if 'services' in data or 'service-sets' in data %}
 {%-                 with args = { 'parent': data } %}
@@ -73,6 +75,20 @@
 
 {%-             if 'firewall' in data and data.firewall %}
 {%-                 with args = { 'firewall': data.firewall } %}
+{{noop.notice('activating-firewall-for-nugget') }}
+{%                      include('templates/support/firewall.sls') with context %}
+{%-                 endwith %}
+{%-             else %}
+{%-                 if diagnostics %}
+{{noop.notice('no firewall data within toplevel') }}
+{%-                 endif %}
+{%-             endif %}
+
+{%-             set activated = 'activated' not in nugget or nugget.activated %}
+
+{%-             if activated and 'activate' in data and 'firewall' in data.activate and data.activate.firewall %}
+{%-                 with args = { 'firewall': data.activate.firewall } %}
+{{noop.notice('activating-firewall-for-nugget') }}
 {%                      include('templates/support/firewall.sls') with context %}
 {%-                 endwith %}
 {%-             else %}

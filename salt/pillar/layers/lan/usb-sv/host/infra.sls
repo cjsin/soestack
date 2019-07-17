@@ -10,7 +10,7 @@ deployments:
                 postgres_ram: 128MB
 
     ipa_master:
-        testenv-master:
+        demo-ipa-master:
             config:
                 passwords: '!!demo.passwords.ipa'
 
@@ -28,23 +28,29 @@ dns:
         search3: ''
         
 managed-hosts:
-    testenv-master:
+    demo-ipa-master:
         infra.demo.com:
             ip:      '!!demo.ips.infra'
             aliases: ipa
             type:    dns
-        pxe-client1:
-            ip:       '!!demo.ips.pxe-client1'
+        replica1:
+            ip:       '!!demo.ips.replica1'
             mac:      '52:54:00:96:72:f9'
             type:     client
             hostfile:
-                - pxe-client1
-        pxe-client2:
-            ip:       '!!demo.ips.pxe-client2'
+                - replica1
+        processor2:
+            ip:       '!!demo.ips.processor2'
             mac:      '52:54:00:b9:b8:d2'
             type:     client
             hostfile:
-                - pxe-client2
+                - processor2
+        workstation3:
+            ip:       '!!demo.ips.workstation3'
+            mac:      '52:54:00:00:01:03'
+            type:     client
+            hostfile:
+                - workstation3
         wildcard:
             ip:       '!!demo.ips.wildcard'
             type:     dns 

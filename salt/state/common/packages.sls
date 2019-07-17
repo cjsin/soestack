@@ -2,7 +2,7 @@
 
 {#  first install packages based on the configured roles #}
 
-{%- set diagnostics = True %}
+{%- set diagnostics = 'diagnostics' in pillar and sls in pillar.diagnostics %}
 
 {%- if 'roles' in grains %}
 {%-     for role_name in grains.roles %}

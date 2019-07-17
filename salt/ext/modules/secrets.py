@@ -75,7 +75,7 @@ def minion_keypair(minion_id=None):
     if minion_id is None or minion_id == '__self__':
         return os.path.sep.join([SALT_PKI,'minion','minion.pem'])
     else:
-        print("Minion keypair not available for specific minions yet")
+        log.info("Minion keypair not available for specific minions yet")
         #return '/etc/salt/pki/minion/minion.pem'
         return None
 
@@ -91,24 +91,17 @@ def readfile(path):
         return False, None
 
 def writefile(path,data):
-    print("write {}".format(path))
-    print("writing {} bytes of data".format(len(data)))
     if path is None:
-        print("writefile path is none")
         return False
     if data is None:
-        print("writefile data is none")
         return False
     try:
-        print("B64 of data is :")
-        print(base64.b64encode(data))
         with open(path, 'w') as f:
             f.write(data)
-            print("writefile success")
             return True
     except:
         traceback.print_exc()
-        print("Writefile exception")
+        log.error("Writefile exception")
         return False
 
 def decrypt_secret_with(secret_name, keypath):
@@ -125,13 +118,13 @@ def encrypt_secret_for(secret_name, minion_id,use_base64=False):
 
 def minion_storage(secret_name):
     if sep in secret_name:
-        print("Illegal secret name")
+        log.error("Illegal secret name")
         return None
     return sep.join([MINION_STORAGE,secret_name])
 
 def master_storage(secret_name):
     if sep in secret_name:
-        print("Illegal secret name")
+        log.error("Illegal secret name")
         return None
     return sep.join([MASTER_STORAGE,secret_name])
 
@@ -143,66 +136,61 @@ def receive_from_master(secret_name, secret_data, base64_encoded=False):
 
 def _encrypt(pubfile,data, use_base64=False):
     if data is None:
-        print("Data to encrypt is None")
+        log.error("Data to encrypt is None")
         return False, None
     if pubfile is None:
-        print("Pubfile for encryption is None")
+        log.error("Pubfile for encryption is None")
         return False, None
     if not os.path.exists(pubfile):
-        print("Pubfile does not exist")
+        log.error("Pubfile does not exist")
         return False, None
 
-    print("data to encode is:")
-    pprint(data)
     try:
         command = ['openssl','rsautl','-encrypt','-inkey',pubfile,'-pubin']
-        print("command is "+" ".join(command))
+        log.debug("command is "+" ".join(command))
         encps = subprocess.Popen(command, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
         output, errs = encps.communicate(input=data)
-        print("result len is {}".format(len(output)))
-        print("result (base64 encoded) is " + base64.b64encode(output))
         if use_base64:
             output = base64.b64encode(output)
 
         return True, output
     except:
         traceback.print_exc()
-        print("Encryption failed!")
+        log.error("Encryption failed!")
         return False, None
 
 def _decrypt(keyfile,infile):
     if keyfile is None:
-        print("No keyfile")
+        log.error("No keyfile")
         return False, None
     if infile is None:
-        print("No infile")
+        log.error("No infile")
         return False, None
     if not os.path.exists(keyfile):
-        print("keyfile {} does not exist".format(keyfile))
+        log.error("keyfile {} does not exist".format(keyfile))
         return False, None
     if not os.path.exists(infile):
-        print("Infile {} does not exist".format(infile))
+        log.error("Infile {} does not exist".format(infile))
         return False, None
 
     command = ['openssl','rsautl','-decrypt','-inkey',keyfile,'-in',infile]
-    print("command is "+" ".join(command))
+    log.debug("command is "+" ".join(command))
 
     try:
         output = subprocess.check_output(command)
-        #print("Decoded data is :{}".format(output))
         return True, output 
     except subprocess.CalledProcessError as ex:
-        print("Decoding secret failed!")
-        print("This can happen if the secret is too long (greater than the key length - 11 bits)")
+        log.error("Decoding secret failed!")
+        log.error("This can happen if the secret is too long (greater than the key length - 11 bits)")
         return False, None
 
 def get_secret(secret_name,minion_id=None):
     success, result = _decrypt(minion_keypair(minion_id), minion_storage(secret_name))
     if not success:
-        print("Decrypt failure")
+        log.error("Decrypt failure")
         return None
     if not len(result):
-        print("Empty result")
+        log.warning("Empty result")
         return None
     return result
 
@@ -210,10 +198,10 @@ def get_master_secret(secret_name):
     """ For the master only """
     success, result = _decrypt(master_keypair(), master_storage(secret_name))
     if not success:
-        print("Decrypt failure")
+        log.error("Decrypt failure")
         return None
     if not len(result):
-        print("Empty result")
+        log.warning("Empty result")
         return None
     return result
 
@@ -224,7 +212,7 @@ def save_secret(secret_name, data):
     if success:
         return writefile(path, encrypted)
     else:
-        print("encryption failed, not writing")
+        log.error("encryption failed, not writing")
         return False
 
 def generatePassphrase(size=13,letters=None):
@@ -260,11 +248,7 @@ def test_master_storage(secret_name, data):
 def test_minion_storage(secret_name):
     success, result = encrypt_secret_for(secret_name,"__self__", use_base64=False)
     assert success
-    print("Success encrypting for own minion")
-    print("len of result = {}".format(len(result)))
-    print("")
     receive_from_master(secret_name, result)
-    print("Returning result")
     return result
 
 def run_tests():
@@ -272,7 +256,7 @@ def run_tests():
     secret_data=generateToken(16)
     print("Starting secret:")
     print(secret_data)
-    minion_id='pxe-client1'
+    minion_id='replica1'
     test_master_storage(secret_name, secret_data)
     minion_stored = test_minion_storage(secret_name)
     assert len(minion_stored)

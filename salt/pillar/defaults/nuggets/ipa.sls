@@ -26,7 +26,28 @@ nugget_data:
                         udp:
                             ntp:         123
 
+        ipa-replica: '!!nugget_data.firewall-rule-sets.ipa-server'
+        ipa-master: '!!nugget_data.firewall-rule-sets.ipa-server'
+
 nuggets:
+
+    ipa-client:
+        description: |
+            provides support for enrolling a node with an IPA server
+
+        install:
+            nuggets-required:
+                - managed-hosts
+                
+            installed:
+                package-sets:
+                    - ipa-client
+
+        activate:
+            firewall:
+                firewall-rule-sets:
+                    - ipa-client
+
     ipa-server:
         description: |
             provides support for rolling out an IPA server (either original master or replica)
@@ -49,26 +70,11 @@ nuggets:
                     - ipa-server
 
     ipa-master:
-        description: |
-            provides support for rolling out an IPA server (initial server, not a replica)
-
-        install:
-            nuggets-required:
-                - ipa-server 
-
-        activate:
-            nuggets-required:
-                - ipa-server 
+        description: provides support for rolling out an IPA server (initial server, not a replica)
+        install:     '!!nuggets.ipa-server.install'
+        activate:    '!!nuggets.ipa-server.activate'
 
     ipa-replica:
-        description: |
-            provides support for rolling out an IPA server replica (non-initial install)
-
-        install:
-            nuggets-required:
-                - ipa-server
-
-        activate:
-            nuggets-required:
-                - ipa-server 
-
+        description: provides support for rolling out an IPA server replica (non-initial install)
+        install:    '!!nuggets.ipa-server.install'
+        activate:   '!!nuggets.ipa-server.activate'

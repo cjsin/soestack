@@ -43,7 +43,7 @@ grain_layers: {{grains.layers|json}}
 {%-         elif grains.layers is mapping %}
 {#-             # If the layer grain is a mapping, it is expected to be a dict specifying #}
 {#-             #   names for the following keys: soe,role,role,site,lan,host which will be processed in that order #}
-{%-             do selected_layers.extend(['soe', 'role', 'site', 'lan', 'host','private']) %}
+{%-             do selected_layers.extend(['soe', 'role', 'site', 'lan', 'host']) %}
 {%-         endif %}
 {%-     endif %}
 
@@ -65,6 +65,7 @@ grain_layers: {{grains.layers|json}}
 {#-             # Hopefully using yaml include will work better #}
 
 {%- do selected_layers.append('lan-host') %}
+{%- do selected_layers.append('private') %}
 {#- Show in pillar which layers were selected, for troubleshooting #}
 selected_layers: {{selected_layers|json}}
 
@@ -89,4 +90,3 @@ layer-include:
 
 {%- endif %}
 
-load-sequence: {{salt.loadtracker.loaded()|json}}

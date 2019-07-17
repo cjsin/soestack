@@ -33,7 +33,7 @@
 {%-                 else %}
 {%-                     set subkey_parts = subkey.split(',') %}
 {%-                     for part in subkey_parts %}
-{%-                         if part in grains.roles %}
+{%-                         if 'roles' in grains and part in grains['roles'] %}
 {%-                             do matched.append(part) %}
 {%-                         endif %}
 {%-                     endfor %}

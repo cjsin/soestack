@@ -1,0 +1,50 @@
+#!/bin/bash
+
+token='{{config.registration_token}}'
+
+echo "Registering with token ${token}"
+
+if [[ "${token}" =~ ^salt-secret: ]]
+then
+    secret_name="${token#salt-secret:}"
+    token=$(salt-secret "${secret_name}")
+    if [[ -z "${token}" ]]
+    then 
+        if command -v gitlab-retrieve-runner-token
+        then
+            if ! gitlab-retrieve-runner-token "${secret_name}"
+            then
+                token=""
+            else
+                # try again
+                token=$(salt-secret "${secret_name}")
+            fi
+        fi
+    fi 
+    if [[ -z "${token}" ]]
+    then
+        {
+            echo "The gitlab registration token has not been stored."
+            echo "Please log into gitlab, use the admin interface to find the token,"
+            echo "and then save it with the following command:"
+            echo "  salt-secret ${token#salt-secret:} -save -stdin"
+            echo "(and then type the password)"
+            exit 1
+        } 1>&2
+    fi
+fi
+
+
+echo "Registering with token '${token}'"
+
+options=(
+    --non-interactive 
+    --name               {{grains.host}}-{{executor_name}}
+    --url                http://{{config.gitlab_host}}
+    --executor           {{executor_name}}
+    --registration-token "${token}"
+    {{config.registration_flags|join(" ")}} 
+    {{executor.registration_flags|join(" ")}}
+)
+
+gitlab-runner register "${options[@]}"

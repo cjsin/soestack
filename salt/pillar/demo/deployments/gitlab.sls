@@ -13,26 +13,25 @@ deployments:
                 firewall:
                     basic:
                         gitlab-frontend:
-                            ip: 192.168.121.104
+                            ip: '!!demo.ips.gitlab'
                             accept:
                                 tcp:
                                     http: 80
                         pages-frontend:
-                            ip: 192.168.121.106
+                            ip: '!!demo.ips.pages'
                             accept:
                                 tcp:
                                     http: 80
                         registry-frontend:
-                            ip: 192.168.121.107
+                            ip: '!!demo.ips.gitlab-registry'
                             accept:
                                 tcp:
                                     http: 5000
                         mattermost:
-                            ip: 192.168.121.105
+                            ip: '!!demo.ips.mattermost'
                             accept:
                                 tcp:
                                     http: 80
-
             config:
                 ports:
                     #gitlab_rails_registry_port: 5005
@@ -45,25 +44,25 @@ deployments:
                 gitlab:
                     hostname:     gitlab
                     port:         80
-                    bind_ip:      192.168.121.104
+                    bind_ip:      '!!demo.ips.gitlab'
 
                 pages:
                     enabled:      True
                     hostname:     pages
                     port:         80
-                    bind_ip:      192.168.121.106
+                    bind_ip:      '!!demo.ips.pages'
 
                 registry:
                     enabled:      True
                     hostname:     gitlab-registry
                     port:         5000
-                    bind_ip:      192.168.121.107
+                    bind_ip:      '!!demo.ips.gitlab-registry'
 
                 mattermost:
                     enabled:      True
                     hostname:     mattermost
                     port:         80
-                    bind_ip:      192.168.121.105
+                    bind_ip:      '!!demo.ips.mattermost'
                     token:        unset
                     app_id:       unset
 

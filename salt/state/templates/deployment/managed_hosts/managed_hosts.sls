@@ -22,8 +22,9 @@
 {%- if not hosts %}
 
 {{sls}}.{{prefix}}no-hosts-found:
-    cmd.run:
-        - name: echo "No hosts found in {{hosts_key}} for this deployment." 
+    noop.notice:
+        - text: |
+            No hosts found in hosts key for this deployment.
 
 {%- else %}
 
@@ -132,11 +133,11 @@
 {%- if diagnostics %}
 
 {{sls}}.{{prefix}}-debug:
-    cmd.run:
-        - name: |
-            echo 'debug strings'
-            echo '{{debug|json}}' | jq .
-            echo  '{{ 'infra' | regex_search('(.*)', ignorecase=True) }}'
+    noop.notice:
+        - text: |
+            debug strings
+            {{debug|json}}
+            {{ 'infra' | regex_search('(.*)', ignorecase=True) }}
 
 {%- endif %}
 

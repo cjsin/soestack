@@ -70,7 +70,7 @@ mattermost['enable']               = {{ 'true' if config.mattermost.enabled else
 {%- if config.mattermost.enabled %}
 {%-     set protocol = 'http' if config.mattermost.port not in [443] else 'https' %}
 {%-     set port_append = ':' ~ config.mattermost.port if config.mattermost.port not in [443,80] else '' %}
-{#-     # NOTE, at this stage I believe the mattermost external URL should not have a slash at the end, in order for the gitlab auth integration to work properly #}
+{#-     # NOTE, at this stage I believe the mattermost external URL MUST NOT have a slash at the end, in order for the gitlab auth integration to work properly #}
 mattermost_external_url            "{{protocol}}://{{config.mattermost.hostname}}{{domain}}{{port_append}}"
 {%-     if 'bind_ip' in config.mattermost and config.mattermost.bind_ip %}
 mattermost_nginx['listen_addresses'] = ["{{config.mattermost.bind_ip}}"]

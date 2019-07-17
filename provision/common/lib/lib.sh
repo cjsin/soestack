@@ -1,6 +1,6 @@
 #!/bin/bash
 
-[[ -n "${SS_LOADED_SS_LIB}" ]] || . "${SS_DIR:=${BASH_SOURCE[0]%/provision/*}}"/provision/common/lib/lib-soestack.sh
+[[ -n "${SS_LOADED_SS_LIB}" ]] || . "${SS_DIR:=${BASH_SOURCE[0]%/provision/*}}"/provision/common/lib/lib-ss.sh
 
 # NOTE: This script will override some vars and functions which were initialised in the file included above.
 
@@ -14,7 +14,7 @@ export BS_VARS="${SS_GEN}/0-bs-vars.sh"
 
 outline_level=3
 
-# NOTE this provides a different msg() implementation than soestack-lib.sh
+# NOTE this provides a different msg() implementation than lib-ss.sh
 function msg()
 {
     local funcname=$(interesting_frame 2)
@@ -366,6 +366,19 @@ function provisioning_display_build_configuration()
         display_well_known_hosts
         display_bar "######"
     } | while IFS='' read line ; do bmsg "${line}" ; done
+}
+
+function create_ssh_key_file()
+{
+    local keyfile="${1}"
+
+    if command_is_available ssh-keygen 
+    then 
+        [[ ! -f "${keyfile}" ]] && ssh-keygen -t rsa -N '' -q -f "${keyfile}"
+    else
+        msg "No ssh client tools available in this environment (cannot create ${keyfile})"
+        : TODO - perhaps install ssh client here ;
+    fi 
 }
 
 export SS_LOADED_COMMON_LIB=1

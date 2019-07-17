@@ -13,22 +13,22 @@ deployments:
                 firewall:
                     basic:
                         dovecot-pop3:
-                            ip:  192.168.121.101
+                            ip:  '!!demo.ips.infra'
                             accept:
                                 tcp:
                                     pop3: 110
                         dovecot-imap:
-                            ip:  192.168.121.101
+                            ip:  '!!demo.ips.infra'
                             accept:
                                 tcp:
                                     imap: 143
                         dovecot-imaps:
-                            ip:  192.168.121.101
+                            ip:  '!!demo.ips.infra'
                             accept:
                                 tcp:
                                     imaps: 993
                         dovecot-pop3s:
-                            ip:  192.168.121.101
+                            ip:  '!!demo.ips.infra'
                             accept:
                                 tcp:
                                     pop3s: 995

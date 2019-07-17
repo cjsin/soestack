@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 
 import logging
+import os
 import salt.exceptions
 
 LOG = logging.getLogger(__name__)
@@ -24,6 +25,14 @@ def __virtual__():
     '''
     Only make these states available if a the execution module is working
     '''
+
+    my_minion_id = __grains__['id']
+
+    # TODO - need to allow this for a replica node also
+    if os.path.exists('/etc/salt/pki/master/master.pem') and os.path.exists('/etc/salt/pki/master/minions/{}'.format(my_minion_id)):
+        logging.info("OK - we appear to be running on the master")
+    else:
+        return False
 
     if 'saltipa.check_ticket' not in __salt__:
         LOG.error("IPA execution module failed loading")

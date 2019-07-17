@@ -29,6 +29,7 @@ role-sets:
             - nexus-node
             - homedir-server-node
             - primary-server-node
+            - infra-node
 
     usb-infra-server-node:
         purpose: |
@@ -36,13 +37,23 @@ role-sets:
             quicker USB install testing
         combine:
             - docker-node
-            - login-processor-node
-            - login-node
             - processor-node
             - jumpserver-node
             - email-server-node
             - service-node
             - nexus-node
+            - homedir-server-node
+            - primary-server-node
+            - infra-node
+
+    secondary-server-node:
+        purpose: |
+            similar to an infra node but intended as a secondary or failover. NOTE only ripa services are currently implemented for the secondary
+        combine:
+            - docker-node
+            - jumpserver-node
+            - email-server-node
+            - service-node
             - homedir-server-node
             - primary-server-node
 
@@ -63,6 +74,7 @@ role-sets:
             - service-node
             - homedir-server-node
             - primary-server-node
+            - infra-node
 
     login-processor-node:
         purpose: |

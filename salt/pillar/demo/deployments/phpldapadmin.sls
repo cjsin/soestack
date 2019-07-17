@@ -10,7 +10,7 @@ deployments:
                 firewall:
                     basic:
                         phpldapadmin-frontend:
-                            ip: 192.168.121.101
+                            ip: '!!demo.ips.infra' 
                             accept:
                                 tcp:
                                     http: 80

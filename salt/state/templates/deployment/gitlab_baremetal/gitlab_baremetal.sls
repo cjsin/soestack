@@ -25,6 +25,23 @@
 
 {%- if action in [ 'all', 'configure' ] %}
 
+{{sls}}.gitlab-{{deployment_name}}-{{deployment_type}}-token-script:
+    file.managed:
+        - name: /usr/local/bin/gitlab-retrieve-runner-token
+        - user: root
+        - group: root
+        - mode:  '0700'
+        - source: salt://templates/deployment/gitlab_baremetal/gitlab-retrieve-runner-token.sh.jinja
+        - template: jinja
+
+{{sls}}.gitlab-{{deployment_name}}-{{deployment_type}}-mattermost-token-script:
+    file.managed:
+        - name: /usr/local/bin/gitlab-retrieve-app-token
+        - user: root
+        - group: root
+        - mode:  '0700'
+        - source: salt://templates/deployment/gitlab_baremetal/gitlab-retrieve-app-token.sh.jinja
+        - template: jinja
 
 # This file deliberately does not specify user,group,perms. The gitlab package install will configure it.
 {{sls}}.gitlab-baremetal-config-dir:
@@ -46,14 +63,17 @@
 
 {{sls}}.gitlab-baremetal-configured:
     cmd.run:
-        - name:     gitlab-ctl reconfigure >> /var/log/gitlab-reconfigure.log 2>&1
+        - name: gitlab-ctl reconfigure >> /var/log/gitlab-reconfigure.log 2>&1 ; gitlab-retrieve-runner-token
         - onlyif:   test -f /usr/bin/gitlab-ctl
         - onchanges:
             - file: {{sls}}.gitlab-baremetal-config-file
 
-{%-    if 'mattermost' in config and 'app_id' in config.mattermost and 'token' in config.mattermost %}
-{%-        set mattermost = config.mattermost %}
-{%-        if mattermost.app_id and mattermost.token and mattermost.app_id != 'unset' and mattermost.token != 'unset' %}
+{#-    #This code is ready to be removed because the auto integration is now working - once the slash at the end of the mattermost URL was removed. #}
+{%-    set obsolete = True %}
+{%-    if not obsolete %}
+{%-        if 'mattermost' in config and 'app_id' in config.mattermost and 'token' in config.mattermost %}
+{%-            set mattermost = config.mattermost %}
+{%-            if mattermost.app_id and mattermost.token and mattermost.app_id != 'unset' and mattermost.token != 'unset' %}
 
 {{sls}}.gitlab-mattermost-integration-appid:
     file.managed:
@@ -76,9 +96,10 @@
         - onchanges:
             - file: {{sls}}.gitlab-mattermost-integration-token
             - file: {{sls}}.gitlab-mattermost-integration-appid
-
+{%-            endif %}
 {%-        endif %}
 {%-     endif %}
+
 {%- endif %}
 
 {%- if action in [ 'all', 'activate'] %}

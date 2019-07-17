@@ -1,3 +1,5 @@
+# TODO - move to state/common/repos
+
 # Example data structure
 # nexus-repos:
 #     defaults:
@@ -112,7 +114,7 @@
 {%-                             if overrides is mapping %}
 {%-                                 do this_repodata.update(overrides) %}
 {%-                             endif %}
-{%-                             set base_url = 'http://'~ nexus.http_address + '/repository/' ~ nexus_reponame ~ '/' ~ this_repodata.path %}
+{%-                             set base_url = ( nexus.urls[yum_reponame] if ('urls' in nexus and yum_reponame in nexus.urls ) else 'http://'~ nexus.http_address + '/repository/' ~ nexus_reponame ~ '/' ~ this_repodata.path) %}
 .create-nexus-{{nexus_reponame}}-repo-{{yum_reponame}}:
     file.managed:
         - name:     '{{yum_repo_file}}'

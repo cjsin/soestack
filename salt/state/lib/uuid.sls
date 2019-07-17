@@ -1,3 +1,3 @@
 {%- macro short() -%}
-{{salt['uuid.short']()}}
+{{salt['uuids.short']()}}
 {%- endmacro %}

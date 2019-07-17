@@ -11,6 +11,7 @@ include:
     - .dns
     # Create configured filesystem areas
     - .filesystem
+    - .firewall
     # Define package repositories before the states that may need to install packages
     - .repos
     # Similarly, scripts can be installed prior to use in other states

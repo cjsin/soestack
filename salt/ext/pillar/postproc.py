@@ -1,7 +1,6 @@
 import logging
 from collections import OrderedDict
 import uuid
-from attrdict import AttrDict
 from pprint import pformat
 import copy
 
@@ -21,29 +20,44 @@ REF_PREFIX = '!!'
 REF_PREFIX_LEN = 2
 VERBOSE = False
 DEBUG = False
+SUPPORTED = True
 
 def arrjoin(s,arr):
     return s.join([str(x) for x in arr])
 
-def __init__( opts ):
-    if 'ext_pillar' in opts and 'postproc' in opts['ext_pillar']:
-        opts = opts['ext_pillar']['postproc']
-        if 'separator' in opts:
-            SEPARATOR1 = opts['separator']
-        if 'postproc.ref_prefix' in opts:
-            REF_PREFIX = opts['ref_prefix']
+def find_opts():
+    opts = {}
 
-    # try:
-    #     REF_PREFIX_LEN=len(REF_PREFIX)
-    # except:
-    #     import traceback
-    #     traceback.format_exc()
-    # finally:
-    #     print(tb)
+    for p in __opts__.get('ext_pillar',[]):
+        if __virtualname__ in p:
+            specified_options = next(six.itervalues(p))
+            opts.update(specified_options)
+        
+    return opts
+
+def __init__( opts = None):
+    global SUPPORTED
+    try:
+        #check_imports() # Nothing to check, yet
+        if SUPPORTED:
+            opts = find_opts()
+            if 'separator' in opts:
+                SEPARATOR1 = opts['separator']
+            if 'ref_prefix' in opts:
+                REF_PREFIX = opts['ref_prefix']
+    except:
+        log.debug("Shitty error")
+        import traceback
+        traceback.print_exc()
     pass
 
 def __virtual__():
-    return __virtualname__
+    global SUPPORTED
+    if SUPPORTED:
+        return __virtualname__
+    else:
+        log.error("Salt extension module {} cannot load due to missing dependencies".format(__virtualname__))
+        return False
 
 def _str_number(s):
     try:
@@ -214,6 +228,7 @@ def diag(*items):
 diagdata={}
 
 def getdata(pillar):
+    #from attrdict import AttrDict
     c = {}
 
     updated = {}
@@ -229,7 +244,10 @@ def getdata(pillar):
     path_mapping = {}
     referenced = {}
     extract = {}
-    
+    status = {}
+    overall = 'success'
+    stacktraces = []
+
     try:
         diagdata['refs']=refs 
         diagdata['expand']=expand 
@@ -325,11 +343,12 @@ def getdata(pillar):
         
         for src_ref in referenced.keys():
             src_path = split_ref(src_ref)
-            src_value, status = lookup(c, src_path)
-            if status == "OK":
+            src_value, lookup_status = lookup(c, src_path)
+            if lookup_status == "OK":
                 extract[src_ref] = src_value
             else:
-                extract[src_ref] = stringify("Error:", status, "for ref", src_ref)
+                #extract[src_ref] = stringify("Error:", lookup_status, "for ref", src_ref)
+                problems.append(stringify("Error:", lookup_status, "for ref", src_ref))
 
         count = 0
 
@@ -340,29 +359,39 @@ def getdata(pillar):
                 
                 update(c, t_path, src_value)
                 count += 1
-
-        c.update({'postproc-status': 'success', 'postproc-result': count})
         diag("SUCCESS")
     except:
         import traceback
         for l in traceback.format_exc().split('\n'):
             diag(l)
         diag("FAIL")
-        c.update({'postproc-stacktrace': traceback.format_exc()})
-        c.update({'postproc-diag': diagdata })
-        c.update({'postproc-status': 'failed', 'postproc-result': count})
-        pass
+        stacktraces.append(traceback.format_exc())
+        overall = 'failed'
 
     if problems:
-        c.update({'postproc-problems': problems})
+        status['problems'] = problems 
+
+    if stacktraces:
+        status['stack'] = stacktraces
 
     if VERBOSE:
-        c.update({'postproc-msg': "\n".join(_diag)})
+        status['msg'] = "\n".join(_diag) 
 
     if DEBUG:
-        c.update({'postproc-diag': diagdata })
+        status['diag'] = diagdata
 
+    if status:
+        status['result'] = overall
+        status['count'] = count
+        c['_postproc'] = status 
+        
     return c
 
 def ext_pillar( minion_id, pillar, *args, **kwargs ):
     return getdata(pillar)
+
+if __name__ == "__main__":
+    global __opts__
+    __opts__={ 'ext_pillar': [] }
+    __init__()
+    print("__virtual__ returns {}".format(__virtual__()))

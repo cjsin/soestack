@@ -12,7 +12,7 @@ deployments:
                 firewall:
                     basic:
                         logstash-frontend:
-                            ip: 192.168.121.101
+                            ip: '{{grains.fqdn_ip4}}'
                             accept:
                                 tcp:
                                     tcp5044: 5044

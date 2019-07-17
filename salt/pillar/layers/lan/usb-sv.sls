@@ -87,7 +87,7 @@ deployments:
                       version: 1                             # well, versioning
 
     ipa_client:
-        testenv-client:
+        demo-ipa-client:
             host:        '.*'
             activated:   True
             activated_where: {{sls}}
@@ -99,7 +99,7 @@ deployments:
                     base-dn: '!!ipa.base_dn'
 
     ipa_master:
-        testenv-master:
+        demo-ipa-master:
             config:
                 domain: '!!network.system_domain'
                 realm:  '!!ipa.realm'
@@ -112,13 +112,28 @@ deployments:
                 initial-setup:
                     global-config:
                         defaultemaildomain:  '!!network.system_domain'
+    ipa_replica:
+        demo-ipa-replica:
+            config:
+                domain: '!!network.system_domain'
+                realm:  '!!ipa.realm'
+                fqdn:   '!!ipa.server'
+                ip:     '!!demo.ips.infra'
+                install:
+                    dns:
+                        forwarders:
+                            - '!!network.gateway'
 
     managed_hosts:
-        testenv-master:
+        demo-ipa-master:
             config:
                 domain: '!!network.system_domain'
 
-        testenv-client:
+        demo-ipa-client:
+            config:
+                domain: '!!network.system_domain'
+
+        demo-ipa-replica:
             config:
                 domain: '!!network.system_domain'
 
@@ -135,7 +150,7 @@ dns:
         search3: ''
 
 managed-hosts:
-    testenv-client:
+    demo-ipa-client:
         infra:
             ip:       '!!demo.ips.infra'
             mac:      '52:54:00:d5:19:d5'
@@ -177,10 +192,12 @@ network:
                 PREFIX2: '24'
 
 node_maps:
-    pxe-client1:
-        roles: 'role-set:developer-workstation-node'
-    pxe-client2:
+    replica1:
+        roles: 'role-set:secondary-server-node'
+    processor2:
         roles: 'role-set:login-processor-node'
+    workstation3:
+        roles: 'role-set:developer-workstation-node'
 
 postfix:
     mode: client

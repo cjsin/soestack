@@ -3,6 +3,7 @@
 base:
     '*':
         # Load soestack defaults
+        - diagnostics
         - defaults
         - layers
         - secrets

@@ -1,6 +1,6 @@
 #!stateconf yaml . jinja
 
-{%- set diagnostics = False %}
+{%- set diagnostics = 'diagnostics' in pillar and sls in pillar.diagnostics %}
 {%- if 'filesystem' in pillar %}
 {%-     set default_file_mode = '0644' %}
 {%-     set default_dir_mode = '0755' %}

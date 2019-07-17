@@ -23,9 +23,15 @@ function die()
 
 function usage()
 {
-    msg "Usage: ${0} [--help | --renew | --list ]"
+    msg "Usage: ${0} [--help | --renew | --list | --shell ]"
     msg ""
     msg "Renew kerberos ticket for Saltstack / IPA integration"
+    msg ""
+    msg "Modes:"
+    msg ""
+    msg "   --renew   Renew the ticket"
+    msg "   --list    Display the ticket"
+    msg "   --shell   Load the ticket and drop into a new shell (using that ticket)"
 }
 
 

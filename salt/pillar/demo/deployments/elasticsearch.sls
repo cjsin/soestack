@@ -10,8 +10,8 @@ deployments:
             activate:
                 firewall:
                     basic:
-                        phpldapadmin-frontend:
-                            ip: 192.168.121.109
+                        elasticsearch-ports:
+                            ip: '!!demo.ips.elasticsearch'
                             accept:
                                 tcp:
                                     http:    9200
