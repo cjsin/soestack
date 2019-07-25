@@ -15,11 +15,11 @@
 #
 #  then, when provisioning:
 #     add 'private:example' to ss.LAYERS provisioning variable
-#        (for example ss.LAYERS=soe:demo,site:testing,lan:home,private:example )
+#        (for example ss.LAYERS=soe:demo,site:testing,lan:home,private:example.private )
 #
 #   or if already provisioned and just updating the salt configuration:
 #     set the salt layers grain: to include 'private: example'
-#        (for example salt-call grains.set layers:private example 
+#        (for example salt-call grains.set layers:private example.private 
 
 # This file can be used to include others which are not
 # checked into a git repo

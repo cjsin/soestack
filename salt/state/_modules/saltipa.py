@@ -33,7 +33,7 @@ log = logging.getLogger(__name__)
 
 record_to_cmdline_flags = {
     'arecord': 'a-rec',
-    'ptrrecord': 'ptr-hostname',
+    'ptrrecord': 'ptr-rec',
     'cnamerecord': 'cname-hostname'
 }
 

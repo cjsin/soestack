@@ -5,16 +5,15 @@
 #     - deployment        - the deployment object (should contain a container object)
 #}
 
-{%- set container = args.deployment.container %}
-{%- set deployment_name = args.deployment_name %}
 {%- set deployment = args.deployment %}
+{%- set deployment_name = args.deployment_name %}
+{%- set action = args.action if 'action' in args else 'all' %}
+{%- set container = deployment.container %}
 
-{{sls}}.nginx_container.cfgdir:
-    file.directory:
-       - name:      /etc/nginx
-       - user:      root
-       - group:     root
-       - mode:      '0755'
+{%- if action in ['all', 'install' ] %}
+
+{#- NOTE that this file installation is done in the install stage not the configure stage #}
+{#- in order that it is present before the containerized_service deployment runs #}
 
 {{sls}}.nginx_container.conf-{{deployment_name}}:
     file.managed:
@@ -29,5 +28,4 @@
             deployment:      {{deployment|json}}
             container:       {{container|json}}
 
-{%  include('templates/containerized_service/containerized_service.sls') with context %}
-
+{%- endif %}

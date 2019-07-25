@@ -1,0 +1,165 @@
+#!/bin/bash 
+# Return 0 if the destination does not need to be updated
+
+function usage()
+{
+    local exitcode="${1:-1}"
+    local errmsg="${2:-}"
+    {
+        echo "Usage: ${0##*/} [--dry|--real] --from <source-path> --to <dest-path> --check <check-path>"
+        echo ""
+        echo "Performs an rsync from source-path to dest-path, as long as the source and dest both"
+        echo "match the sanity check regular expression."
+        echo ""
+        echo "The intent is to provide a way for scripts to perform an rsync between two directories"
+        echo "while providing some safety checks when the source or dest are produced utilising a"
+        echo "variable expansion which may in a bad situation turn out to be empty."
+        echo ""
+        echo "So, users of this script should use a fixed string for the --check option, which"
+        echo "should be a regular expression crafted to ensure that the source and dest are valid"
+        echo "and have not expanded to an empty or unintended value:"
+        echo ""
+        echo "Example usage:"
+        echo ""
+        echo "  src='/original/code'"
+        echo "  dest='/copied/code'"
+        echo "  "
+        echo "  ${0##*/} --dry --from \"\${src}/\" --to \"\${dst}/\" --check /code"
+        echo "  "
+        echo "  NOTE in this example, the command incorrectly used 'dst' instead of 'dest',"
+        echo "  which, if not caught, would result in the src directory being "
+        echo "  copied to / instead of /copied/code/"
+        echo ""
+        echo "Additionally:"
+        echo ""
+        echo "  When run with the 'dry' option, the rsync will be performed in dry-run mode, and"
+        echo "  the exit code will be 0 or 1 to reflect whether any files would be changed."
+        echo ""
+        echo "Note: for technical reasons, the exit code if the sanity check fails is still 0"
+        echo "  (to indicate that no files would be changed). This is because the helper is"
+        echo "  intended to be used as a safety feature / protection mechanism during "
+        echo "  salt automation, not for running interactively. Therefore the return code is"
+        echo "  designed to report whether files were or would be changed, not whether "
+        echo "  the usage of the script was valid."
+        echo "  To test for an unexpected failure of the script you may check for the presence"
+        echo "  of the string 'Success' on the last line of output."
+    } 1>&2
+
+    if [[ -n "${errmsg}" ]]
+    then 
+        echo "ERROR: ${errmsg}" 1>&2
+        echo "Failure."
+    fi 
+
+    exit ${exitcode}
+}
+
+function process_args()
+{
+    # NOTE that the variables a, b, sanity, and dry, should have been declared before using this function
+    local arg
+    local dry_count=0
+
+    if ! (( $# )) 
+    then
+        usage 0
+    fi 
+
+    while (( $# ))
+    do
+        arg="${1}"
+        shift
+        case "${arg}" in
+            -h|-help|--help|help)
+                usage 0
+                ;;
+            dry|real)
+                ((dry_count++))
+                dry="${arg}"
+                ;;
+            -dry|-real)
+                ((dry_count++))
+                dry="${arg#-}"
+                ;;
+            --dry|--real)
+                ((dry_count++))
+                dry="${arg#--}"
+                ;;
+            -from|--from|-src|--src)
+                a="${1}"
+                shift
+                ;;
+            -to|--to|-dest|--dest)
+                b="${1}"
+                shift
+                ;;
+            -check|--check)
+                sanity="${1}"
+                shift
+                ;;
+            *)
+                usage 0 "Invalid script usage. Please see the help text above."
+                ;;
+        esac
+    done
+
+    if [[ "${dry_count}" -gt 1 ]]
+    then
+        usage 0 "Refusing to operate with more than one dry or real option specified"
+    fi
+
+    if [[ -z "${sanity}" ]]
+    then
+        usage 0 "Refusing to operate without sanity check"
+    fi
+
+    if ! [[ "${a}" =~ ${sanity} ]]
+    then 
+        usage 0 "Sanity check - Refusing to operate on '${a}'"
+    fi 
+
+    if ! [[ "${b}" =~ ${sanity} ]]
+    then 
+        usage 0 "Sanity check - Refusing to operate on '${b}'"
+    fi 
+}
+
+function main()
+{
+    local dry a b sanity
+    process_args "${@}"
+
+    local -a cmd=(
+        rsync -av  --info=stats0,flist0
+    )
+
+    if [[ "${dry}" != "real" ]]
+    then
+        local line_count=$( "${cmd[@]}" --dry-run "${a}/" "${b}/" | wc -l)
+        if (( line_count ))
+        then 
+            echo "Destination needs updating ( ${line_count} lines)"
+            echo "Success."
+            exit 1
+        else
+            echo "Destination does not need updating"
+            echo "Success."
+            exit 0
+        fi
+    else
+        mkdir -p "${b}"
+        echo "Updating:"
+        if "${cmd[@]}" "${a}/" "${b}/"
+        then 
+            echo "Success."
+            # NOTE the exit status is 1 to indicate that some files may have changed, regardless of the success
+            exit 1
+        else
+            echo "Failed."
+            # NOTE the exit status is 1 to indicate that some files may have changed, regardless of the failure
+            exit 1
+        fi
+    fi
+}
+
+main "${@}"

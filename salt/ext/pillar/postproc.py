@@ -238,7 +238,7 @@ def getdata(pillar):
     _diag = []
     count = 0
     refs = {}
-    problems = {}
+    problems = []
     referenced = {}
     expand = {}
     path_mapping = {}

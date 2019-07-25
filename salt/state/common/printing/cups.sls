@@ -8,13 +8,18 @@
             - cups-filesystem
             - cups-filters
             - cups-libs
-            # - cups-pdf
             - cups-pk-helper
             - gutenprint-cups
             - foomatic
             - foomatic-db
             - foomatic-db-filesystem
             - foomatic-db-ppds
+
+.cups-pdf-installed:
+    pkg.latest:
+        - fromrepo: epel
+        - pkgs:
+            - cups-pdf
 
 .tools-installed:
     pkg.latest:
@@ -39,9 +44,9 @@
         - context:
             cups:   {{pillar.cups|json()}}
 
-.printers-file:
+.printers-file-template:
     file.managed:
-        - name:     /etc/cups/printers.conf
+        - name:     /etc/cups/printers.conf.ss
         - user:     root
         - group:    lp
         - mode:     '0600'
@@ -49,6 +54,16 @@
         - source:   salt://{{slspath}}/cupsd-printers.conf.jinja
         - context:
             cups:   {{pillar.cups|json()}}
+
+.printers-file:
+    cmd.run:
+        - name: |
+            stopstart=0
+            systemctl is-active cups && stopstart=1
+            (( stopstart )) && (systemctl stop cups; sleep 1) 
+            cp -a /etc/cups/printers.conf.ss /etc/cups/printers.conf
+            (( stopstart )) && systemctl start cups 
+        - unless: cd /etc/cups && test -f printers.conf && diff printers.conf.ss printers.conf | egrep -v '^---|+++' | egrep '^[-+]' | egrep -v '^.(Type|ConfigTime|State|StateMessage|[#]|UUID) ' | egrep .
 
 .service:
     service.running:

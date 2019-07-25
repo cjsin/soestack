@@ -12,7 +12,7 @@
         - unless: rpm -q phpldapadmin
 
 {%- if 'filesystem' in deployment and deployment.filesystem %}
-{%-     with args = { 'parent': deployment.filesystem, 'pillar_location': 'deployments:'~deployment_type~':' ~ deployment_name} %}
+{%-     with args = { 'parent': deployment.filesystem, 'pillar_location': 'deployments:' ~ deployment_name} %}
 {%          include('templates/support/filesystem.sls') with context %}
 {%-     endwith %}
 {%- endif %}

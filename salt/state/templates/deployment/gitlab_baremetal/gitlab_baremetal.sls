@@ -33,6 +33,8 @@
         - mode:  '0700'
         - source: salt://templates/deployment/gitlab_baremetal/gitlab-retrieve-runner-token.sh.jinja
         - template: jinja
+        - context: 
+            config: {{config}}
 
 {{sls}}.gitlab-{{deployment_name}}-{{deployment_type}}-mattermost-token-script:
     file.managed:
@@ -42,6 +44,8 @@
         - mode:  '0700'
         - source: salt://templates/deployment/gitlab_baremetal/gitlab-retrieve-app-token.sh.jinja
         - template: jinja
+        - context: 
+            config: {{config}}
 
 # This file deliberately does not specify user,group,perms. The gitlab package install will configure it.
 {{sls}}.gitlab-baremetal-config-dir:
@@ -54,7 +58,7 @@
         - user:         root
         - group:        root
         - mode:         '0644'
-        - source:       salt://{{slspath}}/gitlab.rb.jinja
+        - source:       salt://templates/deployment/gitlab_baremetal/gitlab.rb.jinja
         - template:     jinja
         - context: 
             deployment_name: {{deployment_name}}

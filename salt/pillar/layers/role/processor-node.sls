@@ -1,6 +1,7 @@
 {{ salt.loadtracker.load_pillar(sls) }}
 
 include:
+    - demo.deployments.types
     - demo.deployments.gitlab-runner
 
 runlevel: graphical
@@ -20,11 +21,10 @@ network:
                 - no-zeroconf
 
 deployments:
-    gitlab_runner_baremetal:
-        gitlab-runner:
-            hosts:
-                - {{grains.host}}
-            activated:       True
-            activated_where: {{sls}}
+    gitlab-runner:
+        hosts:
+            - {{grains.host}}
+        activated:       True
+        activated_where: {{sls}}
 
 

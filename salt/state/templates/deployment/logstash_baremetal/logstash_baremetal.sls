@@ -4,9 +4,8 @@
 {%- set deployment_name  = args.deployment_name %}
 {%- set deployment_type  = args.deployment_type %}
 {%- set service_name     = deployment_name %}
-{%- set service_suffix   = deployment_name|replace('logstash-','') %}
 {%- set filesystem       = deployment.filesystem if 'filesystem' in deployment else {} %}
-{%- set pillar_location  = ':'.join(['deployments',deployment_type,deployment_name]) %}
+{%- set pillar_location  = ':'.join(['deployments',deployment_name]) %}
 {%- set state_tag        = deployment_type ~ '-' ~ deployment_name %}
 {%- set action           = args.action if 'action' in args else 'all' %}
 {%- set account_defaults = { 'user': 'logstash', 'group': 'logstash', 'extra_groups': [] } %}
@@ -59,7 +58,6 @@
         - source:   salt://templates/deployment/logstash_baremetal/service.jinja
         - template: jinja
         - context:
-            service_suffix:  {{service_suffix}}
             deployment_name: {{deployment_name}}
             user:            {{user}}
             group:           {{group}}
@@ -72,7 +70,7 @@
 
 {{sls}}.{{prefix}}{{state_tag}}-service{{suffix}}:
     service.{{'running' if activated else 'dead'}}:
-        - name:   logstash-{{service_suffix}}
+        - name:   {{deployment_name}}
         - enable: {{activated}} 
 
 {%-     endif %}

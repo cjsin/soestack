@@ -34,8 +34,8 @@
     file.managed:
         - name: /etc/cron.d/clamav-update
         - contents: |
-            ## Adjust this line...
-            MAILTO=root
+            ## TODO - Adjust this line (consider whether to send to admin, or make it configurable).
+            MAILTO=admin
 
             # NOTE that the timing here is also affected by
             # the /etc/sysconfig/freshclam file
@@ -45,7 +45,7 @@
 
 .freshclam-run-once:
     cmd.run:
-        - name: freshclam
+        - name: freshclam && touch /var/log/freshclam-run-once
         - unless: test -f /var/log/freshclam-run-once
 
 .clamd-service-enabled:

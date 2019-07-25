@@ -6,6 +6,7 @@
 # also this generally excludes primary-server-node services
 # such as IPA
 include:
+    - demo.deployments.types
     - demo.deployments.dovecot-server
     - demo.deployments.gitlab
     - demo.deployments.grafana

@@ -1,4 +1,5 @@
 #!/bin/bash
+token_setting='{{config.registration_token if 'registration_token' in config else ''}}'
 
 function retrieve_token_from_gitlab()
 {
@@ -20,6 +21,20 @@ function main()
     fi
     
     local secret_name="${1}"
+
+    if [[ -z "${secret_name}" ]]
+    then
+        if [[ "${token_setting}" =~ ^salt-secret: ]]
+        then
+            secret_name="${token_setting#salt-secret:}"
+         fi
+    fi
+
+    if [[ -z "${secret_name}" ]]
+    then
+        secret_name="gitlab-runner-registration-token"
+        echo "Using default salt secret name '${secret_name}' for storing the registration token" 1>&2
+    fi
 
     local token=$(salt-secret "${secret_name}" 2> /dev/null)
     if [[ -z "${token}" ]]
