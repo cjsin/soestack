@@ -14,16 +14,18 @@ function fix_saltstack_pillar_regression_53516()
 
     install_systemd_service_patcher salt-master "${patcher}"
     install_systemd_service_patcher salt-minion "${patcher}"
+    systemctl daemon-reload
 }
 
 function saltstack_fixes()
 {
     # This is really not important - it just reduces some 
     # salt log file error messages
-    ensure_installed python2-pip
+    ensure_installed python2-pip # gpgme-devel
     preconfigure_pip
     pip list | egrep boto || pip install boto boto3
     pip list | egrep attrdict || pip install attrdict 
+    #pip list | egrep gpg || pip install gpg
     if ! pip list | egrep attrdict
     then 
         # Install bootstrap-pkgs pypi copy of attrdict
@@ -91,24 +93,40 @@ function write_layer_grains()
     then 
         if [[ -n "${LAYERS}" ]]
         then
-            {
-                local item
-                echo_data "layers:"
-                if [[ "${LAYERS}" =~ : ]]
+            local layers=()
+            local item=""
+            local layers_sequence=()
+            for item in ${LAYERS//,/ }
+            do
+                local layer_name="${item%%:*}"
+                local layer_spec="${item#*:}"
+                local spec_parts=( ${layer_spec//+/ } )
+                layers_sequence+=("${layer_name}")
+                if [[ "${#spec_parts[@]}" == 1 ]]
                 then
-                    for item in ${LAYERS//,/ }
-                    do
-                        echo_data "    ${item//:/: }"
-                    done
-                elif [[ "${LAYERS}" =~ , ]]
-                then
-                    for item in ${LAYERS//,/ }
-                    do
-                        echo_data "    - ${item}"
-                    done
+                    layers+=("${layer_name}: ${layer_spec}")
                 else
-                    echo_data "    - ${LAYERS}"
+                    layers+=("${layer_name}:")
+                    for sp in "${spec_parts[@]}"
+                    do
+                        sp_name="${sp%%:*}"
+                        sp_value="${sp#*:}"
+                        layers+=("  ${sp_name}: ${sp_value}")
+                    done
                 fi
+            done 
+            {
+                echo "layers:"
+                for item in "${layers[@]}"
+                do 
+                    echo "  ${item}"
+                done 
+                echo "layers-sequence:"
+                for item in "${layers_sequence[@]}"
+                do 
+                    echo "- ${item}"
+                done 
+                
             } >> /etc/salt/grains
         else
             echo_data "layers: []" >> /etc/salt/grains
@@ -131,7 +149,7 @@ function prepare_salt_gpg_keys()
         return 0
     fi
 
-    ensure_installed gpg rngd
+    ensure_installed gnupg rngd
     mkdir -p "/var/log/build/salt-gpgkeys"
     prepare_gpg_keystore "salt" "/etc/salt/gpgkeys" "${ADMIN_EMAIL}" "/var/log/build/salt-gpgkeys" "/usr/local/sbin"
 )

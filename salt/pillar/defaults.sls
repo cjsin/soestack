@@ -1,5 +1,19 @@
 {{ salt.loadtracker.load_pillar(sls) }}
 
+_layers_test:
+    defaults:     {{sls}}
+    defaults-value:  'defaults'
+    test_value:  'defaults'
+    additive:
+        - defaults
+
+layers_test:
+    defaults:     {{sls}}
+    defaults-value:  'defaults'
+    test_value:  'defaults'
+    additive:
+        - defaults
+
 include:
     # Load nuggets first
     - defaults.nuggets 

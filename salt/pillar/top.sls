@@ -7,7 +7,7 @@ base:
         - defaults
         - layers
         - secrets
-        
+        - deployment-sequence
         # Testing schema validation
         #- test-schema
         #- test-schema-testdata

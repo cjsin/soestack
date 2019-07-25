@@ -30,84 +30,66 @@
 {%- set actions = args.actions if 'actions' in args else [ 'auto' ] %}
 {%- set diagnostics = False %}
 {%- set verbose = False %}
+{%- set work = [] %}
+
 
 {%- if 'deployments' in pillar %}
 {#-     # build a list of deployment objects - the actions will then be processed #}
 {#-     # in order - so for example all install actions can be performed before all activate actions, if desired #}
-{%-     set work = [] %}
 
-{%-     for deploy_type, deployments in pillar.deployments.iteritems() %}
-
-{%- if diagnostics %}
-{{sls}}.deployments.{{deployment_type}}.processing.{{deploy_type}}:
-    noop.notice
-{%- endif %}
+{%-     set correct_type = [] %}
+{%-     for deployment_name, deployment in pillar.deployments.iteritems() %}
+{%-         set deploy_type = deployment.deploy_type if 'deploy_type' in deployment else 'basic' %}
 
 {%-         if deployment_type == 'all' or deploy_type == deployment_type %}
+{%-             do correct_type.append(deployment_name) %}
 
-{%- if diagnostics %}
-{{sls}}.deployments.{{deployment_type}}.correct-type.{{deploy_type}}:
-    noop.notice:
-        - text: {{deployments.keys()|json}}
-{%- endif %}
-
-{%-             for deployment_name, deployment in deployments.iteritems() %}
-
-{%- if False %}
-{{sls}}.deployments.{{deployment_type}}.found.{{deployment_name}}.processing:
-    noop.pprint:
-        - text: {{deployment_name}}
-        - data: {{deployment|json}}
-
-{%- endif %}
-
-{%-                 set pillar_location = ':'.join(['deployments',deploy_type,deployment_name]) %}
-{%-                 set hosts = deployment.hosts if 'hosts' in deployment else None %}
-{%-                 set host = deployment.host if 'host' in deployment else None %}
-{%-                 set matchers = [] %}
-{%-                 do matchers.extend([host] if host else []) %}
-{%-                 do matchers.extend(hosts if hosts else []) %}
-{%-                 set matched = [] %}
-
-{%-                 if not matchers %}
-{{sls}}.deployments.{{deployment_type}}.{{deploy_type}}.{{deployment_name}}.has-no-matchers:
+{%-             if diagnostics %}
+{{sls}}.deployments.{{deployment_type}}.processing.{{deploy_type}}.{{deployment_name}}:
     noop.notice
-{%-                 endif %}
+{%-             endif %}
 
-{%-                 for item in matchers %}
+{%-             set pillar_location = ':'.join(['deployments',deployment_name]) %}
 
-{%- if diagnostics %}
-{{sls}}.deployments.{{grains.host}}.attempted-match.{{item}}:
-    noop.notice
-{%- endif %}
-
-{%-                     if grains.host == item or grains.host|regex_match('('~item~')') %}
-
-{%- if diagnostics %}
-{{sls}}.deployments.{{grains.host}}.successful-match.{{item}}:
-    noop.notice
-{%- endif %}
-
-{%-                          do matched.append(item) %}
-{%-                     else %}
-{%- if diagnostics %}
-{{sls}}.deployments.{{grains.host}}.did-not-match.{{item}}:
-    noop.notice
-{%- endif %}
-{%-                     endif %}
-{%-                 endfor %}
-{%-                 if matched %}
-{%-                     do work.append({
-                            'deployment_type': deploy_type,
-                            'deployment_name': deployment_name, 
-                            'deployment': deployment,
-                            'pillar_location': pillar_location,
-                            }) %}
+{%-             set matchers = {} %}
+{%-             for style in ['host', 'role'] %}
+{%-                 set a = deployment[style~'s'] if (style~'s') in deployment else [] %}
+{%-                 set b = deployment[style].split(',') if style in deployment else [] %}
+{%-                 if a or b %}
+{%-                     do matchers.update({style: a+b}) %}
 {%-                 endif %}
 {%-             endfor %}
+
+{%-             set matched = [] %}
+
+{%-             for style, what in matchers.iteritems() %}
+{%-                     for w in what %}
+{%-                         if style == 'host' %}
+{%-                             if grains.host == w or grains.host|regex_match('('~w~')') %}
+{%-                                  do matched.append(w) %}
+{%-                             endif %}
+{%-                         elif style == 'role' %}
+{%-                             if ('role' in grains and w == grains.role) or ('roles' in grains and w in grains.roles) %} 
+{%-                                  do matched.append(w) %}
+{%-                             endif %}
+{%-                         endif %}
+{%-                     endfor %}
+{%-             endfor %}
+
+{%-             if (not matchers) or matched %}
+{%-                 do work.append({
+                        'deployment_type': deploy_type,
+                        'deployment_name': deployment_name, 
+                        'deployment': deployment,
+                        'pillar_location': pillar_location,
+                        }) %}
+{%-             endif %}
 {%-         endif %}
 {%-     endfor %}
+{%- endif %}
 
+
+{%- if work %}
 {%-     for action in actions %}
 {%-         if action in [ 'install', 'configure', 'activate', 'auto' ] %}
 {%-             for item in work %}
@@ -120,10 +102,19 @@
 {%-             endfor %}
 {%-        endif %}
 {%-    endfor %}
+{%- elif correct_type %}
+
+{{sls}}.deployments.no-deployments-in-pillar-matched-this-node--of-{{correct_type|length}}:
+    noop.notice
+
+{%- elif deployment_type == 'all' %}
+
+{{sls}}.deployments.no-deployments-in-pillar-at-all:
+    noop.notice
 
 {%- else %}
 
-{{sls}}.deployments.no-deployments-in-pillar:
+{{sls}}.deployments.no-{{deployment_type}}-deployments-in-pillar:
     noop.notice
 
 {%- endif %}

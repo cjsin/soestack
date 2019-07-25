@@ -1,10 +1,15 @@
-{%- set prefix, suffix  = salt.uuids.ids(args) %}
-{{sls}}.{{prefix}}firewall-rule-{{args.name}}{{suffix}}:
+{%- set ruleset_name = args.ruleset_name %}
+{%- set action_name = args.action_name %}
+{%- set data = args.data %}
+{%- set prefix = args.prefix %}
+{%- set suffix = args.suffix %}
+{%- set valid_keys = [] %}
+
+{{sls}}.{{prefix}}.firewall.complex.{{ruleset_name}}.{{action_name}}{{suffix}}:
     iptables.insert:
         - position:  1
-        {#- # TODO - add all valid keys #}
-        {%- for key in [ 'table', 'chain', 'jump', 'match', 'connstate', 'dport', 'protocol', 'sport', 'save' ] %}
-        {%-     if key in data %}
+        {%- for key, value in data.iteritems() %}
+        {%-     if (not valid_keys) or key in valid_keys %}
         - {{key}}:       {{data[key]}}
         {%-     endfor %}
         {%- endif %}

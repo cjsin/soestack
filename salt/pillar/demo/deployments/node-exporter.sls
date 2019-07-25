@@ -1,9 +1,8 @@
 {{ salt.loadtracker.load_pillar(sls) }}
 
 deployments:
-
-    node_exporter_baremetal:
-        node_exporter:
-            host:      '.*'
-            activated:   True
-            activated_where: {{sls}}
+    node-exporter:
+        deploy_type:    node_exporter_baremetal
+        host:           '.*'
+        activated:       True
+        activated_where: {{sls}}

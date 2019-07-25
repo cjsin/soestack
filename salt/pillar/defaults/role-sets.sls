@@ -29,7 +29,12 @@ role-sets:
             - nexus-node
             - homedir-server-node
             - primary-server-node
-            - infra-node
+            - infra-server-node
+            - pxeboot-server-node
+            - prometheus-node
+            - kibana-node
+            - gitlab-server-node
+            - ipa-member-node
 
     usb-infra-server-node:
         purpose: |
@@ -44,7 +49,18 @@ role-sets:
             - nexus-node
             - homedir-server-node
             - primary-server-node
-            - infra-node
+            - infra-server-node
+            - install-server-node
+            - pxeboot-server-node
+            - elasticsearch-node
+            - gitlab-server-node
+            - grafana-node
+            - kibana-node
+            - kube-master-node
+            - ipa-server-node
+            - nginx-frontend-node
+            - prometheus-node
+            - ipa-member-node
 
     secondary-server-node:
         purpose: |
@@ -56,6 +72,7 @@ role-sets:
             - service-node
             - homedir-server-node
             - primary-server-node
+            - ipa-member-node
 
     quickstart-infra-server-node:
         purpose: |
@@ -74,7 +91,13 @@ role-sets:
             - service-node
             - homedir-server-node
             - primary-server-node
-            - infra-node
+            - infra-server-node
+            - pxeboot-server-node
+            - gitlab-server-node
+            - grafana-node
+            - kibana-node
+            - prometheus-node
+            - ipa-member-node
 
     login-processor-node:
         purpose: |
@@ -82,6 +105,7 @@ role-sets:
         combine:
             - processor-node
             - login-node
+            - ipa-member-node
 
     developer-workstation-node:
         purpose: |
@@ -90,4 +114,4 @@ role-sets:
         combine:
             - software-development-node
             - workstation-node
-
+            - ipa-member-node

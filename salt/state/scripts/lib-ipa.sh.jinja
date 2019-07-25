@@ -1,0 +1,1000 @@
+#!/bin/bash
+
+[[ "${SS_LOADED_SS_LIB}" == "1" ]] || . /usr/local/bin/lib-ss.sh || exit 1
+
+for _x in tools server
+do 
+    [[ -f "/etc/sysconfig/ipa-${_x}" ]] && . "/etc/sysconfig/ipa-${_x}"
+done
+
+{# # TODO - move this to a state file #}
+{% do salt.secrets.check_or_generate('ipa_client_enrol') %}
+
+ticket_dir="/var/cache/salt/master"
+installation_pwfile=/etc/sysconfig/ipa-passwords
+KRB5CCNAME="${ticket_dir}/salt.krb"
+HELP_REGEX='(^|[[:space:]])(-h|-help|--help|help)([[:space:]]|$)'
+
+deployment_name="${IPA_DEPLOYMENT}"
+managed_hosts_key="managed-hosts:${deployment_name}"
+registered_hosts_file="/etc/ss-hosts-${deployment_name}"
+ipa_realm="${IPA_REALM}"
+default_reverse_zone="${IPA_REVERSE_ZONE}"
+default_regular_zone="${IPA_DOMAIN}"
+default_site="${IPA_DEFAULT_SITE}"
+
+ip_octet='[0-9]{1,3}'
+
+# NOTE: except for fqdn_regex where it is unavoidable, these regex 
+# for IP and MAC and hostname deliberately do not use capturing groups or include anchors (^ and $)
+# because they are intended to be include-able within other regular expressions
+# The _single versions do include anchors
+# The _embedded versions will match inside a string (at start or end, or with spaces on either side)
+
+#valid_username_regex='^[a-z]([-_a-z0-9]*[a-z0-9])$'
+valid_username_regex='^[a-z]([-_][A-Za-z0-9]+)*[a-zA-Z0-9]+$'
+
+ip_regex="${ip_octet}[.]${ip_octet}[.]${ip_octet}[.]${ip_octet}"
+ip_regex_single="^${ip_regex}\$"
+
+mac_octet='[aAbBcCdDeEfF0-9]{2}'
+mac_regex="${mac_octet}:${mac_octet}:${mac_octet}:${mac_octet}:${mac_octet}:${mac_octet}"
+mac_regex_single="^${mac_regex}\$"
+# No embedded version for mac address, as it is a fixed length it's not necessary to distinguish where it is
+
+host_octet1="[a-zA-Z0-9]"
+host_octet="[-a-zA-Z0-9_]"
+host_part_regex="${host_octet1}${host_octet}*"
+host_part_single="^${host_part_regex}\$"
+host_part_embedded="^"
+
+fqdn_regex="${host_part_regex}([.]${host_part_regex})+"
+fqdn_regex_single="^${fqdn_regex})\$"
+fqdn_regex_at_start="^${fqdn_regex}[[:space:]]"
+fqdn_regex_at_end="[[:space:]]${fqdn_regex}\$"
+fqdn_regex_in_middle="[[:space:]]${fqdn_regex}[[:space:]]"
+fqdn_regex_embedded="${fqdn_regex_single}|${fqdn_regex_at_start}|${fqdn_regex_in_middle}|${fqdn_regex_at_end}"
+
+reverse_regex_xyz="${ip_octet}[.]${ip_octet}[.]${ip_octet}[.]in-addr[.]arpa"
+reverse_regex_yz="${ip_octet}[.]${ip_octet}[.]in-addr[.]arpa"
+reverse_regex_z="${ip_octet}[.]in-addr[.]arpa"
+reverse_regex="${reverse_regex_xyz}|${reverse_regex_yz}|${reverse_regex_z}"
+reverse_regex_single="^(${reverse_regex})$"
+# No _embedded version for reverse_regex - it's not needed yet and would be very long 
+
+# Set LC_COLLATE to make sure [a-f] is just "abcdef" not  "aAbBcCdDeEfF" or "abcdefghijklmnopqrstuvwxyzABCDEF" depending on case sensitivity
+export LC_COLLATE=C
+
+# Match an ss-hosts line into 4 matching groups - 1=ip, 2= fqdn, 3=domain, 4=aliases 5=entry-type 6=mac
+ss_host_regex="^(${ip_regex})[[:space:]]+(${fqdn_regex})[[:space:]]*(.*)#[[:space:]]*(client|dns)[[:space:]]+(${mac_regex})([[:space:]]|\$)"
+
+function run()
+{
+    echo "Run ${*}" 1>&2
+    "${@}"
+}
+
+function salt_lookup_managed_host()
+{
+    local name="${1}"
+    msg "Looking up managed host '${name}' this can take a little while..."
+    local short_hostname="${name%%.*}"
+    salt-call pillar.get "${managed_hosts_key}:${short_hostname}" --out key | grep -v 'Local Keys' | sed 's/:[[:space:]]*/=/'
+}
+
+function salt_lookup()
+{
+    local short_hostname="${1}"
+    shift
+    local lookup_what=( "${@}" )
+    local -a result=()
+    local -a ret=()
+    local what=""
+    result=( $(salt_lookup_managed_host "${short_hostname}") )
+
+    for what in "${lookup_what[@]}"
+    do
+        local found=""
+        local result_item
+        for result_item in "${result[@]}"
+        do 
+            local key="${result_item%%=*}"
+            if [[ "${key}" == "${what}" ]]
+            then 
+                found="${result_item#*=}"
+                break
+            fi
+        done
+        if [[ -z "${found}" ]]
+        then
+            msg "No salt '${what}' information found for host '${short_hostname}'"
+            found="-"
+        fi
+        ret+=("${found}")
+    done 
+
+    echo "${ret[@]}"
+}
+
+function lookup_host_info_registered_hostfile()
+{
+    local fqdn="${1}"
+
+    local line this_ip this_fqdn remainder aliases found_host_ip found_mac  
+    local -a hostdata_lines=()
+
+    readarray -t hostdata_lines < "${registered_hosts_file}"
+
+    for line in "${hostdata_lines[@]}"
+    do
+        #echo line is "'$line'"
+        read this_ip this_fqdn remainder <<< "${line}"
+        if [[ "${this_fqdn}" == "${fqdn}" ]]
+        then 
+            aliases="${remainder%#*}"
+            found_host_ip="${this_ip}"
+            found_mac=$( awk '{print $1}' <<< "${remainder#*#}")
+            break
+        fi
+    done
+
+    echo "${found_host_ip:--}" "${found_mac:--}"
+}
+
+function lookup_host_info()
+{
+    local fqdn="${1}"
+    local short_hostname="${fqdn%%.*}"
+    local -a salt_result=( $(salt_lookup "${short_hostname}" "ip" "mac") )
+    local ip="${salt_result[0]}"
+    local mac="${salt_result[1]}"
+    if [[ "${ip}" == "-" || "${mac}" == "-" ]]
+    then 
+        local -a file_result=( $(lookup_host_info_registered_hostfile "${fqdn}") )
+        [[ "${ip}" == "-" ]] && ip="${file_result[0]}"
+        [[ "${mac}" == "-" ]] && mac="${file_result[1]}"
+    fi
+    echo "${ip}" "${mac}"
+}
+
+function reregister_check()
+{
+    local fqdn="${1}"
+    local reregister="${2}"
+    if ipa host-find "${fqdn%.}"
+    then
+        if [[ -z "${reregister}" || "${reregister}" == "ask" ]]
+        then 
+            local confirmation
+            logmsg "The host ${fqdn} is already enrolled."
+            msg "Do you wish to delete it and re-add?"
+            read -p "[n/Y]: " confirmation
+            if [[ "${confirmation,,}" != "y" ]]
+            then
+                logmsg "User cancelled add of host ${fqdn%.}"
+                return 1
+            else
+                logmsg "User confirmed removal of ${fqdn%.} before re-add."
+                reregister=1
+            fi
+        fi
+        if [[ "${reregister}" == "1" ]]
+        then 
+            host_rm "${fqdn%.}" 1
+            return $?
+        else 
+            return 0
+        fi
+    else
+        return 0
+    fi
+}
+
+function reverse_zone_for_ip()
+{
+    echo $(tr '.' '\n' <<< "${1}" | head -n3 | tac | tr '\n' '.')in-addr.arpa
+}
+
+function delete_dnsrecords()
+{
+    local fqdn="${1}"
+    local ip="${2}"
+    local d="${fqdn#*.}"
+    local n="${fqdn%%.*}"
+    local r=$(reverse_zone_for_ip "${ip}")
+    local final_octet="${ip##*.}"
+    # At this point, fqdn should include a . at the end 
+    run ipa dnsrecord-del "${d}" "${n}"           --a-rec   "${ip}"
+    run ipa dnsrecord-del "${r}" "${final_octet}" --ptr-rec "${fqdn}"
+}
+
+function add_dnsrecords()
+{
+    local fqdn="${1}"
+    local ip="${2}"
+    local d="${fqdn#*.}"
+    local n="${fqdn%%.*}"
+    local r=$(reverse_zone_for_ip "${ip}")
+    local final_octet="${ip##*.}"
+    
+    if ! ipa dnsrecord-find "${d}" "${n}" --raw | grep -q "arecord: ${ip}"
+    then
+        run ipa dnsrecord-add "${d}" "${n}"           --a-rec   "${ip}"
+    else 
+        echo "DNS record ${d} ${n} A ${ip} already exists" 
+    fi
+
+    if ! ipa dnsrecord-find "${r}" "${final_octet}" --raw | grep -q "ptrrecord: ${fqdn}"
+    then 
+        run ipa dnsrecord-add "${r}" "${final_octet}" --ptr-rec "${fqdn}"
+    else
+        echo "DNS record ${r} ${final_octet} PTR ${fqdn} already exists"
+    fi
+}
+
+function host_promote()
+{
+    local fqdn="${1}"
+    run ipa hostgroup-add-member ipaservers --hosts="${fqdn%.}"
+}
+
+function host_add()
+{
+    local kind="${1}"
+    local reregister="${2}"
+    local fqdn="${3}"
+    local host_ip="${4}"
+    local mac="${5}"
+    local special="${6}"
+    local site="${7:-${default_site}}"
+
+    if ! require_ticket admin
+    then 
+        return 1
+    fi
+
+    if [[ "${kind}" == "host" ]]
+    then 
+        if ! reregister_check "${fqdn}" "${reregister}"
+        then
+            return 1
+        fi
+    fi 
+
+    if [[ "${kind}" == "host" ]]
+    then 
+        delete_dnsrecords "${fqdn}" "${host_ip}" 2> /dev/null
+        logmsg "Registering host ${fqdn%.}"
+        # TODO - stop this using the commandline for the enrol_secret
+        enrol_secret=$(salt-secret ipa_client_enrol)
+        if [[ -z "${enrol_secret}" ]]
+        then 
+            err "No enrolment otp has been sent to this minion"
+        else
+            if run ipa host-add "${fqdn%.}" --ip "${host_ip}" --mac "${mac}" --password="${enrol_secret}" --location="${site}"
+            then
+                if [[ "${special}" == "replica" ]]
+                then
+                    host_promote "${fqdn}"
+                fi
+            fi
+        fi
+    elif [[ "${kind}" == "dns" ]]
+    then
+        add_dnsrecords "${fqdn}" "${host_ip}"
+    fi
+}
+
+function dns_add()
+{
+    local fqdn="${1}"
+    local host_ip="${2}"
+
+    if ! require_ticket admin
+    then 
+        return 1
+    fi
+
+    add_dnsrecords "${fqdn}" "${host_ip}"
+}
+
+
+function host_rm()
+{
+    local fqdn="${1}"
+    local deregister="${2}"
+
+    if ! require_ticket admin
+    then 
+        return 1
+    fi
+    
+    if (( deregister ))
+    then 
+        msg "Searching for ${fqdn%.}"
+        if ipa host-find "${fqdn%.}" 2> /dev/null > /dev/null
+        then 
+            run ipa host-del "${fqdn%.}"
+        else 
+            msg "Host ${fqdn} was not registered"
+        fi 
+    fi 
+
+    delete_dnsrecords "${fqdn}" "${host_ip}" 2> /dev/null
+    echo $?
+}
+
+function require_ticket()
+{
+    local ticket_name="${1}" # @${ipa_realm}"
+    if klist -l | grep "${ticket_name}"
+    then
+        return 0
+    else 
+        kinit "${ticket_name}"
+    fi
+}
+
+function is_bind_user()
+{
+    local user_name="${1}"
+    if groups "${user_name}" | egrep '[[:space:]]bind-users([[:space:]]|$)'
+    then 
+        return 0
+    else
+        return 1
+    fi 
+}
+
+function save_bind_user_pw()
+{
+    local user_name="${1}"
+    local secret_name="pw-bind-user-${user_name}"
+    if [[ -z "${user_name}" ]]
+    then 
+        secret_name="pw-bind-user"
+    fi
+    local pw="${2}"
+    #mkdir -p /root/.bind-users
+    #cat > "/root/.bind-users/${user_name}.txt" <<< "${pw}" 
+    #chmod go-rwx /root/.bind-users/*
+    #chmod o-rwx /root/.bind-users /root
+    #chgrp root /root 
+    salt-secret -save "${secret_name}" -stdin <<< "${pw}"
+}
+
+function send_password_email()
+{
+    local user_name="${1}"
+    local new_pw="${2}"
+    local emailaddr="${3}"
+    if ! [[ "${emailaddr}" =~ @ ]]
+    then 
+        err "Invalid email '${emailaddr}'"
+        return 1
+    fi
+    # TODO - support half/half passwords
+    # TODO - support email template from pillar
+    local lf=$'\n'
+    local data="Your password has been reset to:${lf}${lf}${new_pw}${lf}${lf}Please change it immediately.${lf}"
+    
+    #data=$(sed 's/^[[:space:]]*//' <<< "${data}")
+    if mail -s "[SENSITIVE] Password reset" "${emailaddr}" <<< "${data}"
+    then 
+        msg "Sent."
+        return 0
+    else 
+        msg "Not sent (failed)."
+        return 1
+    fi 
+}
+
+function reset-user-password()
+{
+    local user_name="${1}"
+    local send_email="${2:-0}"
+
+    if ! require_ticket admin
+    then 
+        return 1
+    fi
+
+    local new_password=$(mktemp -u XXXXXXXXXX)
+    if [[ -z "${new_password}" ]]
+    then 
+        err "Failed to generate a random password"
+        return 1
+    fi
+
+    local password_input=""
+    if [[ "${user_name}" == "admin" ]]
+    then 
+        local current_password=$(salt-secret pw-ipa-admin)
+        password_input+="${current_password}"$'\n'
+    fi
+    password_input+="${new_password}"$'\n'"${new_password}"$'\n'
+    if ! ipa passwd "${user_name}" <<< "${password_input}"
+    then 
+        err "Failed setting password for user '${user_name}'"
+        return 1
+    fi
+    if is_bind_user "${user_name}"
+    then 
+        save_bind_user_pw "${user_name}" "${new_password}"
+    fi  
+
+    local email_address=$(ipa user-show "${user_name}" --raw | grep mail: | cut -d ':' -f2- | tr -d ' ')
+    local sent=0
+
+    if (( send_email )) 
+    then
+        if [[ -n "${email_address}" ]]
+        then 
+            if send_password_email "${user_name}" "${new_password}" "${email_address}"
+            then 
+                sent=1
+            else 
+                err "Sending failed."
+            fi
+        else 
+            err "The user has no email address set."
+        fi
+    fi 
+
+    if ! (( sent ))
+    then
+        msg "The user password was set to ${new_password}"
+    fi
+}
+
+
+function create_user()
+{
+    local u="${1}"
+    local email="${2}"
+    local first_name="${3}"
+    local last_name="${4}"
+    local save_it="${5}"
+
+    if ! quiet ipa user-find --login="${u}"
+    then
+        msg "Creating user ${u}"
+        if verbose ipa user-add "${u}" --email="${email}" --first="${first_name}" --last="${last_name}"
+        then
+            msg "Setting password for user ${u}"
+            set_password "${u}" "" "${save_it}"
+        else
+            err "Failed adding user ${u}"
+        fi
+    else 
+        msg "User ${u} already exists"
+    fi
+}
+
+
+function set_password()
+{
+    local u="${1}"
+    local p2="${2}"
+    local save_it="${3}"
+    local p1=$(mktemp -u XXXXXXXXXXXXXXXXX)
+    [[ -n "${p2}" ]] || p2=$(mktemp -u XXXXXXXXXXXXXXXXX)
+    
+    local lf=$'\n'
+    ipa passwd "${u}" <<< "${p1}${lf}${p1}${lf}"
+    su -c "passwd" "${u}" <<< "${p1}${lf}${p2}${lf}${p2}${lf}"
+
+    local result=$?
+
+    if [[ "${save_it}" == "save" ]]
+    then
+        mkdir -p /root/.bind-users
+        chmod ug-rwx /root/.bind-users
+        local savefile="/root/.bind-users/${u}.txt"
+        if (( result ))
+        then
+            p2="${p2} (failed)"
+        fi
+        # NOTE the construct cat > f <<< var   is used to protect the contents of the string from the commandline
+        cat > "${savefile}" <<< "${p2}"
+        chmod go-rwx "${savefile}"
+    fi
+}
+
+function check_group_member()
+{
+    ipa group-show "${1}" 2> /dev/null | egrep -q "[:,] ${2}(,|\$)"
+}
+
+function load_admin_passwords()
+{
+    . /etc/sysconfig/ipa-passwords
+    local p
+    for p in admin ds master
+    do
+        local varname="${p}_password"
+        local value="${!varname}"
+        if [[ "${value}" =~ ^salt-secret: ]]
+        then
+            value=$(salt-secret "${value#salt-secret:}")
+        fi
+    done
+}
+
+
+function list_ticket()
+{
+    if [[ -f "${KRB5CCNAME}" ]]
+    then 
+        export KRB5CCNAME
+        klist
+    else
+        msg "No current ticket"
+    fi
+}
+
+function renew_ticket()
+{
+    mkdir -p "${ticket_dir}"
+
+    local admin_password=$(salt-secret pw-ipa-admin)
+
+    if [[ -n "${admin_password}" ]]
+    then 
+        msg "Using randomly generated IPA passwords during install."
+
+        # Load pregenerated passwords
+        kinit admin <<< "${admin_password}"
+    elif [[ -t 0 ]]
+    then
+        l=7
+        r=9
+        msg "Requesting renewable ticket. The ticket will work for ${l} days. Admin will need to renew each ${r} days."
+        msg "NOTE: the ticket is valid for use on this host only."
+        kinit -l "${l}d" -r "${r}d" -a admin
+    else
+        err "Past install phase and a tty is not available for entering the password"
+        return 1
+    fi
+}
+
+function reset-user-passwd::usage()
+{
+    echo "Usage: reset-user-passwd [options] [username]"
+    echo ""    
+    echo "Reset a user password."
+    echo ""
+    echo "Options:"
+    echo ""
+    echo "  -u,--user <username>       Specify the user name."
+    echo "  --no-email                 Don't send the password via email."
+    echo "  --email|--send             Send the password via email."
+}
+
+function reset-user-passwd::process_argv()
+{
+    local arg i d f n 
+
+    while (( $# ))
+    do
+        arg="${1}"
+        shift 
+        
+        case "${arg}" in
+            -h|-help|--help) 
+                usage
+                exit 0
+                ;;
+            -u|--user|-user)
+                username="${1}"
+                shift 
+                ;;
+            -n|--no-email|-no-email)
+                send_email=0
+                ;;
+            -e|--email|-email|--send|-send)
+                send_email=1
+                ;;
+            [a-z][-_a-z0-9]*)
+                username="${arg}"
+                ;;
+            *)
+                reset-user-passwd::usage
+                die "Unrecognised option: '${arg}'"
+                ;;
+        esac
+    done 
+
+    [[ -n "${username}" ]] || die "No username specified"
+    [[ "${username}" =~ ${valid_username_regex} ]] || die "Invalid username"
+}
+
+function reset-user-passwd::main()
+{
+    local username=""
+    local send_email=0
+
+    reset-user-passwd::process_argv "${@}"
+    reset-user-passwd "${username}" ${send_email}
+}
+
+function host-add::usage()
+{
+    echo "Usage: host-add [OPTIONS] [<hostname>] [IP] [MAC]"
+    echo ""
+    echo "Add (register) a host with IPA or add DNS entries."
+    echo ""
+    echo "The host should already be configured in salt."
+    echo "or else you'll need to specify the IP and also the MAC if performing host enrollment."
+    echo ""
+    echo "Options:"
+    echo ""
+    echo "  --replica     Allow this host to become a replica"
+    echo "  --update      Do not create - only update (for use with --replica)"
+    echo "  --dns-only    Perform DNS updates only (no enrollment)."
+    echo "  -m <MAC>      Specify the MAC address."
+    echo "  -i <IP>       Specify the IP address."
+    echo "  -n <name>     Specify the host name."
+    echo "  -d <domain>   Specify the domain name."
+    echo "  -f <fqdn>     Specify the fully qualified domain name (hostname.domain)."
+    echo "  -m <mac>      Specify the mac address"
+    echo "  -s <site>     Specify the automount site"
+    echo ""
+}
+
+function host-add::process_argv()
+{
+    local arg i m d f n s
+    local opt 
+
+    while (( $# ))
+    do
+        arg="${1}"
+        shift 
+        
+        case "${arg}" in
+            -h|-help|--help) 
+                usage
+                exit 0
+                ;;
+            -dns-only|--dns-only)
+                mode="dns"
+                ;;
+            -replica|--replica)
+                mode="register"
+                allow_replica=1
+                special="replica"
+                ;;
+            -promote|--promote)
+                mode="promote"
+                special="replica"
+                ;;
+            --re-register)
+                reregister=1
+                ;;
+            -m|--mac|-mac) 
+                m="${1}"
+                shift
+                ;;
+            -i|--ip|-ip)
+                i="${1}"
+                shift
+                ;;
+            -n|--name|-name)
+                n="${1}"
+                shift
+                ;;
+            -s|--site|-site)
+                s="${1}"
+                shift
+                ;;
+            -f|--fqdn|-fqdn)
+                f="${1}"
+                shift
+                ;;
+            -d|--domain|-domain)
+                d="${1}"
+                shift
+                ;;
+            ??:??:??:??:??:??)
+                m="${arg}"
+                shift
+                ;;
+            [0-9]*)
+                i="${arg}"
+                shift
+                ;; 
+            [a-zA-Z]*.*)
+                f="${arg}"
+                ;;
+            [a-zA-Z]*)
+                n="${arg}"
+                ;;
+            *)
+                usage
+                die "Unrecognised option: '${arg}'"
+                ;;
+        esac
+    done 
+
+    [[ -n "${m}" && ! "${m}" =~ ${mac_regex} ]] && die "Invalid MAC address: '${m}'"
+    [[ -n "${i}" && ! "${i}" =~ ${ip_regex} ]] && die "Invalid IP address: '${i}'" 
+    [[ -n "${f}" && ! "${f}" =~ [.] ]] && die "FQDN does not include a domain: '${f}'"
+    [[ -n "${f}" && ! "${f}" =~ [.][^.] ]] && die "FQDN does include a domain: '${f}'"
+    [[ -n "${f}" && "${f}" =~ ^[.] ]] && die "FQDN cannot start with a dot: '${f}'"
+
+    [[ -n "${d}" && -n "${f}" ]] && die "Mutually exclusive options (domain and fqdn)."
+    [[ "${n}" =~ [.] ]] && die "Name option does not accept fully qualified names. Use the -f option"
+
+    if [[ -z "${f}" ]]
+    then
+        # Generate the fqdn from other vars
+        if [[ -n "${n}" && -n "${d}" ]]
+        then
+            f="${n}.${d}."
+        elif [[ -n "${n}" ]]
+        then 
+            d="${default_regular_zone%.}"
+            f="${n}.${d}."
+        else
+            die "At least a node name must be specified!"
+        fi
+    else
+        # Break down the fqdn into domain, name, and make sure it has the dot at the end
+        d="${f#*.}"
+        n="${f%%.*}"
+        f="${f%.}."
+    fi
+
+    [[ ! "${f}" =~ ${fqdn_regex} ]] && die "Invalid host name: '${f}'"
+    
+    fqdn="${f%.}."
+
+    [[ -n "${i}" ]] && host_ip="${i}"
+    [[ -n "${m}" ]] && mac="${m}"
+
+    if [[ -z "${mac}" || -z "${host_ip}" ]]
+    then 
+        local -a lookup_results=( $(lookup_host_info "${fqdn}") )
+        [[ -z "${host_ip}" && "${lookup_results[0]}" != "-" ]] && host_ip="${lookup_results[0]}"
+        [[ -z "${mac}" && "${lookup_results[1]}" != "-" ]] && mac="${lookup_results[1]}"
+    fi
+
+    (( register )) && [[ -z "${mac}" ]] && die "No MAC information specified and not found from salt host lookup"
+    [[ -z "${host_ip}" ]] && die "No MAC information specified and not found from salt host lookup"
+
+    site="${s}"
+
+    # At the end of argument processing, we need to have a valid:
+    #   fqdn (with dot at the end)
+    #   host_ip 
+    # and if the host is to be registered (not dns-only):
+    #   mac
+}
+
+function host-add::create_keystore_for_host()
+{
+    warn "${FUNCNAME[0} - unimplemented"
+}
+
+function host-add::main()
+{
+    local fqdn=""
+    local mac=""
+    local host_ip=""
+    local site=""
+
+    local mode="register"
+    local reregister="ask"
+    local special=""
+    local kind="host"
+
+    host-add::process_argv "${@}"
+
+
+    case "${mode}" in
+        promote)
+            msg "Prepping host ${fqdn} for promotion"
+            host_promote "${fqdn}"
+            ;;
+        dns)
+            msg "Performing DNS additions only (no host enrollment)"
+            dns_add "${fqdn}" "${host_ip}"
+            ;;
+        register)
+            host_add "${kind}" "${reregister}" "${fqdn}" "${host_ip}" "${mac}" "${special}" "${site}" 
+            ;;
+    esac 
+}
+
+function host-rm::usage()
+{
+    echo "Usage: host-rm [options] [<hostname>] [IP]"
+    echo ""    
+    echo "De-register a host from IPA or remove DNS entries"
+    echo ""
+    echo "Options:"
+    echo ""
+    echo "  -i <IP>       Specify the IP address."
+    echo "  -n <name>     Specify the host name."
+    echo "  -d <domain>   Specify the domain name."
+    echo "  -f <fqdn>     Specify the fully qualified domain name (hostname.domain)."
+}
+
+function host-rm::process_argv()
+{
+    local arg i d f n 
+
+    while (( $# ))
+    do
+        arg="${1}"
+        shift 
+        
+        case "${arg}" in
+            -h|-help|--help) 
+                usage
+                exit 0
+                ;;
+            -dns-only|--dns-only)
+                deregister=0
+                ;;
+            -i|--ip|-ip)
+                i="${1}"
+                shift
+                ;;
+            -n|--name|-name)
+                n="${1}"
+                shift
+                ;;
+            -f|--fqdn|-fqdn)
+                f="${1}"
+                shift
+                ;;
+            -d|--domain|-domain)
+                d="${1}"
+                shift
+                ;;
+            [0-9]*)
+                i="${arg}"
+                shift
+                ;; 
+            [a-zA-Z]*.*)
+                f="${arg}"
+                ;;
+            [a-zA-Z]*)
+                n="${arg}"
+                ;;
+            *)
+                usage
+                die "Unrecognised option: '${arg}'"
+                ;;
+        esac
+    done 
+
+    [[ -n "${i}" && ! "${i}" =~ ${ip_regex} ]] && die "Invalid IP address: '${i}'" 
+    [[ -n "${f}" && ! "${f}" =~ [.] ]] && die "FQDN does not include a domain: '${f}'"
+    [[ -n "${f}" && ! "${f}" =~ [.][^.] ]] && die "FQDN does include a domain: '${f}'"
+    [[ -n "${f}" && "${f}" =~ ^[.] ]] && die "FQDN cannot start with a dot: '${f}'"
+
+    [[ -n "${d}" && -n "${f}" ]] && die "Mutually exclusive options (domain and fqdn)."
+    [[ "${n}" =~ [.] ]] && die "Name option does not accept fully qualified names. Use the -f option"
+
+    if [[ -z "${f}" ]]
+    then
+        if [[ -n "${n}" && -n "${d}" ]]
+        then
+            f="${n}.${d}."
+        elif [[ -n "${n}" ]]
+        then 
+            d="${default_regular_zone%.}"
+            f="${n}.${d}."
+        else
+            die "At least a node name must be specified!"
+        fi
+    else
+        d="${f#*.}"
+        n="${f%%.*}"
+        f="${f%.}."
+    fi
+
+    [[ ! "${f}" =~ ${fqdn_regex} ]] && die "Invalid host name: '${f}'"
+    [[ -n "${i}" && ! "${i}" =~ ${ip_regex} ]] && die "Invalid IP address: '${i}'"
+    
+    fqdn="${f%.}."
+
+    [[ -n "${i}" ]] && host_ip="${i}"
+
+    if [[ -z "${host_ip}" ]]
+    then 
+        local -a lookup_results=( $(lookup_host_info "${fqdn}") )
+        [[ -z "${host_ip}" && "${lookup_results[0]}" != "-" ]] && host_ip="${lookup_results[0]}"
+    fi
+
+    [[ -z "${host_ip}" ]] && die "No MAC information specified and not found from salt host lookup"
+
+    # At the end of argument processing, we need to have a valid:
+    #   fqdn (with dot at the end)
+    #   host_ip 
+}
+
+function host-rm::main()
+{
+    local fqdn=""
+    local host_ip=""
+    local deregister=1
+
+    host-rm::process_argv "${@}"
+    host-rm "${fqdn}" "${deregister}"
+}
+
+
+function salt-ipa-ticket::usage()
+{
+    msg "Usage: salt-ipa-ticket [--help | --renew | --list | --shell ]"
+    msg ""
+    msg "Renew kerberos ticket for Saltstack / IPA integration"
+    msg ""
+    msg "Modes:"
+    msg ""
+    msg "   --renew   Renew the ticket"
+    msg "   --list    Display the ticket"
+    msg "   --shell   Load the ticket and drop into a new shell (using that ticket)"
+}
+
+function salt-ipa-ticket::main()
+{
+    if ! (( $# ))
+    then
+        salt-ipa-ticket::usage 
+        exit 1
+    elif [[ "${*}" =~ ${HELP_REGEX} ]]
+    then
+        salt-ipa-ticket::usage
+        exit 0
+    else
+        export KRB5CCNAME
+        case "${1}" in 
+            -l|-list|--list|list)
+                list_ticket
+                ;;
+            -r|-renew|--renew|renew)
+                renew_ticket
+                ;;
+            -s|-shell|--shell|shell)
+                shift
+                bash "${@}"
+                ;;
+            *)
+                salt-ipa-ticket::usage
+                exit 1
+                ;;
+        esac 
+    fi 
+}
+
+
+function ipa::upgrade-passwords()
+{
+    
+    if [[ -s "${installation_pwfile}" ]]
+    then 
+        . "${installation_pwfile}"
+        for pw_name in master admin ds
+        do
+            varname="${pw_name}_password"
+            pwvalue="${!varname}"
+
+            if [[ "${pwvalue#salt-secret:}" == "${pwvalue}" ]]
+            then
+                # The password is non-empty and is not yet a salt secret
+                if [[ -n "${pwvalue}" ]] 
+                then
+                    secret_name="pw-ipa-${pw_name}"
+                    salt-secret -master -save "${secret_name}" -stdin <<< "${pwvalue}"
+                    # Update the file to refer to the secret
+                    sed -r -i "s/^(${varname})=(.*)/\1=salt-secret:${secret_name}/" "${installation_pwfile}"
+                fi
+            fi
+        done
+    fi
+}

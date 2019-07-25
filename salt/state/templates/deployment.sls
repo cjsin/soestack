@@ -69,35 +69,35 @@
 {%- set deployment_type  = args.deployment_type %}
 {%- set deployment_name  = args.deployment_name %}
 {%- set deployment       = args.deployment %}
-{%- set pillar_location  = args.pillar_location if 'pillar_location' in args else ':'.join(['deployments',deploy_type,deployment_name]) %}
-{%- set single_action    = [args.action] if 'action' in args and args.action else ['auto'] %}
-
+{%- set stages           = deployment.stages if 'stages' in deployment else [ 'install', 'configure', 'activate' ] %}
+{%- set pillar_location  = args.pillar_location if 'pillar_location' in args else ':'.join(['deployments',deployment_name]) %}
+{%- set single_action    = [args.action] if 'action' in args and args.action else [] %}
 {%- set multiple_actions = args.actions if 'actions' in args else [] %}
+{%- set combined_actions = single_action + multiple_actions %}
+{%- set auto_action      = [] if combined_actions else ['auto'] %}
 {%- set actions          = [] %}
-{%- set activated        = 'activated' in deployment and deployment.activated %}
+{%- set activated        = ('activated' not in deployment) or  deployment.activated %}
+{%- set auto_mode        = 'auto' if 'auto' in combined_actions else ('' if combined_actions else 'auto') %}
 
-{%- for act in multiple_actions+single_action %}
-{%-     if act == 'auto' %}
-
-{%-         if 'install' not in actions %}
-{%-             do actions.append('install') %}
+{#- the intent of this section is that if specific actions have been specified, do those, but #}
+{#- if an action 'auto' was specified, or no action were specified, then, only perform #}
+{#- the activate action if the deployment was 'activated' #}
+{%- if combined_actions %}
+{%-     for s in stages %}
+{%-         if s in combined_actions or auto_mode %}
+{%-             if not ( auto_mode and s == 'activate' and not activated ) %}
+{%-                 do actions.append(s) %}
+{%-             endif %}
+{%-        endif %}
+{%-     endfor %}
+{%- else %}
+{#-     # No specific actions were specified, therefore execute all stages #}
+{%-     for s in stages %}
+{%-         if not (s == 'activate' and not activated ) %}
+{%-             do actions.append(s) %}
 {%-         endif %}
-
-{%-         if 'configure' not in actions %}
-{%-             do actions.append('configure') %}
-{%-         endif %}
-
-{#-         In auto mode, the activate step is only added if the deployment hasn't been explicitly de-activated #}
-{%-         if activated and 'activate' not in actions %}
-{%-             set activated = 'activated' not in deployment or deployment.activated %}
-{%-             do actions.append('activate') %}
-{%-         endif %}
-
-{%-     elif act not in actions %}
-{%-         do actions.append(act) %}
-{%-     endif %}
-
-{%- endfor %}
+{%-     endfor %}
+{%- endif %}
 
 {%- if diagnostics %}
 
@@ -107,66 +107,21 @@
 
 {%- endif %}
 
-
-{%- for action in [ 'install', 'configure', 'activate' ] %}
-
+{%- for action in stages %}
 {%-     if action in actions %}
 
-{#-         # Install the base nugget class - that has a name matching the deployment type #}
-{%-         set base_nugget_type = deployment_type.replace('_','-') %}
-
-{%-         if diagnostics %}
-{{sls}}.{{deployment_name}}.{{action}}.base-nugget-type.{{base_nugget_type}}:
-    noop.notice
-{%-         endif %}
-
-{%-         if 'nuggets' in pillar and pillar.nuggets and base_nugget_type in pillar.nuggets %}
-
-{%-             if diagnostics %}
-{{noop.notice(' '.join(['deployment', deployment_type, deployment_name, action, action~'-base-nugget', base_nugget_type])) }}
-{%-             endif %}
-
-{%-             with args = { 'nugget_name': base_nugget_type} %}
-{%-             if diagnostics %}
-{{sls}}.{{deployment_name}}.{{action}}.base-nugget-type.{{base_nugget_type}}-{{action}}:
-    noop.notice
-{%-             endif %}
-{%                  include('templates/nugget/'~action~'.sls') with context %}
-{%-             endwith %}
-{%-         elif diagnostics %}
-{{sls}}.{{deployment_name}}.{{action}}.base-nugget-type.{{base_nugget_type}}-{{action}}--no-nuggets-or-base-nugget-type-{{base_nugget_type}}-not-in-nuggets:
-    noop.notice
-
-{%-         endif %}
-
-{#-         # Install this deployment as a nugget itself #}
-{%-         with args = { 'nugget': deployment, 
-                          'nugget_name': '-'.join([deployment_type,'deployment',deployment_name]), 
-                          'pillar_location': pillar_location, 
-                          'action': action 
-                        } %}
-
-{%-             if diagnostics %}
-{{noop.notice(' '.join(['deployment', deployment_type, deployment_name,action,'install-instance-as-nugget'])) }}
-{%-             endif %}
-
-{%              include('templates/nugget/'~action~'.sls') with context %}
-{%-         endwith %}
-
 {#-         # Call custom deployment handler #}
-{%-         with args = { 'deployment_name': deployment_name, 
+{%-         with args = { 
+                  'deployment_name': deployment_name, 
                   'deployment_type': deployment_type, 
                   'deployment': deployment, 
                   'pillar_location': pillar_location,
-                  'action': action } %}
+                  'action': action 
+                  } %}
 
-{%- if diagnostics %}
-{{noop.notice(' '.join(['deployment', deployment_type, deployment_name,action,'custom-deployment-handler'])) }}
-{%- endif %}
-
-{%              include('templates/deployment/'~deployment_type~'/'~deployment_type~'.sls') with context %}
-
+{%-             include 'templates/deploy.sls' with context %}
 {%-         endwith %}
+
 {%-     endif %}
 {#- end for each action #}
 {%- endfor %}

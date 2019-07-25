@@ -32,6 +32,10 @@ nuggets:
 
                 /srv:
 
+                /etc/systemd/system-preset:
+                    user: root
+                    group: root
+
                 /srv/sks:
                     mode:  '0755'
                     makedirs: True
@@ -152,7 +156,6 @@ nuggets:
                 /srv/sks/DB_CONFIG:
                     user: sks
                     group: sks
-                    mode: '0644'
                     contents: |
                         set_mp_mmapsize         268435456
                         set_cachesize    0      134217728 1
@@ -194,12 +197,11 @@ nuggets:
                 /etc/systemd/system/sks-db.service.d/preconfigure.conf:
                     user: root
                     group: root
-                    mode: '0644'
                     contents: |
                         [Service]
-                        ExecStartPre=/usr/local/sbin/preconfigure-sks
+                        ExecStartPre=/usr/local/bin/preconfigure-sks
 
-                /usr/local/sbin/preconfigure-sks:
+                /usr/local/bin/preconfigure-sks:
                     user: root
                     group: root
                     mode: '0755'
@@ -220,7 +222,6 @@ nuggets:
                 /etc/systemd/system-preset/99-sks-start-disabled.preset:
                     user: root
                     group: root
-                    mode:  '0644'
                     contents: |
                         disable sks-db.service
                         disable sks-recon.service

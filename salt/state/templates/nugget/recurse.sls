@@ -15,11 +15,11 @@
 {%- set required    = args.required if 'required' in args and args.required else [] %}
 {%- set action      = args.action if 'action' in args and args.action else '' %}
 
-{%- if required and action in ['install','activate'] %}
+{%- if required and action in ['install', 'configure', 'activate'] %}
 
-{%- if diagnostics %}
+{%-     if diagnostics %}
 {{noop.notice(action ~' pulling in nuggets ' ~ ','.join(required))}}
-{%- endif %}
+{%-     endif %}
 
 {%-     for name in required %}
 {%-         with args = {'nugget_name': name, 'required_by': nugget_name} %}
