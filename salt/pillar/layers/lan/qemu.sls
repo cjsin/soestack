@@ -21,7 +21,7 @@ deployments:
                     entries:
                         netinstall:
                             ss_settings:
-                                LAYERS:            soe:demo,site:testing,lan:qemu,private:example.private
+                                LAYERS:            soe:demo,role:G@roles,site:testing,lan:qemu,host:G@host,lan-host:lan:G@layers:lan+host:G@host,private:example.private
                 # Extra lan for testing on 10.0.2.x
                 devlan:
                     kernel:                os/minimal/images/pxeboot/vmlinuz

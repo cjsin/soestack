@@ -97,7 +97,7 @@
 {%-                     endif %}
 {%-                 else %}
 {%-                     set grain_key = x[2:] %}
-{%-                     set grain_value = grains[grain_key] if grain_key in grains else [] %}
+{%-                     set grain_value = salt['grains.get'](grain_key,[]) %}
 {%-                     if grain_value is string or grain_value == 0 or grain_value is not iterable %}
 {%-                         if grain_value != '' %}
 {%-                             do sub_items.extend(grain_value.split(',') if grain_value is string else [grain_value] if grain_value is not iterable else [] if grain_value is mapping else grain_value) %}

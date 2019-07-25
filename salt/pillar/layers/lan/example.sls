@@ -17,7 +17,7 @@ deployments:
                         netinstall:
                             ss_settings:
                                 ROLES:             role-set:developer-workstation-node
-                                LAYERS:            soe:demo,site:testing,lan:example,private:example.private
+                                LAYERS:            soe:demo,role:G@roles,site:testing,lan:example,host:G@host,lan-host:lan:G@layers:lan+host:G@host,private:example.private
 
                 # extra demo lan for pxebooting nodes with quick-install minimal basic node type 
                 demo:

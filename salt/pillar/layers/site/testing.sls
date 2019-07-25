@@ -223,7 +223,7 @@ deployments:
                                 # auto ROLES will use data from node_maps
                                 ROLES:             auto
                                 # NOTE that each lan layer should override LAYERS to set the 'lan:' part here'
-                                LAYERS:            soe:demo,site:testing,lan:unset,private:example.private
+                                LAYERS:            soe:demo,role:G@roles,site:testing,lan:default,host:G@host,lan-host:lan:G@layers:lan+host:G@host,private:example.private
                                 #ADD_HOST:
                                 #    - 192.168.121.101,infra.demo.com,infra
                                 #    - 192.168.121.103,nexus.demo.com,nexus

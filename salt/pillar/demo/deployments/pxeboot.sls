@@ -115,7 +115,7 @@ deployments:
                                 SALT_TYPE:         minion
                                 NAMESERVER:        '!!demo.ips.infra'
                                 ROLES:             basic-node
-                                LAYERS:            soe:demo,site:testing,lan:default,private:example.private
+                                LAYERS:            soe:demo,role:G@roles,site:testing,lan:default,host:G@host,lan-host:lan:G@layers:lan+host:G@host,private:example.private
                                 DEVELOPMENT:       0
                                 INTERACTIVE:       0
                                 WAIT:              0

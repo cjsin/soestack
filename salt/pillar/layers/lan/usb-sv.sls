@@ -17,7 +17,7 @@ deployments:
                     entries:
                         netinstall:
                             ss_settings:
-                                LAYERS:            soe:demo,site:testing,lan:usb-sv,private:example.private
+                                LAYERS:            soe:demo,role:G@roles,site:testing,lan:usb-sv,host:G@host,lan-host:lan:G@layers:lan+host:G@host,private:example.private
                             ss_hosts:
                                 192.168.0.1:       gateway.demo.com gateway
 
