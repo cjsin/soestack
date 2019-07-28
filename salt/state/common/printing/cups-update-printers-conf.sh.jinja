@@ -1,0 +1,27 @@
+#!/bin/bash
+
+if [[ "${1}" == "check" ]]
+then 
+    if cd /etc/cups && test -f printers.conf && diff printers.conf.ss printers.conf | egrep -v '^---|+++' | egrep '^[-+]' | egrep -v '^.(Type|ConfigTime|State|StateMessage|[#]|UUID) ' | egrep .
+    then 
+        echo "File has unexpected differences."
+        exit 1
+    else
+        echo "Up to date."
+        exit 0
+    fi
+elif [[ "${1}" == "update" ]]
+then 
+    echo "Cups printer file update - check results:"
+    "${BASH_SOURCE[0]}" check
+
+    stopstart=0
+
+    systemctl is-active cups && stopstart=1
+
+    (( stopstart )) && (systemctl stop cups; sleep 1) 
+
+    cp -a /etc/cups/printers.conf.ss /etc/cups/printers.conf
+
+    (( stopstart )) && systemctl start cups 
+fi

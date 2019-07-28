@@ -327,11 +327,11 @@ function vagrant_provision()
     configure_soestack_provision
 
     #echo_stage 5 "Running SS Provisioning"
-    #systemctl restart soestack-provision
+    #systemctl restart ss-provision
     #ls -lR "${SS_GEN}"
     # ${SS_DIR}/provision/common/provision.sh
-    #systemctl start soestack-provision
-    msg "Provisioning may be continued by starting the soestack-provision service"
+    #systemctl start ss-provision
+    msg "Provisioning may be continued by starting the ss-provision service"
     msg "Or by running '${SS_DIR}/provision/common/provision.sh console' to view"
     msg "the progress, or rebooting."
 

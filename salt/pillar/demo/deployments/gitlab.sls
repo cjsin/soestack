@@ -2,7 +2,7 @@
 
 deployments:
     
-    gitlab:
+    ss-gitlab:
         deploy_type:     gitlab_baremetal
         activated:       False
         activated_where: {{sls}}
@@ -35,12 +35,20 @@ deployments:
                             tcp:
                                 http: 80
         config:
+            hostname:           gitlab
             # Replace this with the correct token after gitlab installation
             registration_token: salt-secret:gitlab-runner-registration-token
             ports:
                 #gitlab_rails_registry_port: 5005
                 #registry_nginx_listen_port: 5005
                 #node_exporter_listen_port:  9101
+                gitlab_rails_registry_port: 5005
+                registry_nginx_listen_port: 5005
+                node_exporter_listen_port:  9101
+                http_frontend_port:         8000
+                pages_frontend_port:        8000
+
+
 
             registry_nginx:
                 port:         5005

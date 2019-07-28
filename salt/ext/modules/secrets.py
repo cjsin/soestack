@@ -79,7 +79,7 @@ def minion_keypair(minion_id=None):
         #return '/etc/salt/pki/minion/minion.pem'
         return None
 
-def readfile(path):
+def read_file(path):
     if path is None:
         return False, None
     try:
@@ -90,7 +90,15 @@ def readfile(path):
         traceback.print_exc()
         return False, None
 
-def writefile(path,data):
+def update_file(path, data):
+    """ Return None if the file is already up-to-date, otherwise, return the status of writing the file """
+    current_contents_plaintext = self.decrypt_secret_with()
+    if data == current_contents_plaintext:
+        return None
+    else:
+        return write_file(path ,data)
+
+def write_file(path,data):
     if path is None:
         return False
     if data is None:
@@ -101,7 +109,7 @@ def writefile(path,data):
             return True
     except:
         traceback.print_exc()
-        log.error("Writefile exception")
+        log.error("salt secrets write_file exception")
         return False
 
 def decrypt_secret_with(secret_name, keypath):
@@ -132,7 +140,7 @@ def receive_from_master(secret_name, secret_data, base64_encoded=False):
     """ Receive some secret data (encrypted) and save it. No need to decode it. (other than base64) """
     if base64_encoded:
         secret_data=base64.b64decode(secret_data)
-    return writefile(minion_storage(secret_name), secret_data)
+    return update_file(minion_storage(secret_name), secret_data)
 
 def _encrypt(pubfile,data, use_base64=False):
     if data is None:
@@ -210,7 +218,7 @@ def save_secret(secret_name, data):
     path = master_storage(secret_name)
     success, encrypted = _encrypt(master_pub(), data, use_base64=False)
     if success:
-        return writefile(path, encrypted)
+        return write_file(path, encrypted)
     else:
         log.error("encryption failed, not writing")
         return False

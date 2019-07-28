@@ -7,15 +7,15 @@ base:
         - deployments
         - util
 
-    'roles:primary-server':
+    'roles:primary-server-node':
         - match: grain
         - server.primary
 
-    'roles:secondary-server':
+    'roles:secondary-server-node':
         - match: grain
         - server.secondary
 
-    'roles:workstation':
+    'roles:workstation-node':
         - match: grain
         - workstation
    

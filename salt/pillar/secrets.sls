@@ -16,8 +16,13 @@ secrets:
         # You should set it to 'token' to set a random value if utilising in 
         # a real situation
         pw-ipa-admin:     str:admin123
+        # Similarly, this is the nexus password as deployed from the initial default nexus container.
+        # However an administrator should log in and set a new password, and then save it with salt-secret -save pw-nexus-admin
+        pw-nexus-admin:   str:admin123
 
     distribute:
+        pw-nexus-admin:
+            infra:
         pw-ipa-ds:
             replica1:
         pw-ipa-master:

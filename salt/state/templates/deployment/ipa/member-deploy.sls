@@ -6,5 +6,5 @@
 
 {{sls}}.{{deployment_name}}.deploy:
     cmd.run:
-        - name:     /usr/local/bin/deploy-ipa-{{node_type}}
+        - name:     /usr/local/bin/deploy-ipa
         - unless:   test -f /var/log/ipa{{client_or_server}}-install.log && ! test -f /var/log/ipa{{client_or_server}}-install.FAILED

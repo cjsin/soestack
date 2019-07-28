@@ -4,17 +4,6 @@
 
 secret_name_regex='^[A-Za-z]([-A-Za-z0-9_]*[A-Za-z0-9]|)$'
 
-function check_dir()
-{
-    [[ -d "${1}" ]] || mkdir "${1}"
-    chmod 700 "${1}"
-}
-
-function salt_secret_usage()
-{
-    msg "Usage: salt-secret [-h|-help|--help|help] [-master|-minion]  [-stdin|-env] [-save secret-name |-load secret-name |-list]"
-}
-
 function run()
 {
     if (( verbose ))
@@ -24,8 +13,18 @@ function run()
     "${@}"
 }
 
+function crypto::check_dir()
+{
+    [[ -d "${1}" ]] || mkdir "${1}"
+    chmod 700 "${1}"
+}
 
-function do_load()
+function crypto::salt-secret::usage()
+{
+    msg "Usage: salt-secret [-h|-help|--help|help] [-master|-minion]  [-stdin|-env] [-save secret-name |-load secret-name |-list]"
+}
+
+function crypto::salt-secret::load()
 {
     local secret_name="${1}"
     local storage_file="${2}"
@@ -54,7 +53,7 @@ function do_load()
     fi
 }
 
-function do_save()
+function crypto::salt-secret::save()
 {
     local secret_name="${1}"
     local storage_file="${2}"
@@ -65,15 +64,15 @@ function do_save()
     case "${source}" in 
         "")
             err "No data source specified!"
-            salt_secret_usage
-            return 1
+            crypto::salt-secret::usage
+            return 2
             ;;
         ask)
             input=$(ask_password_twice "${secret_name}" "8")
             if [[ "$?" != 0 ]]
             then
                 err "Failed reading password."
-                return 1
+                return 2
             fi
             ;;
         stdin)
@@ -91,13 +90,13 @@ function do_save()
                 msg "Secret to save is ${input}"
             else
                 err "Expected environment variable ${varname} was not set"
-                salt_secret_usage
-                return 1
+                crypto::salt-secret::usage
+                return 2
             fi
             ;;
         *)
-            salt_secret_usage
-            return 1
+            crypto::salt-secret::usage
+            return 2
             ;;
     esac
 
@@ -113,21 +112,8 @@ function do_save()
     return 0
 }
 
-function salt_secret()
+function crypto::salt-secret::process-args()
 {
-    local salt_pki="/etc/salt/pki"
-    local storage="/etc/salt/secrets"
-    local master_keyfile="/etc/salt/pki/master/master.pem" 
-    local storage_dir=""
-    local verbose=0
-    local source=""
-    local mode="auto"
-    local automode=""
-    local what="auto"
-    local output="stdout"
-    local format="binary"
-    local outfile=""
-
     local arg
     while (( $# ))
     do
@@ -135,8 +121,9 @@ function salt_secret()
         shift
         case "${arg}" in
             -h|-help|--help|help)
-                salt_secret_usage
-                return 0
+                crypto::salt-secret::usage
+                # return 1 to indicate the work is done
+                return 1
                 ;;
             -save|-store|--save|--store)
                 mode="save"
@@ -183,8 +170,8 @@ function salt_secret()
                     secret_name="${arg}"
                 else
                     err "Invalid secret name: '${arg}'"
-                    salt_secret_usage
-                    return 1
+                    crypto::salt-secret::usage
+                    return 2
                 fi
                 ;;
         esac
@@ -194,8 +181,8 @@ function salt_secret()
     if ! [[ "${automode}" =~ ${automode_regex} ]]
     then
         err "Conflicting flags specified - some are applicable only for load mode, and some for save mode."
-        salt_secret_usage
-        return 1
+        crypto::salt-secret::usage
+        return 2
     elif [[ -z "${automode}" && "${mode}" == "auto" ]]
     then
         automode="load"
@@ -205,14 +192,15 @@ function salt_secret()
     then
         msg "Available secrets:"
         ls /etc/salt/secrets/{minion,master}/* 2> /dev/null | sed 's%.*/%%' | sort | uniq
-        return 0
+        # return 1 to indicate the work is done
+        return 1
     fi
 
     if [[ -n "${automode}" && "${mode}" != "auto" && "${automode}" != "${mode}" ]]
     then 
         err "A mode '-save' or '-load' was specified which conflicts with other flags that were present."
-        salt_secret_usage
-        return 1
+        crypto::salt-secret::usage
+        return 2
     fi
 
     if [[ "${mode}" == "auto" ]]
@@ -222,8 +210,8 @@ function salt_secret()
 
     if [[ -z "${mode}" ]]
     then
-        salt_secret_usage
-        return 1
+        crypto::salt-secret::usage
+        return 2
     fi
 
     if [[ "${what}" == "auto" ]]
@@ -231,8 +219,42 @@ function salt_secret()
         what="minion"
         [[ -f "${master_keyfile}" ]] && what="master"
     else
-        [[ "${what}" == "master" && ! -f "${master_keyfile}" ]] && die "Master mode specified but this node has not run as a master"
+        if [[ "${what}" == "master" && ! -f "${master_keyfile}" ]]
+        then
+            err "Master mode specified but this node has not run as a master"
+            return 2
+        fi
     fi 
+}
+
+function crypto::salt-secret::main()
+{
+    local salt_pki="/etc/salt/pki"
+    local storage="/etc/salt/secrets"
+    local master_keyfile="/etc/salt/pki/master/master.pem" 
+    local storage_dir=""
+    local verbose=0
+    local source=""
+    local mode="auto"
+    local automode=""
+    local what="auto"
+    local output="stdout"
+    local format="binary"
+    local outfile=""
+
+    local status
+    crypto::salt-secret::process-args "${@}"
+    status=$?
+
+    if [[ "${status}" == 1 ]]
+    then 
+        # help was displayed
+        return 0
+    elif [[ "${status}" != 0 ]]
+    then
+        # there was an error processing the args
+        return 1
+    fi
     
     local keyfile="${salt_pki}/${what}/${what}.pem"
     local pubkey="${salt_pki}/${what}/${what}.pub"
@@ -242,21 +264,20 @@ function salt_secret()
     [[ "${secret_name}" =~ / ]] && die "Invalid secret name specified"
     local storage_file="${storage_dir}/${secret_name}"
 
-    check_dir "${storage}"
-    check_dir "${storage_dir}"
+    crypto::check_dir "${storage}"
+    crypto::check_dir "${storage_dir}"
 
     if [[ "${mode}" == "save" ]]
     then 
-        do_save "${secret_name}" "${storage_file}" "${pubkey}" "${source}" 
+        crypto::salt-secret::save "${secret_name}" "${storage_file}" "${pubkey}" "${source}" 
     elif [[ "${mode}" == "load" ]]
     then
-        do_load "${secret_name}" "${storage_file}" "${keyfile}" "${format}" "${output}" "${outfile}"
+        crypto::salt-secret::load "${secret_name}" "${storage_file}" "${keyfile}" "${format}" "${output}" "${outfile}"
     fi
 }
 
-function generate_secrets_usage()
+function crypto::generate-secrets::usage()
 {
-    local exitcode="${1:-0}"
     msg "${0##*/} [-h|-help|--help|help] [-random|-ask] [-single] [password-name] [password-name]..."
     msg ""
     msg "Options:"
@@ -268,36 +289,19 @@ function generate_secrets_usage()
     msg "  -min-length=x - specify a minimum length"
     msg "  -length=x     - specify a length for random generation"
     msg "  -allow-empty  - allow empty passwords (during entry, not generation)"
-
-    return ${exitcode}
 }
 
-function run()
+function crypto::generate-secrets::process-args()
 {
-    if (( verbose ))
-    then 
-        echo "Run: ${*}" 1>&2
-    fi
-    "${@}"
-}
-
-function generate_secrets()
-{
-    local secret_names=()
-    local style="ask"
-    local multi=1
-    local length=13
-    local min_length=""
     local arg
-    local prefix=""
     while (( $# ))
     do
         arg="${1}"
         shift
         case "${arg}" in
             -h|-help|--help|help)
-                usage 
-                return 0
+                crypto::generate-secrets::usage 
+                return 1
                 ;;
             -random)
                 style="random"
@@ -314,8 +318,8 @@ function generate_secrets()
                 if ! [[ "${min_length}" =~ ^[0-9][0-9]$ ]]
                 then
                     err "Invalid minimum length: '${min_length}'"
-                    usage
-                    return 1
+                    crypto::generate-secrets::usage
+                    return 2
                 fi
                 ;;
             -length=*)
@@ -323,8 +327,8 @@ function generate_secrets()
                 if ! [[ "${length}" =~ ^[0-9][0-9]$ ]]
                 then
                     err "Invalid length: '${length}'"
-                    usage
-                    return 1
+                    crypto::generate-secrets::usage
+                    return 2
                 fi
                 [[ -z "${min_length}" ]] && min_length="${length}"
                 ;;
@@ -343,8 +347,8 @@ function generate_secrets()
                     secret_names+=("pw-${arg}")
                 else
                     err "Invalid secret name: '${arg}'"
-                    usage
-                    return 1
+                    crypto::generate-secrets::usage
+                    return 2
                 fi
                 ;;
         esac
@@ -354,12 +358,34 @@ function generate_secrets()
     if ! (( count ))
     then
         err "No password names specified"
-        usage
-        return 1
+        crypto::generate-secrets::usage
+        return 2
     fi
+}
 
+function crypto::generate-secrets::main()
+{
+    local secret_names=()
+    local style="ask"
+    local multi=1
+    local length=13
+    local min_length=""
+    local prefix=""
     local pwvalue=""
 
+    local status
+    crypto::generate-secrets::process-args "${@}"
+    status=$?
+
+    if [[ "${status}" == 1 ]]
+    then 
+        # help was displayed
+        return 0
+    elif [[ "${status}" != 0 ]]
+    then
+        # there was an error processing the args
+        return 1
+    fi
 
     local secret_name
     for secret_name in "${secret_names[@]}"

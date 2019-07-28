@@ -63,7 +63,7 @@ package-sets:
         centos,redhat,fedora:
             - gpm
             # htop is broken/unailable due to broken epel zchunk issue
-            #- htop
+            - htop
 
     development-base:
         purpose: |
@@ -255,6 +255,13 @@ package-sets:
         centos,redhat,fedora:
             - nfs-utils
 
+    node-exporter-custom-build:
+        purpose: |
+            provide node metrics for prometheus + grafana dashboard
+        centos,redhat,fedora:
+            built-rpms:
+                - node_exporter
+
     nodejs-development:
         purpose: |
             provide nodejs tools
@@ -283,7 +290,7 @@ package-sets:
             provide tools for management of processes
         centos,redhat,fedora:
             # htop is broken/unailable due to broken epel zchunk issue
-            #- htop
+            - htop
             # provides pstree
             - psmisc
 

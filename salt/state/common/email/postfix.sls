@@ -9,6 +9,7 @@
 #        - unless: grep "home_mailbox = Maildir/" /etc/postfix/main.cf
 
 {%- if 'postfix' in pillar and pillar.postfix is mapping and 'config' in pillar.postfix %}
+
 {%-     set postfix  = pillar.postfix %}
 {%-     set configs  = postfix.config %}
 {%-     set mode     = postfix.mode if 'mode' in postfix else 'client' %}
@@ -19,6 +20,13 @@
 {%-     do config.update(defaults) %}
 {%-     do config.update(selected) %}
 {%-     set enabled = config['enabled'] %}
+
+
+.postfix:
+    pkg.installed:
+        - pkgs:
+            - postfix
+            - postfix-perl-scripts
 
 .postconf:
     file.managed: 

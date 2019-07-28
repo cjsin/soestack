@@ -35,6 +35,7 @@ role-sets:
             - kibana-node
             - gitlab-server-node
             - ipa-member-node
+            - desktop-node
 
     usb-infra-server-node:
         purpose: |
@@ -61,6 +62,7 @@ role-sets:
             - nginx-frontend-node
             - prometheus-node
             - ipa-member-node
+            - desktop-node
 
     secondary-server-node:
         purpose: |
@@ -73,6 +75,7 @@ role-sets:
             - homedir-server-node
             - primary-server-node
             - ipa-member-node
+            - desktop-node
 
     quickstart-infra-server-node:
         purpose: |
@@ -98,6 +101,7 @@ role-sets:
             - kibana-node
             - prometheus-node
             - ipa-member-node
+            - desktop-node
 
     login-processor-node:
         purpose: |
@@ -106,6 +110,7 @@ role-sets:
             - processor-node
             - login-node
             - ipa-member-node
+            - desktop-node
 
     developer-workstation-node:
         purpose: |
@@ -115,3 +120,4 @@ role-sets:
             - software-development-node
             - workstation-node
             - ipa-member-node
+            - desktop-node

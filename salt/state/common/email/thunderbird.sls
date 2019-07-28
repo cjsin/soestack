@@ -1,5 +1,6 @@
 #!stateconf yaml . jinja
 
+{%- if 'roles' not in grains or 'desktop-node' in grains.roles %}
 .thunderbird:
     pkg.installed:
         - pkgs:
@@ -43,4 +44,6 @@
 
 {%-         endif %}
 {%-     endfor %}
+{%- endif %}
+
 {%- endif %}

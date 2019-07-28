@@ -7,7 +7,9 @@
 {%- set action           = args.action if 'action' in args else 'all' %}
 
 {%- if action in [ 'all', 'install' ] %}
+
 {%      include(templates ~ '/member-packages.sls') with context %}
+
 {%- endif %}
 
 {%- if action in [ 'all', 'configure' ] %}
@@ -31,8 +33,10 @@
 {%-     if node_type in [ 'master', 'replica '] %}
 {%          include(templates ~ '/server-activation.sls') with context %}
 {%-     endif %}
+
 {%-     if node_type in [ 'master' ] %}
 {%-         include(templates ~ '/master-postinstall.sls') with context %}
 {%-     endif %}
+
 {%- endif %}
 

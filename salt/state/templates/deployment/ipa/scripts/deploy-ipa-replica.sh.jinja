@@ -1,5 +1,7 @@
 #!/bin/bash
 
-. /usr/local/bin/lib-ipa-deploy.sh
+. /usr/local/bin/lib-ss.sh || exit 1
+. /usr/local/bin/lib-ipa.sh || die "Failed loading ipa lib"
+. /usr/local/bin/lib-ipa-deploy.sh || die "Failed loading deployment lib"
 
-deploy::replica::main "${@}"
+ipa::deploy::replica::main "${@}"

@@ -3,7 +3,6 @@
 . /usr/local/bin/lib-ss.sh || exit 1
 . /usr/local/bin/lib-ipa.sh || die "Failed loading ipa lib"
 
-
 # NOTE this function requires a 'logprefix' and TIMESTAMP' variable already to 
 # have been declared
 function ipa::deploy::uninstall_failed_first()
@@ -24,7 +23,6 @@ function ipa::deploy::uninstall_failed_first()
     fi
     rm -f "${logprefix}.FAILED"
 }
-
 
 function ipa::deploy::install::client()
 {
@@ -234,7 +232,7 @@ function ipa::deploy::prep-salt-ticket()
     export KRB5CCNAME=/var/cache/salt/master/salt.krb
 
     local admin_password ds_password master_password
-    load_admin_passwords
+    ipa::load_admin_passwords
     notice "Installation was successful. Preparing salt/IPA integration ticket (${KRB5CCNAME})."
     kinit admin <<< "${admin_password}"
     local result=$?

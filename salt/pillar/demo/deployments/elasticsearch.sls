@@ -17,6 +17,7 @@ deployments:
                             tcp:
                                 http:    9200
                                 elastic: 9300
+                
         container:
             description: Elasticsearch cluster
             volumes:

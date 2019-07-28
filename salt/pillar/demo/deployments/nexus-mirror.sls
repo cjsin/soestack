@@ -1,17 +1,17 @@
 {{ salt.loadtracker.load_pillar(sls) }}
 
 deployments:
-    nexus-mirror:
+    ss-nexus-mirror:
         deploy_type:     nexus_container
         activated:       False
         activated_where: {{sls}}
         activate:
             services:
                 enabled:
-                    - nexus-mirror
+                    - ss-nexus-mirror
             firewall:
                 basic:
-                    nexus-mirror-frontend:
+                    ss-nexus-mirror:
                         ip: '!!demo.ips.nexus'
                         accept:
                             tcp:

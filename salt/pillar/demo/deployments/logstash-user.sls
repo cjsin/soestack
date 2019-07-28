@@ -54,6 +54,9 @@ deployments:
             xpack_elasticsearch_url: http://192.168.121.109:9200
             json_port:               12345
             http_port:               12346
+            # Config_subdir should match the location (under /etc/logstash) of the config files
+            # that are generated below
+            config_subdir:           user
 
         filesystem:
             templates:

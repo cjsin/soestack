@@ -13,7 +13,7 @@ These instructions are from the following Sonatype support pages. Please read th
 
 In short:
 
-    - systemctl stop nexus-mirror
+    - systemctl stop ss-nexus-mirror
 
     - (check that it has stopped)
 

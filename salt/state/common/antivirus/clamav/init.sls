@@ -2,9 +2,11 @@
 
 
 .setup-selinux:
-    cmd.run: 
-        # TODO: convert to selinux.boolean state
-        - name:     setsebool -P antivirus_can_scan_system 1
+    selinux.boolean:
+        - name:    antivirus_can_scan_system
+        - value:   True
+        - persist: True
+
 
 .install:
     pkg.latest:

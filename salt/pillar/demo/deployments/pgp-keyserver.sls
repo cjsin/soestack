@@ -6,6 +6,7 @@ deployments:
         host:            infra
         activated:       True
         activated_where: {{sls}}
+
         activate:
             firewall:
                 basic:

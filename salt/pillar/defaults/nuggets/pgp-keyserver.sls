@@ -55,6 +55,8 @@ nuggets:
                     makedirs: True
 
                 /etc/systemd/system/sks-db.service.d:
+                    user: root
+                    group: root
 
             symlinks:
                 /srv/sks/web/index.html:
@@ -170,6 +172,8 @@ nuggets:
                         mutex_set_max           65536
 
                 /etc/systemd/system/sks-web.service:
+                    user: root
+                    group: root
                     contents: |
                         [Unit]
                         Description=Nginx frontend for SKS keyserver

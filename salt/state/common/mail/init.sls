@@ -1,4 +1,3 @@
 include:
-    - .clients
-    - .aliases
-    - .delivery
+    - common.email
+

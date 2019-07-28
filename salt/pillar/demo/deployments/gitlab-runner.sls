@@ -1,7 +1,7 @@
 {{ salt.loadtracker.load_pillar(sls) }}
 
 deployments:
-    gitlab-runner:
+    ss-gitlab-runners:
         deploy_type: gitlab_runner_baremetal
         activated: False
         activated_where: {{sls}}

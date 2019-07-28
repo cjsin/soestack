@@ -36,7 +36,6 @@ include:
     - .hosts
     - .ipv6
     - .mail
-    - .node_exporter
     - .npm
     - .pip
     - .printing

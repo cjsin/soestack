@@ -30,7 +30,7 @@ deployments:
                 httpd: '!!demo.ips.infra'
                 named: '!!demo.ips.infra'
 
-    gitlab-runner:
+    ss-gitlab-runners:
         hosts:
             - {{grains.host}}
         activated:       True

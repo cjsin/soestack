@@ -51,7 +51,7 @@ Next, pull the sonatype image:
             #> mkdir /data/nexus3
             #> chown 200.200 /data/nexus3
     
-    - create a configuration file, ``/etc/sysconfig/nexus-mirror``, which will include the path to your data directory.
+    - create a configuration file, ``/etc/sysconfig/ss-nexus-mirror``, which will include the path to your data directory.
 
         .. code-block::
 
@@ -72,7 +72,7 @@ Next, pull the sonatype image:
             OPTIONS=-c "/opt/sonatype/start-nexus-repository-manager.sh > /nexus-data/service.log 2>&1"
 
 
-    - create a systemd service unit file ``/etc/systemd/system/nexus-mirror.service`` for the service:
+    - create a systemd service unit file ``/etc/systemd/system/ss-nexus-mirror.service`` for the service:
 
         .. code-block::
 
@@ -144,14 +144,14 @@ Next, pull the sonatype image:
 
         .. code-block:: console 
 
-            #> systemctl start nexus-mirror
+            #> systemctl start ss-nexus-mirror
 
 
     - Check the service
 
         .. code-block:: console 
 
-            #> systemctl status nexus-mirror
+            #> systemctl status ss-nexus-mirror
 
     - If problems occurred:
 
@@ -159,7 +159,7 @@ Next, pull the sonatype image:
 
             .. code-block:: console 
 
-                #> journalctl -u nexus-mirror 
+                #> journalctl -u ss-nexus-mirror 
 
         + check the log created when the service runs (configured in the ``sysconfig`` file):
 

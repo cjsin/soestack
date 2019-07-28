@@ -1,0 +1,50 @@
+#!/bin/bash
+
+name="{{n}}"
+{%- set expected = t.status.split(',') %}
+{%- for e in expected%}
+expected_{{e}}=1
+{%- endfor %}
+
+score=0
+
+exists=$(systemctl list-unit-files "${name}}.service")
+if (( expected_exists )) && [[ "${exists}" =~ ^${name}[.]service ]]
+then 
+    ((score++))
+    problems+=("The ${name} service does not exist or is not loaded")
+fi
+
+enabled=$(systemctl is-enabled "${name}")
+if (( expected_enabled )) && ! [[ "${enabled}" =~ enabled ]]
+then 
+    ((score++))
+    problems+=("The ${name} service was not enabled")
+fi
+
+running=$(systemctl is-active "${name}")
+if (( expected_running )) && ! [[ "${running}" =~ active ]]
+then 
+    ((score++))
+    problems+=("The ${name} service was not running")
+fi
+
+failed=$(systemctl is-failed "${name}")
+if [[ "${failed}" =~ failed ]]
+then 
+    ((score++))
+    problems+=("The ${name} service has failed")
+fi
+
+if (( score ))
+then 
+    echo "FAIL" 1>&2
+    for p in "${problems[@]}"
+    do
+        echo "PROBLEM: ${p}" 1>&2
+    done
+else
+    echo "PASS"
+fi
+
+exit  ${score}

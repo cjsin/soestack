@@ -74,7 +74,7 @@ function run()
     "${@}"
 }
 
-function salt_lookup_managed_host()
+function ipa::salt_lookup_managed_host()
 {
     local name="${1}"
     msg "Looking up managed host '${name}' this can take a little while..."
@@ -82,7 +82,7 @@ function salt_lookup_managed_host()
     salt-call pillar.get "${managed_hosts_key}:${short_hostname}" --out key | grep -v 'Local Keys' | sed 's/:[[:space:]]*/=/'
 }
 
-function salt_lookup()
+function ipa::salt_lookup()
 {
     local short_hostname="${1}"
     shift
@@ -90,7 +90,7 @@ function salt_lookup()
     local -a result=()
     local -a ret=()
     local what=""
-    result=( $(salt_lookup_managed_host "${short_hostname}") )
+    result=( $(ipa::salt_lookup_managed_host "${short_hostname}") )
 
     for what in "${lookup_what[@]}"
     do
@@ -116,7 +116,7 @@ function salt_lookup()
     echo "${ret[@]}"
 }
 
-function lookup_host_info_registered_hostfile()
+function ipa::lookup_host_info_registered_hostfile()
 {
     local fqdn="${1}"
 
@@ -141,23 +141,23 @@ function lookup_host_info_registered_hostfile()
     echo "${found_host_ip:--}" "${found_mac:--}"
 }
 
-function lookup_host_info()
+function ipa::lookup_host_info()
 {
     local fqdn="${1}"
     local short_hostname="${fqdn%%.*}"
-    local -a salt_result=( $(salt_lookup "${short_hostname}" "ip" "mac") )
+    local -a salt_result=( $(ipa::salt_lookup "${short_hostname}" "ip" "mac") )
     local ip="${salt_result[0]}"
     local mac="${salt_result[1]}"
     if [[ "${ip}" == "-" || "${mac}" == "-" ]]
     then 
-        local -a file_result=( $(lookup_host_info_registered_hostfile "${fqdn}") )
+        local -a file_result=( $(ipa::lookup_host_info_registered_hostfile "${fqdn}") )
         [[ "${ip}" == "-" ]] && ip="${file_result[0]}"
         [[ "${mac}" == "-" ]] && mac="${file_result[1]}"
     fi
     echo "${ip}" "${mac}"
 }
 
-function reregister_check()
+function ipa::reregister_check()
 {
     local fqdn="${1}"
     local reregister="${2}"
@@ -180,7 +180,7 @@ function reregister_check()
         fi
         if [[ "${reregister}" == "1" ]]
         then 
-            host_rm "${fqdn%.}" 1
+            ipa::host_rm "${fqdn%.}" 1
             return $?
         else 
             return 0
@@ -190,12 +190,12 @@ function reregister_check()
     fi
 }
 
-function reverse_zone_for_ip()
+function ipa::reverse_zone_for_ip()
 {
     echo $(tr '.' '\n' <<< "${1}" | head -n3 | tac | tr '\n' '.')in-addr.arpa
 }
 
-function delete_dnsrecords()
+function ipa::delete_dnsrecords()
 {
     local fqdn="${1}"
     local ip="${2}"
@@ -208,7 +208,7 @@ function delete_dnsrecords()
     run ipa dnsrecord-del "${r}" "${final_octet}" --ptr-rec "${fqdn}"
 }
 
-function add_dnsrecords()
+function ipa::add_dnsrecords()
 {
     local fqdn="${1}"
     local ip="${2}"
@@ -232,7 +232,7 @@ function add_dnsrecords()
     fi
 }
 
-function host_promote()
+function ipa::host_promote()
 {
     local fqdn="${1}"
     run ipa hostgroup-add-member ipaservers --hosts="${fqdn%.}"
@@ -248,14 +248,14 @@ function host_add()
     local special="${6}"
     local site="${7:-${default_site}}"
 
-    if ! require_ticket admin
+    if ! ipa::require-ticket admin
     then 
         return 1
     fi
 
     if [[ "${kind}" == "host" ]]
     then 
-        if ! reregister_check "${fqdn}" "${reregister}"
+        if ! ipa::reregister_check "${fqdn}" "${reregister}"
         then
             return 1
         fi
@@ -263,7 +263,7 @@ function host_add()
 
     if [[ "${kind}" == "host" ]]
     then 
-        delete_dnsrecords "${fqdn}" "${host_ip}" 2> /dev/null
+        ipa::delete_dnsrecords "${fqdn}" "${host_ip}" 2> /dev/null
         logmsg "Registering host ${fqdn%.}"
         # TODO - stop this using the commandline for the enrol_secret
         enrol_secret=$(salt-secret ipa_client_enrol)
@@ -275,36 +275,35 @@ function host_add()
             then
                 if [[ "${special}" == "replica" ]]
                 then
-                    host_promote "${fqdn}"
+                    ipa::host_promote "${fqdn}"
                 fi
             fi
         fi
     elif [[ "${kind}" == "dns" ]]
     then
-        add_dnsrecords "${fqdn}" "${host_ip}"
+        ipa::add_dnsrecords "${fqdn}" "${host_ip}"
     fi
 }
 
-function dns_add()
+function ipa::dns_add()
 {
     local fqdn="${1}"
     local host_ip="${2}"
 
-    if ! require_ticket admin
+    if ! ipa::require-ticket admin
     then 
         return 1
     fi
 
-    add_dnsrecords "${fqdn}" "${host_ip}"
+    ipa::add_dnsrecords "${fqdn}" "${host_ip}"
 }
 
-
-function host_rm()
+function ipa::host_rm()
 {
     local fqdn="${1}"
     local deregister="${2}"
 
-    if ! require_ticket admin
+    if ! ipa::require-ticket admin
     then 
         return 1
     fi
@@ -320,22 +319,28 @@ function host_rm()
         fi 
     fi 
 
-    delete_dnsrecords "${fqdn}" "${host_ip}" 2> /dev/null
+    ipa::delete_dnsrecords "${fqdn}" "${host_ip}" 2> /dev/null
     echo $?
 }
 
-function require_ticket()
+function ipa::require-ticket()
 {
     local ticket_name="${1}" # @${ipa_realm}"
     if klist -l | grep "${ticket_name}"
     then
         return 0
     else 
-        kinit "${ticket_name}"
+        local secret_name="pw-ipa-${ticket_name}"
+        if salt-secret --list | egrep "^${secret_name}\$"
+        then 
+            salt-secret "${secret_name}" | kinit "${ticket_name}"
+        else
+            kinit "${ticket_name}"
+        fi
     fi
 }
 
-function is_bind_user()
+function ipa::is_bind_user()
 {
     local user_name="${1}"
     if groups "${user_name}" | egrep '[[:space:]]bind-users([[:space:]]|$)'
@@ -346,7 +351,7 @@ function is_bind_user()
     fi 
 }
 
-function save_bind_user_pw()
+function ipa::save_bind_user_pw()
 {
     local user_name="${1}"
     local secret_name="pw-bind-user-${user_name}"
@@ -363,7 +368,7 @@ function save_bind_user_pw()
     salt-secret -save "${secret_name}" -stdin <<< "${pw}"
 }
 
-function send_password_email()
+function ipa::send_password_email()
 {
     local user_name="${1}"
     local new_pw="${2}"
@@ -381,6 +386,9 @@ function send_password_email()
     #data=$(sed 's/^[[:space:]]*//' <<< "${data}")
     if mail -s "[SENSITIVE] Password reset" "${emailaddr}" <<< "${data}"
     then 
+        msg "Email contents:"
+        cat <<< "${data}"
+        msg "Run: mail -s \"[SENSITIVE] Password reset\" \"${emailaddr}\" "
         msg "Sent."
         return 0
     else 
@@ -389,12 +397,12 @@ function send_password_email()
     fi 
 }
 
-function reset-user-password()
+function ipa::reset-user-passwd()
 {
     local user_name="${1}"
     local send_email="${2:-0}"
 
-    if ! require_ticket admin
+    if ! ipa::require-ticket admin
     then 
         return 1
     fi
@@ -418,9 +426,9 @@ function reset-user-password()
         err "Failed setting password for user '${user_name}'"
         return 1
     fi
-    if is_bind_user "${user_name}"
+    if ipa::is_bind_user "${user_name}"
     then 
-        save_bind_user_pw "${user_name}" "${new_password}"
+        ipa::save_bind_user_pw "${user_name}" "${new_password}"
     fi  
 
     local email_address=$(ipa user-show "${user_name}" --raw | grep mail: | cut -d ':' -f2- | tr -d ' ')
@@ -430,7 +438,7 @@ function reset-user-password()
     then
         if [[ -n "${email_address}" ]]
         then 
-            if send_password_email "${user_name}" "${new_password}" "${email_address}"
+            if ipa::send_password_email "${user_name}" "${new_password}" "${email_address}"
             then 
                 sent=1
             else 
@@ -447,14 +455,14 @@ function reset-user-password()
     fi
 }
 
-
-function create_user()
+function ipa::create_user()
 {
     local u="${1}"
     local email="${2}"
     local first_name="${3}"
     local last_name="${4}"
     local save_it="${5}"
+    local verbose="${6:-0}"
 
     if ! quiet ipa user-find --login="${u}"
     then
@@ -462,17 +470,17 @@ function create_user()
         if verbose ipa user-add "${u}" --email="${email}" --first="${first_name}" --last="${last_name}"
         then
             msg "Setting password for user ${u}"
-            set_password "${u}" "" "${save_it}"
+            ipa::set-password "${u}" "" "${save_it}"
         else
             err "Failed adding user ${u}"
         fi
-    else 
+    elif (( verbose ))
+    then 
         msg "User ${u} already exists"
     fi
 }
 
-
-function set_password()
+function ipa::set-password()
 {
     local u="${1}"
     local p2="${2}"
@@ -501,12 +509,20 @@ function set_password()
     fi
 }
 
-function check_group_member()
+function ipa::check_group_member()
 {
-    ipa group-show "${1}" 2> /dev/null | egrep -q "[:,] ${2}(,|\$)"
+    #ipa group-show "${1}" 2> /dev/null | egrep -q "[:,] ${2}(,|\$)"
+    if ipa group-show "${1}" 2> /dev/null | egrep "[:,] ${2}(,|\$)"
+    then 
+        echo "yes"
+        return 0
+    else 
+        echo "no"
+        return 1
+    fi
 }
 
-function load_admin_passwords()
+function ipa::load_admin_passwords()
 {
     . /etc/sysconfig/ipa-passwords
     local p
@@ -522,7 +538,7 @@ function load_admin_passwords()
 }
 
 
-function list_ticket()
+function ipa::list_ticket()
 {
     if [[ -f "${KRB5CCNAME}" ]]
     then 
@@ -533,7 +549,7 @@ function list_ticket()
     fi
 }
 
-function renew_ticket()
+function ipa::renew_ticket()
 {
     mkdir -p "${ticket_dir}"
 
@@ -558,7 +574,7 @@ function renew_ticket()
     fi
 }
 
-function reset-user-passwd::usage()
+function ipa::reset-user-passwd::usage()
 {
     echo "Usage: reset-user-passwd [options] [username]"
     echo ""    
@@ -571,7 +587,7 @@ function reset-user-passwd::usage()
     echo "  --email|--send             Send the password via email."
 }
 
-function reset-user-passwd::process_argv()
+function ipa::reset-user-passwd::process_argv()
 {
     local arg i d f n 
 
@@ -599,7 +615,7 @@ function reset-user-passwd::process_argv()
                 username="${arg}"
                 ;;
             *)
-                reset-user-passwd::usage
+                ipa::reset-user-passwd::usage
                 die "Unrecognised option: '${arg}'"
                 ;;
         esac
@@ -609,16 +625,16 @@ function reset-user-passwd::process_argv()
     [[ "${username}" =~ ${valid_username_regex} ]] || die "Invalid username"
 }
 
-function reset-user-passwd::main()
+function ipa::reset-user-passwd::main()
 {
     local username=""
     local send_email=0
 
-    reset-user-passwd::process_argv "${@}"
-    reset-user-passwd "${username}" ${send_email}
+    ipa::reset-user-passwd::process_argv "${@}"
+    ipa::reset-user-passwd "${username}" ${send_email}
 }
 
-function host-add::usage()
+function ipa::host-add::usage()
 {
     echo "Usage: host-add [OPTIONS] [<hostname>] [IP] [MAC]"
     echo ""
@@ -642,7 +658,7 @@ function host-add::usage()
     echo ""
 }
 
-function host-add::process_argv()
+function ipa::host-add::process_argv()
 {
     local arg i m d f n s
     local opt 
@@ -755,7 +771,7 @@ function host-add::process_argv()
 
     if [[ -z "${mac}" || -z "${host_ip}" ]]
     then 
-        local -a lookup_results=( $(lookup_host_info "${fqdn}") )
+        local -a lookup_results=( $(ipa::lookup_host_info "${fqdn}") )
         [[ -z "${host_ip}" && "${lookup_results[0]}" != "-" ]] && host_ip="${lookup_results[0]}"
         [[ -z "${mac}" && "${lookup_results[1]}" != "-" ]] && mac="${lookup_results[1]}"
     fi
@@ -772,12 +788,12 @@ function host-add::process_argv()
     #   mac
 }
 
-function host-add::create_keystore_for_host()
+function ipa::host-add::create_keystore_for_host()
 {
     warn "${FUNCNAME[0} - unimplemented"
 }
 
-function host-add::main()
+function ipa::host-add::main()
 {
     local fqdn=""
     local mac=""
@@ -789,25 +805,25 @@ function host-add::main()
     local special=""
     local kind="host"
 
-    host-add::process_argv "${@}"
+    ipa::host-add::process_argv "${@}"
 
 
     case "${mode}" in
         promote)
             msg "Prepping host ${fqdn} for promotion"
-            host_promote "${fqdn}"
+            ipa::host_promote "${fqdn}"
             ;;
         dns)
             msg "Performing DNS additions only (no host enrollment)"
-            dns_add "${fqdn}" "${host_ip}"
+            ipa::dns_add "${fqdn}" "${host_ip}"
             ;;
         register)
-            host_add "${kind}" "${reregister}" "${fqdn}" "${host_ip}" "${mac}" "${special}" "${site}" 
+            ipa::host_add "${kind}" "${reregister}" "${fqdn}" "${host_ip}" "${mac}" "${special}" "${site}" 
             ;;
     esac 
 }
 
-function host-rm::usage()
+function ipa::host-rm::usage()
 {
     echo "Usage: host-rm [options] [<hostname>] [IP]"
     echo ""    
@@ -821,7 +837,7 @@ function host-rm::usage()
     echo "  -f <fqdn>     Specify the fully qualified domain name (hostname.domain)."
 }
 
-function host-rm::process_argv()
+function ipa::host-rm::process_argv()
 {
     local arg i d f n 
 
@@ -906,7 +922,7 @@ function host-rm::process_argv()
 
     if [[ -z "${host_ip}" ]]
     then 
-        local -a lookup_results=( $(lookup_host_info "${fqdn}") )
+        local -a lookup_results=( $(ipa::lookup_host_info "${fqdn}") )
         [[ -z "${host_ip}" && "${lookup_results[0]}" != "-" ]] && host_ip="${lookup_results[0]}"
     fi
 
@@ -917,18 +933,18 @@ function host-rm::process_argv()
     #   host_ip 
 }
 
-function host-rm::main()
+function ipa::host-rm::main()
 {
     local fqdn=""
     local host_ip=""
     local deregister=1
 
-    host-rm::process_argv "${@}"
-    host-rm "${fqdn}" "${deregister}"
+    ipa::host-rm::process_argv "${@}"
+    ipa::host-rm "${fqdn}" "${deregister}"
 }
 
 
-function salt-ipa-ticket::usage()
+function ipa::salt-ipa-ticket::usage()
 {
     msg "Usage: salt-ipa-ticket [--help | --renew | --list | --shell ]"
     msg ""
@@ -941,37 +957,36 @@ function salt-ipa-ticket::usage()
     msg "   --shell   Load the ticket and drop into a new shell (using that ticket)"
 }
 
-function salt-ipa-ticket::main()
+function ipa::salt-ipa-ticket::main()
 {
     if ! (( $# ))
     then
-        salt-ipa-ticket::usage 
+        ipa::salt-ipa-ticket::usage 
         exit 1
     elif [[ "${*}" =~ ${HELP_REGEX} ]]
     then
-        salt-ipa-ticket::usage
+        ipa::salt-ipa-ticket::usage
         exit 0
     else
         export KRB5CCNAME
         case "${1}" in 
             -l|-list|--list|list)
-                list_ticket
+                ipa::list_ticket
                 ;;
             -r|-renew|--renew|renew)
-                renew_ticket
+                ipa::renew_ticket
                 ;;
             -s|-shell|--shell|shell)
                 shift
                 bash "${@}"
                 ;;
             *)
-                salt-ipa-ticket::usage
+                ipa::salt-ipa-ticket::usage
                 exit 1
                 ;;
         esac 
     fi 
 }
-
 
 function ipa::upgrade-passwords()
 {
@@ -996,5 +1011,127 @@ function ipa::upgrade-passwords()
                 fi
             fi
         done
+    fi
+}
+
+function ipa::user-create::usage()
+{
+    echo "Usage: user-create <username> [-e email] [-f firstname] -s [surname] [--send]"
+    echo ""
+    echo "Add a user account"
+    echo ""
+    echo "The IPA server should have already been configured."
+
+    echo ""
+    echo "Options:"
+    echo ""
+    echo "  -e|-email <email-address>"
+    echo "  -f|-first <firstname>"
+    echo "  -s|-surname <surname>"
+    echo "  -u|-user <username>"
+}
+
+function ipa::user-create::process_argv()
+{
+    local arg
+    local opt 
+
+    while (( $# ))
+    do
+        arg="${1}"
+        shift 
+        
+        case "${arg}" in
+            -h|-help|--help) 
+                ipa::user-create::usage
+                exit 0
+                ;;
+            [a-z]*)
+                username="${arg}"
+                ;;
+            -u|--user|-user)
+                username="${1}"
+                shift
+                ;;
+            -e|--email|-email)
+                email="${1}"
+                shift
+                ;;
+            -f|--first|-first)
+                firstname="${1}"
+                shift
+                ;;
+            -s|--surname|-surname|--last|-last|-l)
+                surname="${1}"
+                shift
+                ;;
+            --send)
+                send_email=--send
+                ;;
+            *)
+                ipa::user-create::usage
+                die "Unrecognised option: '${arg}'"
+                ;;
+        esac
+    done 
+
+    [[ -z "${username}"  ]] && die "No username specified!"
+    [[ "${username}" =~ ${valid_username_regex} ]] || die "Invalid username '${username}' specified!"
+    [[ -z "${firstname}" ]] && die "No first name specified!"
+    [[ -z "${surname}"   ]] && die "No surname specified!"
+    [[ -z "${email}"     ]] && email="${username}@${IPA_EMAIL_DOMAIN}"
+}
+
+function ipa::user-create::integrations()
+{
+    local username="${1}"
+    # Gitlab integration (register the account in gitlab and confirm the email)
+    local is_gitlab_user=0
+    local is_gitlab_admin=0
+
+    ipa::check_group_member "gitlab-users" "${username}" && is_gitlab_user=1
+    ipa::check_group_member "gitlab-admins" "${username}" && is_gitlab_admin=1
+
+    if (( is_gitlab_user + is_gitlab_admin ))
+    then 
+        local -a flags=("--create" "--confirm")
+        (( is_gitlab_admin )) && flags+=("--admin")
+        gitlab-util "${username}" "${flags[@]}"
+    else 
+        msg "Gitlab account setup is not activated for this user (not in gitlab-users or gitlab-admins group)"
+    fi
+
+}
+
+function ipa::user-create::main()
+{
+    local username=""
+    local firstname=""
+    local surname=""
+    local send_email="${IPA_PW_SEND_EMAIL}"
+
+    ipa::user-create::process_argv "${@}"
+
+    if ! ipa::require-ticket admin
+    then 
+        return 1
+    fi
+    
+    if quiet ipa user-find --login="${username}"
+    then
+        msg "User '${username}' already exists."
+    elif ! ipa::create_user "${username}" "${email}" "${firstname}" "${surname}" ""
+    then
+        die "User creation failed for user '${username}'"
+    else 
+        local g
+        for g in "${IPA_DEFAULT_GROUPS[@]}"
+        do 
+            ipa::check_group_member "${g}" "${username}" || verbose ipa group-add-member "${g}" --user "${username}"
+        done
+
+        ipa::user-create::integrations "${username}"
+
+        ipa::reset-user-passwd "${username}" ${send_email}
     fi
 }

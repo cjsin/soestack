@@ -1,0 +1,85 @@
+#!/bin/bash
+
+. /usr/local/bin/lib-ss.sh || exit 1
+
+function salt-deploy::usage()
+{
+    msg "Usage: salt-deploy deployment-name"
+    msg ""
+    msg "Run a salt state to (re)deploy only the specific named deployment"
+}
+
+function salt-deploy::process-argv()
+{
+    local arg
+    while (( $# )) 
+    do
+        arg="${1}"
+        shift
+        case "${arg}" in
+            -h|-help|--help|help)
+                salt-deploy::usage
+                return 1
+                ;;
+            -type|--type)
+                mode="typed"
+                ;;
+            -name|--names)
+                mode="named"
+                ;;
+            [a-zA-Z]*)
+                names+=("${arg}")
+                ;;
+            *)
+                salt-deploy::usage
+                return 2
+                ;;
+        esac
+    done
+
+    return 0
+}
+
+function salt-deploy::run-named-deployment()
+{
+    local deployment_name="${1}"
+    local actions="${2:-auto}"
+    msg "Deploying ${deployment_name} with actions ${actions}"
+    salt-call state.sls deployments.deploy-cmdline pillar="{\"cmdline-args\": { \"deploy-cmdline\": { \"deployment_name\": \"${deployment_name}\", \"actions\": \"${actions// /,}\" } } }"
+}
+
+function salt-deploy::run-typed-deployment()
+{
+    local deployment_type="${1}"
+    local actions="${2:-auto}"
+    msg "Deploying deployments of type ${deployment_type} with actions ${actions}"
+    salt-call state.sls deployments.deploy-cmdline pillar="{\"cmdline-args\": { \"deploy-cmdline\": { \"deployment_type\": \"${deployment_type}\", \"actions\": \"${actions// /,}\" } } }"
+}
+
+function salt-deploy::main()
+{
+    local mode="named"
+    local names=()
+    local actions=()
+    local status
+
+    salt-deploy::process-argv "${@}"
+    status=$?
+
+    if [[ "${status}" == 1 ]]
+    then 
+        # help flag was specified
+        return 0
+    elif [[ "${status}" != 0 ]]
+    then 
+        return ${status}
+    fi 
+
+    local name
+    for name in "${names[@]}"
+    do
+        "salt-deploy::run-${mode}-deployment" "${name}" "${actions[*]}"
+    done
+}
+
+salt-deploy::main "${@}"

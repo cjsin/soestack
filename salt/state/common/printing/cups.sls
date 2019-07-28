@@ -1,5 +1,7 @@
 #!stateconf yaml . jinja
 
+{%- set cups = pillar.cups %}
+
 .cups-installed:
     pkg.latest:
         - pkgs:
@@ -42,7 +44,7 @@
         - template: jinja
         - source:   salt://{{slspath}}/cupsd.conf.jinja
         - context:
-            cups:   {{pillar.cups|json()}}
+            cups:   {{cups|json()}}
 
 .printers-file-template:
     file.managed:
@@ -53,17 +55,21 @@
         - template: jinja
         - source:   salt://{{slspath}}/cupsd-printers.conf.jinja
         - context:
-            cups:   {{pillar.cups|json()}}
+            cups:   {{cups|json()}}
 
-.printers-file:
+.printers-file-updater:
+    file.managed:
+        - name:     /usr/local/bin/cups-update-printer-conf
+        - user:     root
+        - group:    root
+        - mode:     '0755'
+        - source:   salt://{{slspath}}/cups-update-printers-conf.sh.jinja
+        - template: jinja 
+
+.printers-file-update:
     cmd.run:
-        - name: |
-            stopstart=0
-            systemctl is-active cups && stopstart=1
-            (( stopstart )) && (systemctl stop cups; sleep 1) 
-            cp -a /etc/cups/printers.conf.ss /etc/cups/printers.conf
-            (( stopstart )) && systemctl start cups 
-        - unless: cd /etc/cups && test -f printers.conf && diff printers.conf.ss printers.conf | egrep -v '^---|+++' | egrep '^[-+]' | egrep -v '^.(Type|ConfigTime|State|StateMessage|[#]|UUID) ' | egrep .
+        - name:     /usr/local/bin/cups-update-printer-conf update
+        - unless:   /usr/local/bin/cups-update-printer-conf check
 
 .service:
     service.running:

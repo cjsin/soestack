@@ -3,4 +3,4 @@
 
 {{sls}}.{{deployment_name}}.postinstall:
     cmd.run:
-        - name:     /usr/local/bin/ipa-postinstall
+        - name: /usr/local/bin/ipa-postinstall --background

@@ -22,6 +22,21 @@
 {%- endif %}
 
 {%- if templates %}
+
+{{sls}}.statesupport-template-templates-parent-dir-created-{{suffix}}:
+    file.directory:
+        - name:     /var/lib/soestack
+        - user:     root
+        - group:    root 
+        - mode:     '0755'
+
+{{sls}}.statesupport-template-templates-dir-created-{{suffix}}:
+    file.directory:
+        - name:     /var/lib/soestack/templates/
+        - user:     root
+        - group:    root 
+        - mode:     '0700'
+        
 {%-     for name, contents in templates.iteritems() %}
 
 {{sls}}.statesupport-template-{{name}}-{{suffix}}:

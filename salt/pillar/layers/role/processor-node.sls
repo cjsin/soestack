@@ -21,7 +21,7 @@ network:
                 - no-zeroconf
 
 deployments:
-    gitlab-runner:
+    ss-gitlab-runners:
         hosts:
             - {{grains.host}}
         activated:       True

@@ -7,7 +7,7 @@
 # and the eth1 device is configured as normal)
 
 deployments:
-    gitlab:
+    ss-gitlab:
         config:
             # In my demo vm's I have very limited ram available, so need to set this down low
             # The default is that it will use 1/4 of total RAM or so

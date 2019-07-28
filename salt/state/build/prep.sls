@@ -42,6 +42,7 @@ include:
         - group: root
         - mode: '0755'
         - contents: |
+            #!/bin/bash
             n=$(basename "${1}")
             if ! [[ "${n}" =~ [.]rpm$ ]]
             then 
@@ -51,6 +52,7 @@ include:
             d="soestack/demo"
             repo="built-rpms"
             url="http://nexus:7081/repository/${repo}/${d}/${n}"
-            curl -v --user 'admin' --upload-file  "${n}" "${url}"
+            upload_pw=$(salt-secret pw-nexus-admin)
+            curl -v --user 'admin' --upload-file  "${n}" "${url}" <<< "${upload_pw}"
 
 {%- endif %}

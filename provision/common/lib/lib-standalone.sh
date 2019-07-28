@@ -543,7 +543,7 @@ function prepare_network_for_docker()
 function prepare_nexus_service()
 {
     echo_stage 3 "Preparing nexus user and service"
-    local unit_name="nexus-mirror"
+    local unit_name="ss-nexus-mirror"
     local idnum="200"
     local idname="nexus"
     local homedir="/d/local/data/${idname}"
@@ -583,21 +583,21 @@ function patch_hostfile_for_nexus()
 
 function start_nexus()
 {
-    if docker ps | egrep nexus-mirror && docker logs nexus-mirror | egrep -i 'Started Sonatype Nexus' 
+    if docker ps | egrep ss-nexus-mirror && docker logs ss-nexus-mirror | egrep -i 'Started Sonatype Nexus' 
     then
         notice "Nexus appears to already be running"
         return 0
     fi
 
     msg "Starting nexus service"
-    if systemctl start nexus-mirror.service
+    if systemctl start ss-nexus-mirror.service
     then
         msg "Wait for nexus mirror startup"
         sleep 30 
-        if docker ps | egrep nexus-mirror
+        if docker ps | egrep ss-nexus-mirror
         then 
             max_wait=600
-            while ! docker logs --since=10s nexus-mirror | egrep -i 'Started Sonatype Nexus' 
+            while ! docker logs --since=10s ss-nexus-mirror | egrep -i 'Started Sonatype Nexus' 
             do
                 msg "Still waiting for Nexus to recreate its database and finish starting up."
                 sleep 5
@@ -682,7 +682,7 @@ function configure_standalone_server()
             return 1
         fi
 
-        if ! docker ps | grep -q nexus-mirror 
+        if ! docker ps | grep -q ss-nexus-mirror 
         then 
             if start_docker
             then

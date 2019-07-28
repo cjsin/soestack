@@ -1,5 +1,11 @@
 #!stateconf yaml . jinja
 
+
+.installed:
+    pkg.installed:
+        - pkgs:
+            - mutt
+
 .rcfile:
     file.managed:
         - name: /etc/Muttrc.local

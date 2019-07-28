@@ -24,36 +24,6 @@ soe:
 
 # The remaining items are in alphabetical order
 
-build:
-
-    rpm:
-
-        python37:
-            package_url:       https://www.python.org
-            subdir:            Python-VERSION
-            configure_flags:   --enable-optimizations --with-ensurepip=upgrade CFLAGS=-Wno-error=coverage-mismatch
-            install_flags:     altinstall DESTDIR=${DESTDIR}
-            source_url:        http://nexus:7081/repository/interwebs/www.python.org/ftp/python/VERSION/Python-VERSION.tar.xz
-
-            rpm_version:       1
-
-            required_packages:
-                - openssl-devel
-                - valgrind-devel 
-                - ncurses-devel
-                - gdbm-devel 
-                - sqlite-devel
-                - readline-devel
-                - xz-devel
-                - zlib-devel 
-                # need libuuid-devel and must not have uuid-devel installed (they both provide conflicting headers)
-                - libuuid-devel
-                - libffi-devel
-                - bzip2-devel
-                - tcl-devel
-                - tk-devel
-
-
 email:
     aliases:
         root: devuser
@@ -146,15 +116,20 @@ installed_scripts:
         mode:  '0755'
         common:
             - salt-render.sh.jinja
+            - salt-build.sh.jinja
+            - salt-deploy.sh.jinja
             - systemd-bugfix-change-runlevel.sh.jinja
             - uuid4.py.jinja
             - yum-refresh.sh.jinja
             - lib-ss.sh.jinja
             - lib-ipa.sh.jinja
             - lib-ss-crypto.sh.jinja
+            - lib-gitlab.sh.jinja
+            - gitlab-util.sh.jinja
             - salt-secret.sh.jinja
             - generate-passwords.sh.jinja
             - rsync-uptodate.sh.jinja
+            - built-rpm-upload.sh.jinja
 
 # This data is not used yet but I am just recording the
 # configuration which is performed, so it can be automated

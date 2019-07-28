@@ -20,73 +20,67 @@ sourcedir="{{paths.source}}"
 distdir="{{paths.dist}}"
 rpmdir="{{paths.rpm}}"
 outfile="{{paths.outfile}}"
+clean="{{clean}}"
 
 export DESTDIR="${distdir}"
-logdir="${distdir}/var/log/build"
-logprefix="${logdir}/${package_name}-${version}-${rpm_version}-"
-mkdir -p "${logdir}"
-configure_log="${logprefix}configure.log"
-make_log="${logprefix}make.log"
-install_log="${logprefix}make.log"
-fpm_log="${logprefix}fpm.log"
-set -o pipefail
+logdir="{{params.logdir}}"
+logprefix="{{params.logprefix}}"
 
-die()
+full_build_log="${logprefix}/all.log"
+
+
+function die()
 {
     echo "Fatal: ${*}" 1>&2
     exit 1
 }
 
-run_configure()
-{ 
-    ( ./configure "${configure_flags[@]}"  2>&1 | tee "${configure_log}" ) || die "Failed running configure"
-}
-
-run_make()
+function msg()
 {
-    ( make "${make_flags[@]}"  2>&1 | tee "${make_log}" )  || die "Failed building"
+    echo "${*}" 1>&2
 }
 
-run_make_install()
+function build-rpm::prep-logs()
 {
-    ( make install DESTDIR="${DESTDIR}"  2>&1 | tee "${install_log}" ) || die "Failed installing"
+    mkdir -p "${logdir}" "${logprefix}"
 }
 
-fpm_package()
+{%- for step_name in params.build_steps.split(',') %}
+{%-    set step_script = params.steps[step_name] if step_name in params.steps else 'unset' %}
+function build-rpm::run::{{step_name}}()
 {
-    local -a fpm_args=(
-        -t rpm 
-        --force 
-        --rpm-os linux 
-        --rpm-auto-add-directories  
-        --rpm-dist     "${rpm_distribution}" 
-        --rpm-summary  "${rpm_summary}"
-        --url          "${package_url}"
-        --description  "${rpm_description}"
-        -S             "${rpm_vendorsuffix}"  
-        -a             "native" 
-        --vendor       "${vendor}"
-        --version      "${version}" 
-        --iteration    "${rpm_version}"
-        --license      "${package_license}" 
-        -n             "${package_name}"
-        -C             "${distdir}" 
-        -p             "${outfile}" 
-        -s dir "."
-    )
-    
-    chmod -R ug-st "${distdir}"
-    echo fpm "${fpm_args[@]}" >> "${fpm_log}"
-    fpm "${fpm_args[@]}" 2>&1 | tee -a "${fpm_log}"
+    msg "Running step {{step_name}}"
+    {%- if step_script == 'unset' %}
+    die "Script for step {{step_name}} is not defined in pillar."
+    {%- else %}
+    ( {{step_script|indent(8)}} ) || die "Failed step {{step_name}}"
+    {%- endif %}
+}
+{%- endfor %}
+
+function build-rpm::run-steps()
+{
+    {
+        {%- for step_name in params.build_steps.split(',') %}
+        local step_logfile="${logprefix}/{{step_name}}.log"
+        local step_logdir="${step_logfile%/*}"
+        mkdir -p "${step_logdir}"
+        echo "Begin step {{step_name}} at date $(date)" > "${step_logfile}"
+        if ! build-rpm::run::{{step_name}} 2>&1 | tee -a "${step_logfile}"
+        then
+            exit 1
+        fi
+        {%- endfor %}
+    } 2>&1 | tee "${full_build_log}"
 }
 
-build_main()
+function build-rpm::main()
 {
     [[ -d "${sourcedir}" ]] || die "No build dir"
     [[ -d "${distdir}" ]] || die "No dist dir"
     [[ -d "${rpmdir}" ]] || die "No rpm dir"
 
-    cd "${sourcedir}" || die "Could not enter source dir}"
+    cd "${sourcedir}" || die "Could not enter source dir"
 
     if [[ -n "${subdir}}" ]]
     then
@@ -95,7 +89,9 @@ build_main()
         echo "No subdir defined - files will be expected to be within ${sourcedir}"
     fi
 
-    {{ params.build_steps|indent(4) }}
+    build-rpm::prep-logs
+    build-rpm::run-steps
 }
 
-build_main
+set -o pipefail
+build-rpm::main

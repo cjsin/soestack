@@ -36,6 +36,8 @@ demo:
     ips:
         gateway:         192.168.121.1
         infra:           192.168.121.101
+        primary_server:  '!!demo.ips.infra'
+        secondary_server: '!!demo.ips.replica1'
         wildcard:        192.168.121.102
         nexus:           192.168.121.103
         gitlab:          192.168.121.104
@@ -160,7 +162,7 @@ deployments:
                     defaultemaildomain:  '!!network.system_domain'
                 automount:
                     locations:
-                        - testing
+                        testing:
             install:
                 dns:
                     enabled: True
@@ -169,11 +171,11 @@ deployments:
 
 
     # Override and Disable various deployments here (override some activated by node roles) until I have more RAM
-    #    gitlab-runner:
+    #    ss-gitlab-runners:
     #        hosts: []
     #        activated:       False
     #        activated_where: {{sls}}
-    gitlab:
+    ss-gitlab:
         activated:       True
         activated_where: {{sls}}
         config:
@@ -188,10 +190,14 @@ deployments:
         activated_where: {{sls}}
 
     ss-logstash-sys:
-        activated:       True
+        activated:       False
         activated_where: {{sls}}
 
-    nexus-mirror:
+    ss-logstash-user:
+        activated:       False
+        activated_where: {{sls}}
+
+    ss-nexus-mirror:
         activated:       True
         activated_where: {{sls}}
 
@@ -295,11 +301,6 @@ ipa:
     reverse_zone: '!!demo.vars.reverse_zone'
     default_site: testing
     site:         testing
-
-ipa-initial-setup:
-    automount:
-        locations:
-            - testing
 
 managed-hosts:
     hostfile-hosts:

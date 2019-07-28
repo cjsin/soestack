@@ -31,7 +31,7 @@ nuggets:
             defaults:
                 user:       root
                 group:      root
-                dir_mode:  '0755'
+                dir_mode:  '0750'
                 file_mode: '0644'
 
             templates:
@@ -45,6 +45,10 @@ nuggets:
                 /etc/skel/Maildir/new:
                 /etc/skel/Maildir/cur:
                 /etc/skel/Maildir/tmp:
+                /root/Maildir:
+                /root/Maildir/new:
+                /root/Maildir/cur:
+                /root/Maildir/tmp:
 
             files:
 

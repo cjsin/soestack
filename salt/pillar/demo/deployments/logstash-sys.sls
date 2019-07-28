@@ -18,6 +18,9 @@ deployments:
             server_host:             "0"
             elasticsearch_url:       http://192.168.121.109:9200
             xpack_elasticsearch_url: http://192.168.121.109:9200
+            # Config_subdir should match the location (under /etc/logstash) of the config files
+            # that are generated below
+            config_subdir:           sys
 
         account:
             user: logstash

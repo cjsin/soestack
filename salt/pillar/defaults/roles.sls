@@ -70,6 +70,11 @@ roles:
         purpose: |
             a node which allows logins
 
+    desktop-node:
+        purpose: |
+            a node which provide GUI desktop tools (such as a workstation or a
+            processor node which provide VNC desktops).
+
     workstation-node:
         purpose: |
             a workstation (has a GUI login)

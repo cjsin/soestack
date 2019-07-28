@@ -16,6 +16,7 @@
 {%-             set version = versions_entry.version %}
 {%-             set build_settings = pillar.build.rpm %}
 {%-             set build_defaults = build_settings.defaults %}
+{%-             set clean = args.clean if 'clean' in args else True %}
 
 {%-             set package_build_params = build_settings[pkgname] if pkgname in build_settings else {} %}
 
@@ -34,7 +35,11 @@
                     'package_version':  version,
                     'version':          version,
                 }) %}
+{%-             if False %}
 {%-             do params.update(package_build_params) %}
+{%-             else %}
+{%-             set params = salt['slsutil.merge'](params, package_build_params) %}
+{%-             endif %}
 {%-             do params.update({'pkgname': pkgname, 'version': version }) %}
 {%-             if 'source_url' in params and params.source_url %}
 {%-                 set hash    = versions_entry.hash if 'hash' in versions_entry else '' %}

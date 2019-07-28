@@ -41,16 +41,14 @@
 #         root:
 #             root@infra.demo.com: a-big-long-root-ssh-key
 # deployments:
-#     gitlab_runner_baremetal:
-#         gitlab-runner:
-#             config:
-#                 registration_token: example-gitlab-runner-token
-#     gitlab_baremetal:
-#         gitlab:
-#             config:
-#                 mattermost:
-#                     app_id:       a-gitlab-application-app-id
-#                     token:        a-gitlab-application-secret-token
+#     ss-gitlab-runners:
+#         config:
+#             registration_token: example-gitlab-runner-token
+#     ss-gitlab:
+#         config:
+#             mattermost:
+#                 app_id:       a-gitlab-application-app-id
+#                 token:        a-gitlab-application-secret-token
 
 # network:
 #     classes:

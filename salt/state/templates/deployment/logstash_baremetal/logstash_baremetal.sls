@@ -3,6 +3,7 @@
 {%- set deployment       = args.deployment %}
 {%- set deployment_name  = args.deployment_name %}
 {%- set deployment_type  = args.deployment_type %}
+{%- set config           = deployment.config if 'config' in deployment else {} %}
 {%- set service_name     = deployment_name %}
 {%- set filesystem       = deployment.filesystem if 'filesystem' in deployment else {} %}
 {%- set pillar_location  = ':'.join(['deployments',deployment_name]) %}
@@ -61,6 +62,7 @@
             deployment_name: {{deployment_name}}
             user:            {{user}}
             group:           {{group}}
+            config_subdir:   {{config.config_subdir if 'config_subdir' in config else ''}}
 
 {%-     endif %}
 

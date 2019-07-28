@@ -1,23 +1,7 @@
 #!/bin/bash
 
-. /usr/local/bin/lib-ipa.sh
-
-function user-create::usage()
-{
-    echo "Usage: user-create <username> [-e email] [-f firstname] -s [surname] [--send]"
-    echo ""
-    echo "Add a user account"
-    echo ""
-    echo "The IPA server should have already been configured."
-
-    echo ""
-    echo "Options:"
-    echo ""
-    echo "  -e|-email <email-address>"
-    echo "  -f|-first <firstname>"
-    echo "  -s|-surname <surname>"
-    echo "  -u|-user <username>"
-}
+. /usr/local/bin/lib-ss.sh || exit 1
+. /usr/local/bin/lib-ipa.sh || die "Failed loading ipa lib"
 
 function verbose()
 {
@@ -30,89 +14,4 @@ function quiet()
     "${@}" > /dev/null 2> /dev/null
 }
 
-function user-create::process_argv()
-{
-    local arg
-    local opt 
-
-    while (( $# ))
-    do
-        arg="${1}"
-        shift 
-        
-        case "${arg}" in
-            -h|-help|--help) 
-                usage
-                exit 0
-                ;;
-            [a-z]*)
-                username="${arg}"
-                ;;
-            -u|--user|-user)
-                username="${1}"
-                shift
-                ;;
-            -e|--email|-email)
-                email="${1}"
-                shift
-                ;;
-            -f|--first|-first)
-                firstname="${1}"
-                shift
-                ;;
-            -s|--surname|-surname|--last|-last|-l)
-                surname="${1}"
-                shift
-                ;;
-            --send)
-                send_email=--send
-                ;;
-            *)
-                usage
-                die "Unrecognised option: '${arg}'"
-                ;;
-        esac
-    done 
-
-    [[ -z "${username}"  ]] && die "No username specified!"
-    [[ "${username}" =~ ${valid_username_regex} ]] || die "Invalid username '${username}' specified!"
-    [[ -z "${firstname}" ]] && die "No first name specified!"
-    [[ -z "${surname}"   ]] && die "No surname specified!"
-    [[ -z "${email}"     ]] && email="${username}@${emaildomain}"
-}
-
-function user-create::main()
-{
-    local username=""
-    local firstname=""
-    local surname=""
-    local emaildomain="{{emaildomain}}"
-    local default_groups="{{default_groups|join(" ")}}"
-    local send_email="{{send_email}}"
-
-    user-create::process_argv "${@}"
-
-    if ! require_ticket admin
-    then 
-        return 1
-    fi
-    
-    if quiet ipa user-find --login="${username}"
-    then
-        die "User '${username}' already exists."
-    elif create_user "${username}" "${email}" "${firstname}" "${surname}" ""
-    then
-        local g
-        for g in ${default_groups}
-        do 
-            check_group_member "${g}" "${username}" || verbose ipa group-add-member "${g}" --user "${username}"
-        done
-
-        reset-user-passwd "${username}" ${send_email}
-    else 
-        die "User creation failed."
-    fi
-
-}
-
-user-create::main "${@}"
+ipa::user-create::main "${@}"

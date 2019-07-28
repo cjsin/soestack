@@ -1,0 +1,53 @@
+#!/bin/env python2
+
+import sys
+import requests
+import os
+from pprint import pformat
+
+def usage():
+    print "Usage: gitlab-prepopulate-users <url> <domain> <base-dn> [user]...." 
+
+def preconfirm_users(url, domain, *users):
+    parts = domain.split('.')
+    base_dn = ','.join( ['dc='+x for x in parts])
+    headers = { 'PRIVATE-TOKEN' : 'token-here' }
+    for user in users:
+        data = { 
+            'email': '{}@{}'.format(user,domain),
+            'extern_uid' : 'uid={},cn=users,cn=accounts,{}'.format(user,base_dn),
+            'provider' : 'ldapmain',
+            'name': user,
+            'username': user,
+            'password' : 'unset',
+            'confirm': False
+        }
+
+    full_url=url+'/api/v3/users/'
+    print("Post to {}, data {}".format(full_url, pformat(data)))
+    response = requests.post(full_url, data, headers=headers)
+    print("{}".format(pformat(response)))
+
+def main(args):
+    if args < 3:
+        usage()
+        sys.exit(1)
+    else:
+        url = args[0]
+        if not url.startswith('http'):
+            usage()
+            sys.exit(1)
+        
+        domain = args[1]
+        if not '.' in domain:
+            usage()
+            sys.exit(1)
+
+        #base_dn = args[2]
+        #if not 'cn=' in base_dn:
+        #    usage()
+        #    sys.exit(1)
+        preconfirm_users(url, domain, args[2:])
+
+if __name__ == "__main__":
+    main(sys.argv[1:])
