@@ -17,8 +17,15 @@
 {%- endfor %}
 
 {%- set sequence_by_type = pillar['deployment-sequence'] if 'deployment-sequence' in pillar else by_type.keys() %}
+{%- set all_types = [] %}
+{%- do all_types.extend(sequence_by_type) %}
+{%- for x in by_type.keys() %}
+{%-     if x not in all_types %}
+{%-         do all_types.append(x) %}
+{%-     endif %}
+{%- endfor %}
 
-{%- for deploy_type in sequence_by_type %}
+{%- for deploy_type in all_types %}
 {%-    set deployments_for_type = by_type[deploy_type] if deploy_type in by_type else [] %}
 
 {%-    if not deployments_for_type %}

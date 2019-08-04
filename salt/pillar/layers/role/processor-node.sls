@@ -3,6 +3,9 @@
 include:
     - demo.deployments.types
     - demo.deployments.gitlab-runner
+    - demo.deployments.logstash-sys
+    - demo.deployments.logstash-user
+    - demo.deployments.node-exporter
 
 runlevel: graphical
 
@@ -21,7 +24,7 @@ network:
                 - no-zeroconf
 
 deployments:
-    ss-gitlab-runners:
+    ss-runners:
         hosts:
             - {{grains.host}}
         activated:       True

@@ -9,8 +9,8 @@
         - template: jinja
         - contents: |
             [nodesource]
-            name=Node.js 10 Packages for Fedora Linux $releasever - $basearch
-            baseurl={{pillar.nexus.repos.docker}}/pub_10.x/fc/$releasever/$basearch
+            name=Node.js Packages for Fedora Linux $releasever - $basearch
+            baseurl={{pillar.nexus.repos.nodesource}}/pub_10.x/fc/$releasever/$basearch
             baseurl=https://rpm.nodesource.com/pub_10.x/fc/$releasever/$basearch
             failovermethod=priority
             enabled=1

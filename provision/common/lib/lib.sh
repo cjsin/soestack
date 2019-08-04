@@ -49,7 +49,7 @@ function add_nameserver()
 
 function display_well_known_hosts()
 {
-    display_array 15 29 "${hosts[@]}"
+    display_array 15 18 "${hosts[@]}"
 }
 
 function display_repos()
@@ -354,18 +354,25 @@ function bootstrap_repos()
 
 function provisioning_display_build_configuration()
 {
-    display_build_configuration
     {
-        display_bar "######"
-        echo "                              Repositories:" 1>&2
-        display_bar "######"
+        echo 1>&2
+        # Overwrite some garbage that the installer leaves on the current line
+        echo $'\r'"                       " 1>&2
+        local underscores
+        underscores="_________________________________"
+        echo "" #display_bar "      "
+        echo " ${underscores}Repositories${underscores}"
+        #display_bar "######"
         display_repos 
-        display_bar "######"
-        echo "                            Well known hosts:" 1>&2
-        display_bar "######"
+        #display_bar "######"
+        echo ""
+        underscores="_______________________________"
+        echo " ${underscores}Well known hosts${underscores}"
+        #display_bar "######"
         display_well_known_hosts
-        display_bar "######"
+        #display_bar "______"
     } | while IFS='' read line ; do bmsg "${line}" ; done
+    display_build_configuration
 }
 
 function create_ssh_key_file()

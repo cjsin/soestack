@@ -81,6 +81,9 @@ deployments:
             prometheus:
                 enabled:  False
 
+            grafana:
+                enabled:  False
+
             node_exporter:
                 enabled:  False
 
@@ -88,9 +91,9 @@ deployments:
                 port:     18080
 
             storage:  
-                path:     /d/local/gitlab/git-data
+                path:     /d/local/data/gitlab/git-data
                 
             backups:  
-                path:     /d/local/gitlab-backups
+                path:     /d/local/data/gitlab-backups
 
 

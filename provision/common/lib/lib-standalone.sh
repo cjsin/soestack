@@ -629,7 +629,7 @@ function prepare_docker_for_nexus()
     # TODO - get this from boot config
     local x
     local build
-    local registries=( ${DOCKER_REGISTRIES//,/ } )
+    local registries=( ${REGISTRIES//,/ } )
     mkdir -p /etc/docker
     pairs_to_json \
         "dns" "$(array_to_json "${nameservers[@]}")" \

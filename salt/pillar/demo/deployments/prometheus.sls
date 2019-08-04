@@ -29,7 +29,7 @@ deployments:
             description:  Prometheus metrics and monitoring
             image:        prom/prometheus:v2.3.2
             volumes: 
-                - -v /d/local/prometheus:/prometheus
+                - -v /d/local/data/prometheus:/prometheus
                 - -v /etc/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
             ports:   
                 - -p 192.168.121.108:9090:9090
@@ -37,9 +37,9 @@ deployments:
             group:   nfsnobody
             options: 
             storage: 
-                - /d/local/prometheus
+                - /d/local/data/prometheus
             mounts:
-                /d/local/prometheus: dir
+                /d/local/data/prometheus: dir
                 /etc/prometheus/prometheus.yml: file
         config:
             port:        9090
@@ -59,6 +59,10 @@ deployments:
 
             dirs:
                 /etc/prometheus:
+                /d/local/data:
+                    user: root
+                    group: root
+                /d/local/data/prometheus:
 
             files:
                 /etc/prometheus/prometheus.yml:

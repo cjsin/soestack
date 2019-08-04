@@ -2,7 +2,7 @@
 
 [[ -n "${SS_LOADED_COMMON_LIB}" ]] || . "${SS_DIR:=${BASH_SOURCE[0]%/provision/*}}"/provision/common/lib/lib.sh
 
-function configure_salt_api()
+function provision::salt::configure-salt-api()
 {
     ensure_installed pyOpenSSL
 
@@ -35,7 +35,7 @@ function configure_salt_api()
     chmod 700 /var/lib/salt-enrol/.ssh 
 }
 
-function salt_configure_for_development()
+function provision::salt::configure-for-development()
 {
     local devconfig="/etc/salt/master.d/development.conf"
     if is_development 
@@ -46,7 +46,7 @@ function salt_configure_for_development()
     fi
 }
 
-function salt_master_enrol_self()
+function provision::salt::master::enrol-self()
 {
     local h="$(hostname -s)"
 
@@ -67,7 +67,7 @@ function salt_master_enrol_self()
 
     fi
      
-    while ! salt_test_ping "${h}"
+    while ! provision::salt::test-ping "${h}"
     do
         msg "Waiting longer for minion to start responding to pings."
         sleep 5

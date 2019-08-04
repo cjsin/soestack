@@ -1,6 +1,9 @@
 {{ salt.loadtracker.load_pillar(sls) }}
 
 # Overrides and data for testing a USB build in a virtual machine (using a qemu virtual machine network)
+
+{# 
+# This is for testing a salt
 _layers_test:
     lan:        {{sls}}
     lan_value:  'lan-usb-vm'
@@ -13,11 +16,12 @@ layers_test:
     lan_value:  'lan-usb-vm'
     test_value: 'lan-usb-vm'
     additive:
-        - lan-usb-vm
+        - lan-usb-vm #}
 
 demo:
     vars:
         lan_name:         usb-vm
+        soe_layers:       soe:demo,role:G@roles,site:testing,lan:usb-vm,host:G@host,lan-host:lan:G@layers:lan+host:G@host,private:example.private
     ips:
         gateway:          192.168.121.1
         infra-gateway-ip: 192.168.121.1
@@ -34,8 +38,6 @@ deployments:
                 defaults:
                     entries:
                         netinstall:
-                            ss_settings:
-                                LAYERS:            soe:demo,role:G@roles,site:testing,lan:usb-vm,host:G@host,lan-host:lan:G@layers:lan+host:G@host,private:example.private
                             ss_hosts:
                                 192.168.121.1:     gateway.demo.com gateway
 
@@ -43,13 +45,3 @@ network:
     
     hostfile-additions:
         192.168.121.1:   gateway.demo.com gateway
-
-    classes:
-        gateway:
-            sysconfig:
-                GATEWAY: '!!demo.ips.gateway'
-        infra-dns:
-            sysconfig:
-                DNS1: 127.0.0.1
-                DNS2: '!!demo.ips.gateway'
-                DNS3: ''

@@ -13,3 +13,5 @@ for f in /etc/yum.repos.d/CentOS-{Base,Sources,Debuginfo,Vault}.repo
 do 
     [[ -f "${f}" ]] && mv -f "${f}" disable/
 done
+
+exit 0

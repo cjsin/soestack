@@ -24,9 +24,13 @@ soe:
 
 # The remaining items are in alphabetical order
 
+demo:
+    vars:
+        soe_layers: soe:demo,role:G@roles,site:testing,lan:default,host:G@host,lan-host:lan:G@layers:lan+host:G@host,private:example.private
+
 email:
     aliases:
-        root: devuser
+        root: adminuser
 
 filesystem:
     dirs:
@@ -115,6 +119,10 @@ installed_scripts:
         to:    /usr/local/bin
         mode:  '0755'
         common:
+            - salt-scripts.sh.jinja
+            - salt-packages.sh.jinja
+            - b64decode.sh.jinja
+            - b64encode.sh.jinja
             - salt-render.sh.jinja
             - salt-build.sh.jinja
             - salt-deploy.sh.jinja
@@ -266,6 +274,12 @@ network:
                 MODE:     'Managed'
             wpaconfig: {}
 
+        infra-dns:
+            sysconfig:
+                DNS1: 127.0.0.1
+                DNS2: '!!demo.ips.gateway'
+                DNS3: ''
+
 # NOTE - while this key houses nexus configuration,
 # the separate key nexus-repos (above) selects which 
 # repositories are selected for particular hosts.
@@ -277,28 +291,27 @@ nexus:
     urls:
         centos:          http://nexus:7081/repository/centos
         docker:          nexus:7082
-        #dockerce:        http://nexus:7081/repository/dockerce
-        #epel:            http://nexus:7081/repository/epel
-        epel:            http://infra.demo.com:9002/
-        #fedora:          http://nexus:7081/repository/dl-fedora
+        dockerce:        http://nexus:7081/repository/dockerce
+        epel:            http://nexus:7081/repository/epel
+        fedora:          http://nexus:7081/repository/dl-fedora
         github:          http://nexus:7081/repository/github
-        #gitlab:          http://nexus:7081/repository/gitlab
-        #grafana:         http://nexus:7081/repository/grafana
-        #ius:             http://nexus:7081/repository/ius
-        #nodesource:      http://nexus:7081/repository/nodesource
+        gitlab:          http://nexus:7081/repository/gitlab
+        grafana:         http://nexus:7081/repository/grafana
+        ius:             http://nexus:7081/repository/ius
+        nodesource:      http://nexus:7081/repository/nodesource
         npmjs:           http://nexus:7081/repository/npmjs
         pypi:            http://nexus:7081/repository/pypi
-        #rpmfusion:       http://nexus:7081/repository/rpmfusion
-        #saltstack:       http://nexus:7081/repository/saltstack
-        #kubernetes:      http://nexus:7081/repository/kubernetes 
-        #vscode:          http://nexus:7081/repository/vscode
+        rpmfusion:       http://nexus:7081/repository/rpmfusion
+        saltstack:       http://nexus:7081/repository/saltstack
+        kubernetes:      http://nexus:7081/repository/kubernetes 
+        vscode:          http://nexus:7081/repository/vscode
         elasticsearch:   http://nexus:7081/repository/elasticsearch
         #elastic-docker:  http://nexus:7081/repository/elastic-docker
-        #elastic-docker: nexus:7082
+        elastic-docker:  nexus:7082
         rubygems:        http://nexus:7081/repository/rubygems
         interwebs:       http://nexus:7081/repository/interwebs
-        #built-rpms:      http://nexus:7081/repository/built-rpms
-        #google-storage:  http://nexus:7081/repository/google-storage
+        built-rpms:      http://nexus:7081/repository/built-rpms
+        google-storage:  http://nexus:7081/repository/google-storage
 
     blobstores:
         dockerhub:
@@ -453,7 +466,7 @@ nexus:
         # currently does not support that, so nexus is incapable of proxying for EPEL now.
         # see Sonatype issue tracker bug url: https://issues.sonatype.org/browse/NEXUS-20078
         #
-        epel:
+        {# epel:
             type:           proxy
             format:         yum
             blobstore:      epel
@@ -467,7 +480,7 @@ nexus:
                     repos:
                         epel:
                             description: EPEL for Centos $releasever
-                            path:        pub/epel/$releasever/$basearch
+                            path:        pub/epel/$releasever/$basearch #}
 
         github:
             type:                proxy
@@ -687,7 +700,9 @@ nexus-repos:
         kubernetes: True 
         built-rpms: True
         dockerce:   True
-        # gitlab:   True # add only on the infra server
+        #gitlab-ce:    False # this one is added only on the infra server
+        #gitlab-runner: True
+        gitlab:     True
         nodesource: True
         #prometheus: 
         saltstack: True
@@ -946,3 +961,19 @@ postfix:
             relayhost:           '[infra.demo.com]:25'
             relay_domains:       '!!network.system_domain'
             default_transport:   smtp
+
+yum:
+    repos:
+        centos,redhat:
+            epel:
+                baseurl:     http://infra.demo.com:9002/bootstrap-pkgs/epel
+                enabled:     True
+                description: EPEL bootstrap repos
+                gpgcheck:    False
+            centos-os-dvd:
+                baseurl:     http://infra.demo.com:9001/os/dvd
+                enabled:     True
+                description: OS packages from the DVD
+                gpgcheck:    True 
+                gpgkey:      file:///etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-7
+        fedora: {}

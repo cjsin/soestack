@@ -1,5 +1,11 @@
 #!stateconf yaml . jinja
 
+.deps:
+    pkg.installed:
+        - pkgs:
+            - mailcap
+            - hunspell
+
 .installed:
     pkg.installed:
         - fromrepo: epel

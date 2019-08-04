@@ -46,7 +46,7 @@ include:
     - demo.hosts
 
 deployments:
-    ss-gitlab-runners:
+    ss-runners:
         hosts:
             - {{grains.host}}
         activated:       True

@@ -9,15 +9,19 @@
             'salt-ipa-ticket', 
             'host-add', 
             'host-rm', 
+            'host-rebuild',
             'user-create', 
             'update-hosts', 
             'reset-user-passwd',
-            'deploy-ipa'
+            'deploy-ipa',
+            'lib-ipa-deploy'
             ],
         'server' : [ 
             'ipa-pw-upgrade', 
             'ipa-postinstall', 
-            'ipa-server-backup' 
+            'ipa-server-backup',
+            'ipa-reset-admin-password',
+            'ipa-reset-ds-password'
             ],
         'client' : [],
         'master' : []
@@ -26,10 +30,11 @@
 {%- for group_name, script_names in scripts.iteritems() %}
 {%-     if group_name in [ 'common', node_type, client_or_server ] %}
 {%-         for script_name in script_names %}
+{%-             set suffix = '.sh' if script_name.startswith('lib-') else '' %}
 
 {{sls}}.{{deployment_name}}.member-script.{{group_name}}.{{script_name}}-for-{{group_name}}-{{node_type}}-{{client_or_server}}:
     file.managed:
-        - name:     /usr/local/bin/{{script_name}}
+        - name:     /usr/local/bin/{{script_name}}{{suffix}}
         - source:   salt://templates/deployment/ipa/scripts/{{script_name}}.sh.jinja
         - user:     root
         - group:    root

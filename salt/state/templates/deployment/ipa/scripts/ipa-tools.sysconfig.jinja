@@ -10,7 +10,7 @@ IPA_SERVER="{{config.server if 'server' in config else ''}}"
 IPA_SERVER_IP="{{config.server_ip if 'server_ip' in config else ''}}"
 IPA_REALM="{{config.realm if 'realm' in config else ''}}"
 IPA_BIND_USER="{{config.bind_user if 'bind_user' in config else ''}}"
-IPA_BASE_DN="{{config.base_dn if 'base_dn' in config else ''}}"
+IPA_BASE_DN="{{config.base_dn if 'base_dn' in config and config.base_dn not in ['','unset','default'] else base_dn}}"
 IPA_REVERSE_ZONE="{{config.reverse_zone if 'reverse_zone' in config else ''}}"
 IPA_ZONE="{{domain}}"
 IPA_DOMAIN="{{config.domain if 'domain' in config else ''}}"
@@ -22,4 +22,7 @@ IPA_DEFAULT_EMAIL_DOMAIN="{{emaildomain}}"
 IPA_EMAIL_DOMAIN="{{emaildomain if emaildomain else pillar.network.system_domain}}"
 IPA_NODE_TYPE="{{node_type}}"
 IPA_CLIENT_OR_SERVER="{{client_or_server}}"
-IPA_BASE_DN="{{base_dn}}"
+IPA_DEPLOYMENT='{{deployment_name}}'
+{%- if client_or_server == 'server' %}
+IPA_MANAGED_HOSTS='{{config.hosts}}'
+{%- endif %}

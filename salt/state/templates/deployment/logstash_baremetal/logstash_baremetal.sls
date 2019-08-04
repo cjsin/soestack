@@ -35,9 +35,10 @@
 
 
 {%-     if action in [ 'all', 'configure' ] %}
-
+{%-         set primary_group = [] %}
 {%-         if 'extra_groups' in account_info and account_info.extra_groups %}
 {%-             for extra_group in account_info.extra_groups %}
+{%-                 do primary_group.append(extra_group) %}
 
 {{sls}}.{{prefix}}{{state_tag}}-user-{{user}}-group-{{extra_group}}{{suffix}}:
     cmd.run:
@@ -64,6 +65,21 @@
             group:           {{group}}
             config_subdir:   {{config.config_subdir if 'config_subdir' in config else ''}}
 
+{%-         if primary_group and 'chgrp' in config %}
+{%-             for what in config.chgrp %}
+{{sls}}.{{prefix}}{{state_tag}}.chgrp.{{what}}{{suffix}}:
+    cmd.run:
+        - name: chgrp '{{primary_group[0]}}' '{{what}}'
+{%-             endfor %}
+{%-         endif %}
+
+{%-         if primary_group and 'chmod' in config %}
+{%-             for what in config.chmod %}
+{{sls}}.{{prefix}}{{state_tag}}.chmod.{{what}}{{suffix}}:
+    cmd.run:
+        - name: chmod g+rX '{{what}}'
+{%-             endfor %}
+{%-         endif %}
 {%-     endif %}
 
 {%-     if action in [ 'all', 'activate' ] %}

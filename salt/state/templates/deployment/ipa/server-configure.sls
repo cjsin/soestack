@@ -8,6 +8,9 @@
 {#- build up a list of states which can trigger a httpd restart #}
 {%- set dependent_states = [] %}
 
+# Generate a secret which will be used for enrolling clients
+{% do salt.secrets.master_check_or_generate('ipa_client_enrol') %}
+
 {%- do dependent_states.append(['pkg', 'mod-ssl-conflicts']) %}
 {{sls}}.{{deployment_name}}.mod-ssl-conflicts:
     pkg.removed:
@@ -70,7 +73,7 @@
         - identifier: SALT-IPA-TICKET-RENEWAL
         - user:       root
         - special:    '@daily'
-        - name:       /usr/local/sbin/salt-ipa-ticket --renew
+        - name:       /usr/local/bin/salt-ipa-ticket --renew
 
 .script:
     file.managed:

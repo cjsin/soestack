@@ -1,2 +1,3 @@
 include:
     - .repos
+    - .settings

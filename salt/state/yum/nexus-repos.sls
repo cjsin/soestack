@@ -42,15 +42,6 @@
 {%-         endif %}
 {%-     endfor %}
 
-{%- for expect in [ ['minrate','0'],['timeout','600'], ['ip_resolve','4'], ['fastestmirror','0'] ] %}
-
-{%-     set expect_text= expect[0] ~ '='~ expect[1] %}
-.fix-yum-for-mirror-use-{{expect[0]}}:
-    cmd.run:
-        - name:   sed -i -e '/{{expect[0]}}/ d' -e '$ p; n; a {{expect_text}}' /etc/yum.conf
-        - unless: grep -q '{{expect_text}}' /etc/yum.conf
-{%- endfor %}
-
 {%- if diagnostics %}
 .selected-nexus-repos-for-os-{{grains.os}}:
     noop.notice:
@@ -100,7 +91,6 @@
 {%-                     for validkey in base_repodata.keys() %}
 {%-                         if validkey in os_data  %}
 {%-                             do os_repodata.update({validkey: os_data[validkey]}) %}
-
 {%-                         endif %}
 {%-                     endfor %}
 {%-                     for yum_reponame,yum_repodata in subkey_data.repos.iteritems() %}
@@ -114,7 +104,9 @@
 {%-                             if overrides is mapping %}
 {%-                                 do this_repodata.update(overrides) %}
 {%-                             endif %}
-{%-                             set base_url = ( nexus.urls[yum_reponame] if ('urls' in nexus and yum_reponame in nexus.urls ) else 'http://'~ nexus.http_address + '/repository/' ~ nexus_reponame ~ '/' ~ this_repodata.path) %}
+{%-                             set nexus_http_url = 'http://'~ nexus.http_address + '/repository/' ~ nexus_reponame ~ '/' ~ this_repodata.path %}
+{%-                             set nexus_specific_url = nexus.urls[yum_reponame] if ('urls' in nexus and yum_reponame in nexus.urls ) %}
+{%-                             set base_url = nexus_http_url %}
 .create-nexus-{{nexus_reponame}}-repo-{{yum_reponame}}:
     file.managed:
         - name:     '{{yum_repo_file}}'
@@ -133,8 +125,21 @@
             
 {%-                         else %}
 
+{%- if diagnostics %}
+.abc-{{nexus_reponame}}-repo-{{yum_reponame}}-was-not-selected:
+   noop.notice
+{%- endif %}
+
 {#-                         # end if create or delete #}
 {%-                         endif %}
+
+{%- else %}
+
+{%- if diagnostics %}
+.abc-{{nexus_reponame}}-repo-{{yum_reponame}}-repos-was-not-in-subkey-data:
+   noop.notice
+{%- endif %}
+
 {#-                     # end for each yum_reponame #}
 {%-                     endfor %}
 {%-                 else %}

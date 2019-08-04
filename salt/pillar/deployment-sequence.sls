@@ -31,3 +31,4 @@ deployment-sequence:
     - logstash_container
     - logstash_baremetal
     - kube_master
+    - gitlab_runner_baremetal

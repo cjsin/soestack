@@ -24,6 +24,7 @@ demo:
         primary_server: infra.demo.com
         reverse_zone:   '121.168.192.in-addr.arpa.'
         ipa_base_dn:    dc=demo,dc=com
+        timezone:       UTC
 
     passwords: 
         public-default: admin123
@@ -171,10 +172,9 @@ deployments:
 
 
     # Override and Disable various deployments here (override some activated by node roles) until I have more RAM
-    #    ss-gitlab-runners:
-    #        hosts: []
-    #        activated:       False
-    #        activated_where: {{sls}}
+    ss-runners:
+        config:
+            gitlab_host: gitlab.demo.com
     ss-gitlab:
         activated:       True
         activated_where: {{sls}}
@@ -216,8 +216,8 @@ deployments:
                     timeout:         0
                     title:           Default Network Boot
                     type:            soestack
-                    kernel:          os/minimal/images/pxeboot/vmlinuz
-                    initrd:          os/minimal/images/pxeboot/initrd.img
+                    kernel:          os/dvd/images/pxeboot/vmlinuz
+                    initrd:          os/dvd/images/pxeboot/initrd.img
                     ss_provisioning: provision
                     entries:
                         netinstall:
@@ -229,7 +229,7 @@ deployments:
                                 # auto ROLES will use data from node_maps
                                 ROLES:             auto
                                 # NOTE that each lan layer should override LAYERS to set the 'lan:' part here'
-                                LAYERS:            soe:demo,role:G@roles,site:testing,lan:default,host:G@host,lan-host:lan:G@layers:lan+host:G@host,private:example.private
+                                LAYERS:            '!!demo.vars.soe_layers'
                                 #ADD_HOST:
                                 #    - 192.168.121.101,infra.demo.com,infra
                                 #    - 192.168.121.103,nexus.demo.com,nexus
@@ -243,8 +243,8 @@ deployments:
 
                             kickstart: http://%http_server%/provision/kickstart/kickstart.cfg
                 devlan:
-                    kernel:                os/minimal/images/pxeboot/vmlinuz
-                    initrd:                os/minimal/images/pxeboot/initrd.img
+                    kernel:                os/dvd/images/pxeboot/vmlinuz
+                    initrd:                os/dvd/images/pxeboot/initrd.img
                     iface:                 eth0
                     static:                True
                     subnet:                192.168.121
@@ -286,6 +286,7 @@ docker:
                 # Misc (uploaded manually)
                 - nexus:7085
                 - gitlab-registry:5000
+                - gitlab-registry.demo.com:5000
             
             # disable-legacy-registry: True
 
@@ -395,6 +396,9 @@ network:
         mode: 'disabled'
 
     classes:
+        gateway:
+            sysconfig:
+                GATEWAY: '!!demo.ips.gateway' 
         infra-server-common:
             sysconfig:
                 # Nexus
@@ -452,7 +456,6 @@ network:
                 # Nginx frontend / proxy
                 IPADDR2: '!!demo.ips.nginx'
                 PREFIX2: '24'
-
 
 node_maps:
     replica1:

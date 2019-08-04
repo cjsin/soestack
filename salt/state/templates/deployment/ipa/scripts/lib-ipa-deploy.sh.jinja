@@ -5,7 +5,7 @@
 
 # NOTE this function requires a 'logprefix' and TIMESTAMP' variable already to 
 # have been declared
-function ipa::deploy::uninstall_failed_first()
+function ipa::deploy::uninstall-failed-first()
 {
     local what="${1}"
     local logfile="${logprefix}.log"
@@ -68,7 +68,7 @@ function ipa::deploy::install::client()
     # and the firewall rules flushed, because it has troubles otherwise.
     # The rules it requires can be configured after
 
-    ipa::deploy::ipa_install_wrapper ipa-client-install -U "${options[@]}"  -w "${secret}"
+    ipa::deploy::ipa-install-wrapper ipa-client-install -U "${options[@]}"  -w "${secret}"
     # Just making it explicit here that the return status of the prior function
     # is returned to the caller
     return $?
@@ -76,8 +76,8 @@ function ipa::deploy::install::client()
 
 function ipa::deploy::client::main()
 {
-    ipa::deploy::uninstall_failed_first client
-    ipa::deploy::client
+    ipa::deploy::uninstall-failed-first client
+    ipa::deploy::install::client
 }
 
 function ipa::deploy::master()
@@ -86,6 +86,9 @@ function ipa::deploy::master()
     
     local admin_password master_password ds_password
     load_admin_passwords
+
+    #local ip="{{grains.fqdn_ip4[0]}}"
+    local ip="{{config.ip}}"
 
     [[ -n "${master_password}" ]] || die "No IPA secrets have been created! Run salt-call state.sls secrets first (and make sure the pw-ipa-* passwords are set to be generated and distributed in pillar.secrets "
 
@@ -101,24 +104,24 @@ function ipa::deploy::master()
         "--realm=${IPA_REALM}"
         "--domain=${IPA_DOMAIN}"
         "--hostname=$(hostname -f)"
-        "--ip-address={{ip}}"
+        "--ip-address={{config.ip}}"
         "--no-host-dns"
 
-        {%- if install.dns.enabled %}
+        {%- if config.install.dns.enabled %}
         "--setup-dns"
         {#  forwarders during installation are disabled because it always fails #}
         {#  Instead - forwarders are configured later #}
         {%- if True %}
         "--no-forwarders"
         {%- else %}
-        {%- for f in install.dns.forwarders %}
+        {%- for f in config.install.dns.forwarders %}
         "--forwarder={{f}}"
         {%- endfor %}
         {%- endif %}
         # "--reverse-zone={{''}}"
         # "--auto-reverse"
         # TODO - change to use IPA_REVERSE_ZONE from sysconfig
-        #"--reverse-zone=$(echo "{{ip}}" | tr '.' '\n' | head -n3 | tac|tr '\n' '.' )in-addr.arpa."
+        #"--reverse-zone=$(echo "${ip}" | tr '.' '\n' | head -n3 | tac|tr '\n' '.' )in-addr.arpa."
         "--reverse-zone=${IPA_REVERSE_ZONE}"
         {%- endif %} 
 
@@ -127,7 +130,7 @@ function ipa::deploy::master()
         "--ds-password=${ds_password}"
     )
 
-    ipa::deploy::ipa_install_wrapper ipa-server-install -U "${options[@]}"
+    ipa::deploy::ipa-install-wrapper ipa-server-install -U "${options[@]}"
     # Just making it explicit here that the return status of the prior function
     # is returned to the caller
     return $?
@@ -138,7 +141,7 @@ function ipa::deploy::master::main()
     local TIMESTAMP=$(date +%s)
     local logprefix="/var/log/ipaserver-install"
 
-    ipa::deploy::uninstall_failed_first server
+    ipa::deploy::uninstall-failed-first server
     
     if ipa::deploy::install::master
     then
@@ -149,12 +152,12 @@ function ipa::deploy::master::main()
         # Note, the exit code from ipa-postinstall is passed out here just to make it explicit
         return $?
     else
-        ipa::deploy::save_failed_log replica
+        ipa::deploy::save-failed-log replica
         return 1
     fi
 }
 
-function ipa::deploy::ipa_install_wrapper()
+function ipa::deploy::ipa-install-wrapper()
 {
     local command=("${@}")
 
@@ -201,7 +204,7 @@ function ipa::deploy::ipa_install_wrapper()
     return ${result}
 }
 
-function ipa::deploy::promote_to_server()
+function ipa::deploy::promote-to-server()
 {
     local -a options=(
         # TODO - add options such as dns, etc that are useful for replica also
@@ -210,14 +213,14 @@ function ipa::deploy::promote_to_server()
     # The installation is performed with selinux disabled 
     # and the firewall rules flushed, because it has troubles otherwise.
     # The rules it requires can be configured after
-    ipa::deploy::ipa_install_wrapper ipa-replica-install -U "${options[@]}"
+    ipa::deploy::ipa-install-wrapper ipa-replica-install -U "${options[@]}"
 
     # Just making it explicit here that the return status of the prior function
     # is returned to the caller
     return $?
 }
 
-function ipa::deploy::save_failed_log()
+function ipa::deploy::save-failed-log()
 {
     local what="${1}"
     local saved="${logprefix}.FAILED.${TIMESTAMP}.log"
@@ -232,7 +235,7 @@ function ipa::deploy::prep-salt-ticket()
     export KRB5CCNAME=/var/cache/salt/master/salt.krb
 
     local admin_password ds_password master_password
-    ipa::load_admin_passwords
+    ipa::load-admin-passwords
     notice "Installation was successful. Preparing salt/IPA integration ticket (${KRB5CCNAME})."
     kinit admin <<< "${admin_password}"
     local result=$?
@@ -248,15 +251,15 @@ function ipa::deploy::replica::main()
     local TIMESTAMP=$(date +%s)
     local logprefix="/var/log/ipaserver-install"
 
-    ipa::deploy::uninstall_failed_first server
-    ipa::deploy::uninstall_failed_first client
+    ipa::deploy::uninstall-failed-first server
+    ipa::deploy::uninstall-failed-first client
 
-    if ipa::deploy::promote_to_server
+    if ipa::deploy::promote-to-server
     then
         notice "Installation was successful. Preparing salt/IPA integration ticket (${KRB5CCNAME})."
         ipa::deploy::prep-salt-ticket
     else
-        ipa::deploy::save_failed_log replica
+        ipa::deploy::save-failed-log replica
         return 1
     fi
 }

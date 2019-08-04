@@ -14,9 +14,9 @@ tests:
             bad:
         service: {}
 
-    ss-epel:
+    ss-bundled:
         curl:
-            path: /
+            path: /bootstrap-pkgs/epel/
             port: 9002
             good: repodata/
             bad:

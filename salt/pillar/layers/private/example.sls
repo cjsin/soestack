@@ -41,7 +41,7 @@
 #         root:
 #             root@infra.demo.com: a-big-long-root-ssh-key
 # deployments:
-#     ss-gitlab-runners:
+#     ss-runners:
 #         config:
 #             registration_token: example-gitlab-runner-token
 #     ss-gitlab:

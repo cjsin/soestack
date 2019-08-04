@@ -86,10 +86,11 @@ deployments:
                         }
                     }
                     {%endraw%}
+                # NOTE that the indentation within this yml template is important.
                 logstash-user-pipelines-yml: |
                     {%raw%}
                     - pipeline.id: main
-                        path.config: "/usr/share/logstash/pipeline"
+                      path.config: "/usr/share/logstash/pipeline"
                     {%endraw%}
 
 

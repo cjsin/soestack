@@ -37,7 +37,7 @@ accounts:
             fullname: Prometheus
             shell:    /bin/nologin
             #uid:      999
-            home:     /d/local/prometheus
+            home:     /d/local/data/prometheus
             groups:
                 - prometheus
 

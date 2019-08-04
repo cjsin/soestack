@@ -460,9 +460,9 @@ function is_verbose()
     [[ -n "${VERBOSE}" ]] && (( VERBOSE ))
 }
 
-function is_skip_confirmation()
+function is_skip_confirm()
 {
-    [[ -n "${SKIP_CONFIRMATION}" ]] && (( SKIP_CONFIRMATION ))
+    [[ -n "${SKIP_CONFIRM}" ]] && (( SKIP_CONFIRM ))
 }
 
 function is_interactive()
@@ -688,7 +688,7 @@ function prepare_gpg_keystore()
     if [[ -z "${email}" ]]
     then
         err "Cannot generate GPG keys for ${name} private data"
-        err "without an email specified!"
+        err 'without an email specified!'
         return
     fi
 
@@ -724,26 +724,26 @@ function prepare_gpg_keystore()
 
     if [[ ! -s "${keyconfig_file}" ]]
     then
-        err "Generated keyconfig file was empty!"
+        err 'Generated keyconfig file was empty!'
         rm -f "${keyconfig_file}"
         return 1
     fi
 
     if ! gpg2 --verbose --homedir "${keystore}" --batch  --gen-key "${keyconfig_file}" < /dev/null
     then
-        err "Key generation failed!"
+        err 'Key generation failed!'
         return 1
     fi
     
     if ! gpg2 --verbose --homedir "${keystore}" --list-secret-keys
     then 
-        err "No keys were found!"
+        err 'No keys were found!'
         return 1
     fi
 
     if ! gpg2 --homedir "${keystore}" --armor --output "${pubkey}" --export
     then
-        err "No public keys were exported!"
+        err 'No public keys were exported!'
         return 1
     fi
 
@@ -764,7 +764,7 @@ function prepare_gpg_keystore()
 
     if ! gpg2 --homedir "${keystore}" --armor --output "${priv_ascfile}" --export-secret-keys 
     then
-        err "No private keys were exported!"
+        err 'No private keys were exported!'
         return 1
     fi
 
@@ -813,7 +813,7 @@ function prepare_gpg_keystore()
 
     if ! "${scripts}/${name}-gpg-test"
     then
-        err "Encrypt/Decrypt tests failed!"
+        err 'Encrypt/Decrypt tests failed!'
         return 1
     fi
 )
@@ -851,7 +851,7 @@ function prepare_node_keystore()
     cp -f /etc/salt/gpgkeys/soestack.gpg "${base}/soestack-master.gpg"
     if ! tar -czf "${archive}" -C "${base}" "${name}/soestack-"* "${name}/${name}"-??crypt* "${base}/soestack-master.gpg"
     then
-        err "Tarring sig for ${name} failed!"
+        err "Tarring sig for ${name} failed"'!'
         return 1
     fi
 
@@ -859,7 +859,7 @@ function prepare_node_keystore()
     
     if ! gpg2 --home /etc/salt/gpgkeys --armor --output "${archive}.sig" --sign "${archive}" 
     then
-        err "Signing with our salt keys failed!"
+        err 'Signing with our salt keys failed!'
         return 1
     fi
 

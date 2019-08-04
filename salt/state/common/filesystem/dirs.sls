@@ -62,6 +62,7 @@
 {%-                             do props.update(overrides) %}
 
 
+# Example of an exported dir
 #                /export/home:
 #                    description: Export home directories for clients
 #                    user: root
@@ -87,8 +88,8 @@
         {%- endif %}
 
 {%-                             if 'export' in props and props.export is mapping and props.export %}
-{%-                                 set export_name=props['export'].keys()[0] %}
-{%-                                 set export_data=props['export'][export_name] %}
+{%-                                 set export_name = props['export'].keys()[0] %}
+{%-                                 set export_data = props['export'][export_name] %}
 {%-                                 if export_data and export_data is iterable and export_data %}
 {%-                                     set clients = [export_data] if export_data is mapping else export_data %}
 

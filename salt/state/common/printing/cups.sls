@@ -1,6 +1,7 @@
 #!stateconf yaml . jinja
 
-{%- set cups = pillar.cups %}
+{%- if 'cups' in pillar %}
+{%-     set cups = pillar.cups %}
 
 .cups-installed:
     pkg.latest:
@@ -75,3 +76,10 @@
     service.running:
         - name:     cups
         - enable:   True
+
+{%- else %}
+
+.cups-not-configured:
+    noop.notice
+
+{%- endif %}

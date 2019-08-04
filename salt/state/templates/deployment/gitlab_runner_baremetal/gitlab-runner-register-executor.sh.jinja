@@ -39,9 +39,12 @@ echo "Registering with token '${token}'"
 
 options=(
     --non-interactive 
-    --name               {{grains.host}}-{{executor_name}}
-    --url                http://{{config.gitlab_host}}
-    --executor           {{executor_name}}
+    {%- if 'builds_dir' in config and config.builds_dir not in ['', 'unset'] %}
+    --builds-dir         '{{config.builds_dir}}'
+    {%- endif %}
+    --name               '{{grains.host}}-{{executor_name}}'
+    --url                'http://{{config.gitlab_host}}'
+    --executor           '{{executor_type}}'
     --registration-token "${token}"
     {{config.registration_flags|join(" ")}} 
     {{executor.registration_flags|join(" ")}}

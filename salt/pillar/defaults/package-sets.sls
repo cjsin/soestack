@@ -43,6 +43,10 @@ package-sets:
         purpose: |
             provide antivirus support for scanning files obtained from untrusted sources
         centos,redhat-fedora:
+            order: os,epel
+            os:
+                - pcre2
+                - libtool-ltdl
             epel:
                 - clamav
                 - clamav-data
@@ -155,6 +159,7 @@ package-sets:
             os:
                 - perl-Error
                 - perl-TermReadKey
+                - libsecret
             ius:
                 - git2u
         fedora:
@@ -248,6 +253,8 @@ package-sets:
             - net-tools
             # provides 'ip'
             - iproute
+            - wget
+            - curl
 
     nfs-server:
         purpose: |

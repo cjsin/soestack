@@ -290,19 +290,83 @@ function display_build_configuration()
         #cat "${STATICVARS}" | egrep '^[a-zA-Z].*=' | egrep -v '=[(]' | sed -r 's/^([^=]*)=/\1 /' | indent_vars
         #display_bar "######" 
 
-        echo 1>&2
-        echo "                       Dynamic build configuration:" 1>&2
+        local underscores="_____________________________"
+        echo "" #display_bar "      "
+        echo " ${underscores}Dynamic build config${underscores}"
         
-        display_bar "######"
+        #display_bar "######"
 
         local var_names=( $( egrep --no-filename '^[a-zA-Z].*=($|[^(])' "${SS_GEN}"/*-vars.sh  | cut -d= -f1 | sort | uniq ) )
 
+        local -a vals=()
+        local screen_height=25
+        local reserve_for_bottom=15
+        local rows=$((screen_height-reserve_for_bottom))
+        local screen_width=80
+        local half_width=$(( (screen_width - 2) / 2 ))
+
         local n v
+        local indent=""
+        local min_left="0"
+        local min_right=0
+
+        local left=()
+        local right=()
+        local nitems="${#var_names[@]}"
+        local nrows=$(( ( nitems + 1 ) / 2 ))
+
+        local itemnum=0
+        for n in "${var_names[@]}"
+        do
+            if [[ "${itemnum}" -lt ${nrows} ]]
+            then 
+                left+=("${n}")
+                [[ "${#n}" -gt "${min_left}" ]] && min_left="${#n}"
+            else 
+                right+=("${n}")
+                [[ "${#n}" -gt "${min_right}" ]] && min_right="${#n}"
+            fi
+            ((itemnum++))
+        done
+
+        #printf "%.0s1234567890" {1..8}
+        #echo 
+        #vals+=("left=$((min_left))")
+        #vals+=("right=$((min_right))")
+        itemnum=0
+        indlen="${min_left}"
+        [[ "${min_right}" -gt "${indlen}" ]] && indlen="${min_right}"
+        ((indlen++))
         for n in "${var_names[@]}"
         do 
             v="${!n}"
-            [[ -n "${v}" ]] && echo "${n} ${v}"
-        done | indent_vars
+            local n_len="${#n}"
+            local indent_space=$(printf "%-${indlen}s" " ")
+            local indent=$(printf "%-${indlen}s" " ")
+            local vstr="${v}"
+            [[ -z "${v}" ]] && vstr="(empty)"
+
+            local str=$(printf "%${indlen}s%s" "${n} " "${vstr}")
+            if [[ "${#str}" -le "${half_width}" ]]
+            then 
+                vals+=("${str}")
+            else
+                # The first line can take the full width 
+                # without losing some space to the indent
+                local chunklen=$((half_width))
+                vals+=("${str:0:chunklen-1}+")
+                str="${str:chunklen-1}"
+                ((chunklen-=indlen))
+                while [[ "${#str}" -gt "${chunklen}" ]]
+                do
+                    vals+=("${indent}${str:0:chunklen-1}+")
+                    str="${str:chunklen-1}"
+                done
+                vals+=("${indent}${str}")
+            fi
+            ((itemnum++))
+        done 
+        columnify " %-39s %-39s\n" "${vals[@]}"
 
         local var_count=$(array_length "${var_names[@]}")
         if ! (( var_count ))
@@ -311,6 +375,41 @@ function display_build_configuration()
         fi
     } | while IFS='' read line ; do bmsg "${line}" ; done
 }
+
+# The install environment does not have 'column'
+# So this simply formats X lines into half that many rows,
+# each with two columns formatted by the specified formatter
+function columnify()
+{
+    local formatter="${1:- %-39s %-39s\n}"
+    shift
+    local ncols=2
+    local l r
+    local nrows=$(( ( $# + 1 ) / 2 ))
+    local left=() right=()
+    local bar="${bar}"
+    #left+=("123456789012345678901234567890123456789")
+    while [[ "${#left[@]}" -lt ${nrows} ]]
+    do
+        left+=("${1}")
+        shift
+    done 
+
+    
+    #right+=("123456789012345678901234567890123456789")
+    right+=("${@}")
+    r=0
+    set -- "${right[@]}"
+    while (( $# )) 
+    do
+        local right="${1}"
+        shift 
+        local left="${left[${r}]}"
+        printf "${formatter}" "${left}" "${right}"
+        ((r++))
+    done
+}
+
 
 function dump_array()
 {
@@ -346,7 +445,8 @@ function indent_vars()
 
 function display_bar()
 {
-    echo_return " $(printf "######%.0s" {1..13})"
+    local filler="${1:-######}"
+    echo_return " $(printf "${filler}%.0s" {1..13})"
 }
 
 function display_array()
@@ -468,9 +568,9 @@ function is_verbose()
     [[ -n "${VERBOSE}" ]] && (( VERBOSE ))
 }
 
-function is_skip_confirmation()
+function is_skip_confirm()
 {
-    [[ -n "${SKIP_CONFIRMATION}" ]] && (( SKIP_CONFIRMATION ))
+    [[ -n "${SKIP_CONFIRM}" ]] && (( SKIP_CONFIRM ))
 }
 
 function is_interactive()

@@ -65,8 +65,8 @@ deployments:
                     timeout:       600
                     title:         'Default Network Boot'
                     type:          'soestack'
-                    kernel:        os/minimal/images/pxeboot/vmlinuz
-                    initrd:        os/minimal/images/pxeboot/initrd.img
+                    kernel:        os/dvd/images/pxeboot/vmlinuz
+                    initrd:        os/dvd/images/pxeboot/initrd.img
                     ss_provisioning: provision
                     nfs_server:    '!!demo.ips.infra'
                     http_server:   '192.168.121.101:9001'
@@ -102,6 +102,7 @@ deployments:
                                 - noquiet
                                 - modprobe.blacklist=xfs
                                 - rd.driver.blacklist=xfs
+                                # - vga=31b
                             # For example, this would set the kernel commandline appends to just 'noquiet', discarding the 'rd.shell' specified above
                             #append: noquiet 
                             ss_settings:
@@ -111,23 +112,23 @@ deployments:
                                 SALT_MASTER:       infra.default
                                 # NOTE that the admin email is mandatory for having a working Salt/GPG integration
                                 # for private data storage
-                                ADMIN_EMAIL:       admin@demo.soestack.example.com
+                                ADMIN_EMAIL:       admin@localhost.localdomain
                                 SALT_TYPE:         minion
                                 NAMESERVER:        '!!demo.ips.infra'
                                 ROLES:             basic-node
-                                LAYERS:            soe:demo,role:G@roles,site:testing,lan:default,host:G@host,lan-host:lan:G@layers:lan+host:G@host,private:example.private
+                                LAYERS:            '!!demo.vars.soe_layers'
                                 DEVELOPMENT:       0
                                 INTERACTIVE:       0
                                 WAIT:              0
                                 INSPECT:           0
-                                SKIP_CONFIRMATION: 0
+                                SKIP_CONFIRM:      0
                                 #BOOTSTRAP_REPOS:   bootstrap-centos.repo
                                 NEXUS:             nexus:7081
-                                TIMEZONE:          UTC
+                                TIMEZONE:          '!!demo.vars.timezone'
                             ss_repos:
                                 os:                'http://$NEXUS/repository/centos/centos/$releaselong/os/$basearch'
                                 updates:           'http://$NEXUS/repository/centos/centos/$releaselong/updates/$basearch'
                             ss_hosts: {}
-                            kickstart: http://%http_server%/os/minimal/provision/kickstart/kickstart.cfg
-                            stage2:    nfs:nfsvers=4:%nfs_server%:/pxe/os/minimal/
+                            kickstart: http://%http_server%/os/dvd/provision/kickstart/kickstart.cfg
+                            stage2:    nfs:nfsvers=4:%nfs_server%:/pxe/os/dvd/
 

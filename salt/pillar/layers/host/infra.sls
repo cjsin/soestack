@@ -30,7 +30,7 @@ deployments:
                 httpd: '!!demo.ips.infra'
                 named: '!!demo.ips.infra'
 
-    ss-gitlab-runners:
+    ss-runners:
         hosts:
             - {{grains.host}}
         activated:       True
@@ -65,7 +65,7 @@ network:
 
 nexus-repos:
     defaults:
-        gitlab:   True # add only on the infra server
+        gitlab-ce:   True # add only on the infra server
 
 rsyslog:
     server:
@@ -73,7 +73,7 @@ rsyslog:
 
 # Override the runlevel to multi-user for this node
 # despite configuring it with desktop packages
-runlevel: graphical
+runlevel: multi-user
 
 tftp:
     implementation: dnsmasq

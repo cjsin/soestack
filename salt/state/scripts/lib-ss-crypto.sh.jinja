@@ -53,6 +53,22 @@ function crypto::salt-secret::load()
     fi
 }
 
+function crypto::salt-secret::delete()
+{
+    local secret_name="${1}"
+    local storage_file="${2}"
+    local safety_check='^/etc/salt/secrets/(master|minion)/[^./]+$'
+    if [[ -f "${storage_file}" && "${storage_file}" =~ ${safety_check} ]]
+    then
+        rm -f "${storage_file}" 
+        msg "Deleted secret ${secret_name}"
+    else
+        err "Bad usage of ${FUNCNAME[0]}"'!'
+        err "Not safe to continue."
+        return 1
+    fi
+}
+
 function crypto::salt-secret::save()
 {
     local secret_name="${1}"
@@ -63,12 +79,12 @@ function crypto::salt-secret::save()
     local input=""
     case "${source}" in 
         "")
-            err "No data source specified!"
+            err 'No data source specified!'
             crypto::salt-secret::usage
             return 2
             ;;
         ask)
-            input=$(ask_password_twice "${secret_name}" "8")
+            input=$(ask_password_twice "${secret_name}" "${min_length:-8}")
             if [[ "$?" != 0 ]]
             then
                 err "Failed reading password."
@@ -164,6 +180,15 @@ function crypto::salt-secret::process-args()
             -list|--list|-l)
                 mode="list"
                 ;;
+            -delete|--delete)
+                mode="delete"
+                ;;
+            -force|--force)
+                force=1
+                ;;
+            -min-length=?*,--min-length=?*)
+                min_length="${arg#*=}"
+                ;;
             *)
                 if [[ "${arg}" =~ ${secret_name_regex} ]]
                 then
@@ -177,7 +202,7 @@ function crypto::salt-secret::process-args()
         esac
     done
 
-    local automode_regex='^(save|load|auto|)$'
+    local automode_regex='^(save|load|auto|delete|)$'
     if ! [[ "${automode}" =~ ${automode_regex} ]]
     then
         err "Conflicting flags specified - some are applicable only for load mode, and some for save mode."
@@ -218,13 +243,13 @@ function crypto::salt-secret::process-args()
     then
         what="minion"
         [[ -f "${master_keyfile}" ]] && what="master"
-    else
-        if [[ "${what}" == "master" && ! -f "${master_keyfile}" ]]
-        then
-            err "Master mode specified but this node has not run as a master"
-            return 2
-        fi
+    elif [[ "${what}" == "master" && ! -f "${master_keyfile}" ]]
+    then
+        err "Master mode specified but this node has not run as a master"
+        return 2
     fi 
+
+    return 0
 }
 
 function crypto::salt-secret::main()
@@ -241,7 +266,8 @@ function crypto::salt-secret::main()
     local output="stdout"
     local format="binary"
     local outfile=""
-
+    local force=0
+    local min_length=8
     local status
     crypto::salt-secret::process-args "${@}"
     status=$?
@@ -273,6 +299,14 @@ function crypto::salt-secret::main()
     elif [[ "${mode}" == "load" ]]
     then
         crypto::salt-secret::load "${secret_name}" "${storage_file}" "${keyfile}" "${format}" "${output}" "${outfile}"
+    elif [[ "${mode}" == "delete" ]]
+    then 
+        if ! (( force ))
+        then 
+            err "The --force flag must be specified when using --delete"
+            return 1
+        fi
+        crypto::salt-secret::delete "${secret_name}" "${storage_file}"
     fi
 }
 
@@ -308,7 +342,6 @@ function crypto::generate-secrets::process-args()
                 ;;
             -passphrase)
                 style="passphrase"
-                prefix="pw-"
                 ;;
             -allow-empty)
                 min_length=0
@@ -342,9 +375,9 @@ function crypto::generate-secrets::process-args()
                 style="ask"
                 ;;
             *)
-                if [[ "pw-${arg}" =~ ${secret_name_regex} ]]
+                if [[ "${arg}" =~ ${secret_name_regex} ]]
                 then
-                    secret_names+=("pw-${arg}")
+                    secret_names+=("${arg}")
                 else
                     err "Invalid secret name: '${arg}'"
                     crypto::generate-secrets::usage

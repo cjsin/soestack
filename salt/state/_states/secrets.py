@@ -30,14 +30,20 @@ def receive(name):
 
     if data:
 
-        result = __salt__['secrets.receive_from_master'](secret_name, data, True)
-        if result:
+        success, data = __salt__['secrets.minion_receive_from_master'](secret_name, data, True)
+        if success is None:
+            changes = {}
+            comment = 'Up-to-date'
+            result = True
+        elif success:
             changes = { 
                     name : { 'old': { secret_name: '' }, 'new': { secret_name: 'updated' } }
                 }
             comment = 'Stored'
+            result = True
         else:
             comment = 'Receive from master failed for secret {} on minion {}'.format(secret_name, minion_id)
+            result = False
 
     ret={}
 

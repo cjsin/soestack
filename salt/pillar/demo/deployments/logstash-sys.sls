@@ -21,6 +21,13 @@ deployments:
             # Config_subdir should match the location (under /etc/logstash) of the config files
             # that are generated below
             config_subdir:           sys
+            chgrp:
+                - /var/log/cron
+                - /var/log/yum.log
+                - /var/log/messages
+            chmod:
+                - /var/log/cron
+                - /var/log/messages
 
         account:
             user: logstash
@@ -35,13 +42,13 @@ deployments:
                     xpack.monitoring.elasticsearch.url: {{config.xpack_elasticsearch_url or 'http://elasticsearch:9200'}}
                     {%endraw%}
                 logstash-sys-conf: |
-                    {%raw%}
+                    {%raw-%}
                     input {
                         file {
                             path => "/var/log/yum.log"
                         }
                         file {
-                            path => "/var/log/cron.log"
+                            path => "/var/log/cron"
                             type => "syslog"
                         }
                         file {
@@ -59,7 +66,7 @@ deployments:
                 logstash-sys-pipelines-yml: |
                     {%raw%}
                     - pipeline.id: main
-                        path.config: "/etc/logstash/sys/pipeline"
+                      path.config: "/etc/logstash/sys/pipeline"
                     {%endraw%}
 
 

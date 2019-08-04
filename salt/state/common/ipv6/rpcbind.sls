@@ -3,6 +3,12 @@
 {%- if 'network' in pillar and 'ipv6' in pillar.network %}
 {%-     set mode = pillar.network.ipv6.mode if 'mode' in pillar.network.ipv6 else 'default' %}
 
+{{sls}}.packages:
+    pkg.installed:
+        - pkgs:
+            - rpcbind
+            - libtirpc
+
 {{sls}}.ipv6-{{mode}}:
     file.{{'comment' if mode in [ 'lo-only', 'disable' ] else 'uncomment' }}:
         - name:  /usr/lib/systemd/system/rpcbind.socket

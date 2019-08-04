@@ -76,7 +76,7 @@ function ipa::post-install::usage()
     exit ${exitcode}
 }
 
-function ipa::post-install::configure_policies()
+function ipa::post-install::configure-policies()
 {
     local -a policy_modifications=(
         {%- if 'minlength' in pwpolicy %}
@@ -98,7 +98,7 @@ function ipa::post-install::configure_policies()
     fi
 }
 
-function ipa::post-install::configure_globals()
+function ipa::post-install::configure-globals()
 {
     {%- set valid_opts = [
         'maxusernamelength',
@@ -159,7 +159,7 @@ function ipa::post-install::configure_globals()
     {%- endif %}
 }
 
-function ipa::post-install::create_groups()
+function ipa::post-install::create-groups()
 {
     {%- if groups %}
     {%-     for group_name, group in groups.iteritems() %}
@@ -170,7 +170,7 @@ function ipa::post-install::create_groups()
     {%- endif %}
 }
 
-function ipa::post-install::setup_user_accounts()
+function ipa::post-install::setup-user-accounts()
 {
     {%- if users %}
     {%-     for user_name, user in users.iteritems() %}
@@ -179,7 +179,7 @@ function ipa::post-install::setup_user_accounts()
     {%-             set first   = user['first-name'] if 'first-name' in user and user['first-name'] else '' %}
     {%-             set surname = user.surname       if 'surname'    in user and user.surname       else '' %}
     {%-             set save_it = 'save' if 'groups' in user and user.groups and 'bind-users' in user.groups else 'nosave' %}
-    ipa::create_user "{{user_name}}" "{{email}}" "{{first}}" "{{surname}}" "{{save_it}}" "${VERBOSE}"
+    ipa::create-user "{{user_name}}" "{{email}}" "{{first}}" "{{surname}}" "{{save_it}}" "${VERBOSE}"
     {%-         endif %}
     {%-     endfor %}
     {%- else %}
@@ -187,7 +187,7 @@ function ipa::post-install::setup_user_accounts()
     {%- endif %}
 }
 
-function ipa::post-install::add_group_members()
+function ipa::post-install::add-group-members()
 {
     {%- if users and groups %}
     {%-     for user_name, user in users.iteritems() %}
@@ -195,7 +195,7 @@ function ipa::post-install::add_group_members()
     {%-         if 'groups' in user and user.groups %}
     {%-             for group_name in user.groups %}
     {%-                 if group_name in groups %}
-    ipa::check_group_member "{{group_name}}" "{{user_name}}" || chatty ipa group-add-member "{{group_name}}" --user "{{user_name}}"
+    ipa::check-group-member "{{group_name}}" "{{user_name}}" || chatty ipa group-add-member "{{group_name}}" --user "{{user_name}}"
     {%-                 endif %}
     {%-             endfor %}
     {%-         endif %}
@@ -205,7 +205,7 @@ function ipa::post-install::add_group_members()
     {%- endif %}
 }
 
-function ipa::post-install::configure_automounts()
+function ipa::post-install::configure-automounts()
 {    
     {%- if locations %}
     {%-     for location_name, location_data in locations.iteritems() %}
@@ -224,7 +224,7 @@ function ipa::post-install::configure_automounts()
     {%- endif %}
 }
 
-function ipa::post-install::register_hosts()
+function ipa::post-install::register-hosts()
 {
 {%- if hosts %}
 {%-     for hostid, hostitem in hosts.iteritems() %}
@@ -238,9 +238,9 @@ function ipa::post-install::register_hosts()
 {%- endif %}
 }
 
-function ipa::post-install::perform_kinit()
+function ipa::post-install::perform-kinit()
 {
-    ipa::load_admin_passwords
+    ipa::load-admin-passwords
     if [[ -n "${admin_password}" ]]
     then
         if salt-ipa-ticket --renew
@@ -251,37 +251,37 @@ function ipa::post-install::perform_kinit()
     fi
 }
 
-function ipa::post-install::do_work()
+function ipa::post-install::do-work()
 {
     msg "Beginning IPA postinstall configuration at $(date)"
     {%- if globalconf %}
-    (( run_all + run_globalconf )) && chatty ipa::post-install::configure_globals 
+    (( run_all + run_globalconf )) && chatty ipa::post-install::configure-globals 
     {%- endif %}
 
     {%- if pwpolicy %}
-    (( run_all + run_policies   )) && chatty ipa::post-install::configure_policies
+    (( run_all + run_policies   )) && chatty ipa::post-install::configure-policies
     {%- endif %}
 
     {%- if groups %}
-    (( run_all + run_groups     )) && chatty ipa::post-install::create_groups 
+    (( run_all + run_groups     )) && chatty ipa::post-install::create-groups 
     {%- endif %}
 
     {%- if users %}
-    (( run_all + run_users      )) && chatty ipa::post-install::setup_user_accounts
+    (( run_all + run_users      )) && chatty ipa::post-install::setup-user-accounts
     {%- endif %}
 
     {%- if users and groups %}
-    (( run_all + run_users + run_groups )) && chatty ipa::post-install::add_group_members
+    (( run_all + run_users + run_groups )) && chatty ipa::post-install::add-group-members
     {%- endif %}
 
-    (( run_all + run_automounts )) && chatty ipa::post-install::configure_automounts
+    (( run_all + run_automounts )) && chatty ipa::post-install::configure-automounts
 
-    (( run_all + run_hosts      )) && chatty ipa::post-install::register_hosts
+    (( run_all + run_hosts      )) && chatty ipa::post-install::register-hosts
 
     msg "Finished."
 }
 
-function ipa::post-install::process_args()
+function ipa::post-install::process-args()
 {
     local valid_sections='^(-|--|)(globals|policies|groups|users|automounts|hosts)$'
     local help_regex='(^|[[:space:]])(-h|-help|--help)([[:space:]]|$)'
@@ -327,17 +327,17 @@ function ipa::post-install::main()
     local VERBOSE=0
     local CHATTY=1
 
-    ipa::post-install::process_args "${@}"
+    ipa::post-install::process-args "${@}"
 
-    ipa::post-install::perform_kinit || exit 1
+    ipa::post-install::perform-kinit || exit 1
 
     if (( run_in_background ))
     then 
         local logfile="/var/log/ipa-postinstall.log"
         msg "IPA post-install started in background (see ${logfile} for results)"
-        ipa::post-install::do_work >> "${logfile}" 2>&1 &
+        ipa::post-install::do-work >> "${logfile}" 2>&1 &
     else
-        ipa::post-install::do_work
+        ipa::post-install::do-work
     fi 
 }
 

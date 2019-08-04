@@ -368,9 +368,9 @@ function user_rebuild_confirmation()
     # First things first, don't just blow away a server without
     # an admin confirmation.
 
-    if is_skip_confirmation
+    if is_skip_confirm
     then
-        bmsg "Skipping rebuild confirmation (SKIP_CONFIRMATION=1 was present on the commandline) !"
+        bmsg "Skipping rebuild confirmation (SKIP_CONFIRM=1 was present on the commandline) !"
         return 0
     else
 

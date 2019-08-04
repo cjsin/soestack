@@ -39,9 +39,9 @@ def generate_secrets(generate):
         log.info("Processing auto-generation for secret '{}'".format(secret_name))
         how = generate[secret_name]
         if how is None or how == 'token':
-            __salt__['secrets.check_or_generate'](secret_name)
+            __salt__['secrets.master_check_or_generate'](secret_name)
         elif how.startswith('str:'):
-            __salt__['secrets.check_or_set'](secret_name,how[4:])
+            __salt__['secrets.master_check_or_set'](secret_name, how[4:])
         else:
             log.error("Unrecognised generation mode '{}' for secret '{}'".format(how, secret_name))
 
@@ -59,9 +59,9 @@ def distribute_secrets(secrets, distribute, minion_id):
         status.append("Processing secret {}".format(secret_name))
         count = 0
         if distribution and minion_id in distribution:
-            secret_data = __salt__['secrets.get_master_secret'](secret_name)
-            if secret_data:
-                encoded_for_minion = __salt__['secrets.encrypt_secret_for'](secret_name,minion_id,use_base64=True)
+            retrieve_success, secret_data = __salt__['secrets.master_get_secret'](secret_name)
+            if retrieve_success:
+                encode_success, encoded_for_minion = __salt__['secrets.master_encrypt_for'](secret_name,minion_id,use_base64=True)
                 if secret_name not in data:
                     data[secret_name]={}
                 data[secret_name][minion_id] = encoded_for_minion

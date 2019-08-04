@@ -3,6 +3,8 @@
 # Overrides and data for the demo test soe lan
 
 demo:
+    vars:
+        soe_layers: soe:demo,role:G@roles,site:testing,lan:example,host:G@host,lan-host:lan:G@layers:lan+host:G@host,private:example.private
     ips:
         gateway: 192.168.188.1
     macs:
@@ -17,7 +19,6 @@ deployments:
                         netinstall:
                             ss_settings:
                                 ROLES:             role-set:developer-workstation-node
-                                LAYERS:            soe:demo,role:G@roles,site:testing,lan:example,host:G@host,lan-host:lan:G@layers:lan+host:G@host,private:example.private
 
                 # extra demo lan for pxebooting nodes with quick-install minimal basic node type 
                 demo:
@@ -44,19 +45,8 @@ deployments:
                 dns:
                     forwarders:
                         - '!!demo.ips.gateway' 
-{# 
-managed-hosts:
-    hostfile-hosts:
-        infra:
-            ip:       '!!demo.ips.infra' 
-            mac:      '
-            aliases:  infra ipa.demo.com ipa salt.demo.com salt ldap.demo.com ldap
-            type:     client
-            hostfile:
-                - '.*' #}
 
 network:
-
     hostfile-additions:
         # For now use the nexus on my host box to avoid re-downloading anything
         192.168.121.1:   wired-gateway
@@ -64,14 +54,6 @@ network:
         10.0.2.15:       client.demo.com client
 
     classes:
-        gateway:
-            sysconfig:
-                GATEWAY: '!!demo.ips.gateway' 
         lan-wired-gateway:
             sysconfig:
                 GATEWAY: '!!demo.ips.gateway' 
-        infra-dns:
-            sysconfig:
-                DNS1: 127.0.0.1
-                DNS2: '!!demo.ips.gateway' 
-                DNS3: ''

@@ -1,14 +1,7 @@
 #!/bin/bash
 
 [[ "${SS_LOADED_SS_LIB}" == "1" ]] || . /usr/local/bin/lib-ss.sh || exit 1
-
-for _x in tools server
-do 
-    [[ -f "/etc/sysconfig/ipa-${_x}" ]] && . "/etc/sysconfig/ipa-${_x}"
-done
-
-{# # TODO - move this to a state file #}
-{% do salt.secrets.check_or_generate('ipa_client_enrol') %}
+[[ -f "/etc/sysconfig/ipa-tools" ]] && . "/etc/sysconfig/ipa-tools"
 
 ticket_dir="/var/cache/salt/master"
 installation_pwfile=/etc/sysconfig/ipa-passwords
@@ -16,7 +9,7 @@ KRB5CCNAME="${ticket_dir}/salt.krb"
 HELP_REGEX='(^|[[:space:]])(-h|-help|--help|help)([[:space:]]|$)'
 
 deployment_name="${IPA_DEPLOYMENT}"
-managed_hosts_key="managed-hosts:${deployment_name}"
+managed_hosts_key="${IPA_MANAGED_HOSTS}"
 registered_hosts_file="/etc/ss-hosts-${deployment_name}"
 ipa_realm="${IPA_REALM}"
 default_reverse_zone="${IPA_REVERSE_ZONE}"
@@ -74,7 +67,7 @@ function run()
     "${@}"
 }
 
-function ipa::salt_lookup_managed_host()
+function ipa::salt-lookup-managed-host()
 {
     local name="${1}"
     msg "Looking up managed host '${name}' this can take a little while..."
@@ -82,7 +75,7 @@ function ipa::salt_lookup_managed_host()
     salt-call pillar.get "${managed_hosts_key}:${short_hostname}" --out key | grep -v 'Local Keys' | sed 's/:[[:space:]]*/=/'
 }
 
-function ipa::salt_lookup()
+function ipa::salt-lookup()
 {
     local short_hostname="${1}"
     shift
@@ -90,7 +83,7 @@ function ipa::salt_lookup()
     local -a result=()
     local -a ret=()
     local what=""
-    result=( $(ipa::salt_lookup_managed_host "${short_hostname}") )
+    result=( $(ipa::salt-lookup-managed-host "${short_hostname}") )
 
     for what in "${lookup_what[@]}"
     do
@@ -116,7 +109,7 @@ function ipa::salt_lookup()
     echo "${ret[@]}"
 }
 
-function ipa::lookup_host_info_registered_hostfile()
+function ipa::lookup-host-info-registered-hostfile()
 {
     local fqdn="${1}"
 
@@ -141,23 +134,23 @@ function ipa::lookup_host_info_registered_hostfile()
     echo "${found_host_ip:--}" "${found_mac:--}"
 }
 
-function ipa::lookup_host_info()
+function ipa::lookup-host-info()
 {
     local fqdn="${1}"
     local short_hostname="${fqdn%%.*}"
-    local -a salt_result=( $(ipa::salt_lookup "${short_hostname}" "ip" "mac") )
+    local -a salt_result=( $(ipa::salt-lookup "${short_hostname}" "ip" "mac") )
     local ip="${salt_result[0]}"
     local mac="${salt_result[1]}"
     if [[ "${ip}" == "-" || "${mac}" == "-" ]]
     then 
-        local -a file_result=( $(ipa::lookup_host_info_registered_hostfile "${fqdn}") )
+        local -a file_result=( $(ipa::lookup-host-info-registered-hostfile "${fqdn}") )
         [[ "${ip}" == "-" ]] && ip="${file_result[0]}"
         [[ "${mac}" == "-" ]] && mac="${file_result[1]}"
     fi
     echo "${ip}" "${mac}"
 }
 
-function ipa::reregister_check()
+function ipa::reregister-check()
 {
     local fqdn="${1}"
     local reregister="${2}"
@@ -172,7 +165,7 @@ function ipa::reregister_check()
             if [[ "${confirmation,,}" != "y" ]]
             then
                 logmsg "User cancelled add of host ${fqdn%.}"
-                return 1
+                return 2
             else
                 logmsg "User confirmed removal of ${fqdn%.} before re-add."
                 reregister=1
@@ -180,41 +173,40 @@ function ipa::reregister_check()
         fi
         if [[ "${reregister}" == "1" ]]
         then 
-            ipa::host_rm "${fqdn%.}" 1
-            return $?
-        else 
-            return 0
+            if ! ipa::host-rm "${fqdn%.}" 1
+            then 
+                return 2
+            fi
         fi
-    else
-        return 0
     fi
+    return 0
 }
 
-function ipa::reverse_zone_for_ip()
+function ipa::reverse-zone-for-ip()
 {
     echo $(tr '.' '\n' <<< "${1}" | head -n3 | tac | tr '\n' '.')in-addr.arpa
 }
 
-function ipa::delete_dnsrecords()
+function ipa::delete-dnsrecords()
 {
     local fqdn="${1}"
     local ip="${2}"
     local d="${fqdn#*.}"
     local n="${fqdn%%.*}"
-    local r=$(reverse_zone_for_ip "${ip}")
+    local r=$(ipa::reverse-zone-for-ip "${ip}")
     local final_octet="${ip##*.}"
     # At this point, fqdn should include a . at the end 
     run ipa dnsrecord-del "${d}" "${n}"           --a-rec   "${ip}"
     run ipa dnsrecord-del "${r}" "${final_octet}" --ptr-rec "${fqdn}"
 }
 
-function ipa::add_dnsrecords()
+function ipa::add-dnsrecords()
 {
     local fqdn="${1}"
     local ip="${2}"
     local d="${fqdn#*.}"
     local n="${fqdn%%.*}"
-    local r=$(reverse_zone_for_ip "${ip}")
+    local r=$(ipa::reverse-zone-for-ip "${ip}")
     local final_octet="${ip##*.}"
     
     if ! ipa dnsrecord-find "${d}" "${n}" --raw | grep -q "arecord: ${ip}"
@@ -232,13 +224,13 @@ function ipa::add_dnsrecords()
     fi
 }
 
-function ipa::host_promote()
+function ipa::host-promote()
 {
     local fqdn="${1}"
     run ipa hostgroup-add-member ipaservers --hosts="${fqdn%.}"
 }
 
-function host_add()
+function ipa::host-add()
 {
     local kind="${1}"
     local reregister="${2}"
@@ -250,20 +242,20 @@ function host_add()
 
     if ! ipa::require-ticket admin
     then 
-        return 1
+        return 2
     fi
 
     if [[ "${kind}" == "host" ]]
     then 
-        if ! ipa::reregister_check "${fqdn}" "${reregister}"
+        if ! ipa::reregister-check "${fqdn}" "${reregister}"
         then
-            return 1
+            return 2
         fi
     fi 
 
     if [[ "${kind}" == "host" ]]
     then 
-        ipa::delete_dnsrecords "${fqdn}" "${host_ip}" 2> /dev/null
+        ipa::delete-dnsrecords "${fqdn}" "${host_ip}" #2> /dev/null
         logmsg "Registering host ${fqdn%.}"
         # TODO - stop this using the commandline for the enrol_secret
         enrol_secret=$(salt-secret ipa_client_enrol)
@@ -275,37 +267,40 @@ function host_add()
             then
                 if [[ "${special}" == "replica" ]]
                 then
-                    ipa::host_promote "${fqdn}"
+                    ipa::host-promote "${fqdn}"
                 fi
             fi
         fi
     elif [[ "${kind}" == "dns" ]]
     then
-        ipa::add_dnsrecords "${fqdn}" "${host_ip}"
+        ipa::add-dnsrecords "${fqdn}" "${host_ip}"
     fi
+
+    msg "Updating PXE booting configuration."
+    salt-deploy pxebooting
 }
 
-function ipa::dns_add()
+function ipa::dns-add()
 {
     local fqdn="${1}"
     local host_ip="${2}"
 
     if ! ipa::require-ticket admin
     then 
-        return 1
+        return 2
     fi
 
-    ipa::add_dnsrecords "${fqdn}" "${host_ip}"
+    ipa::add-dnsrecords "${fqdn}" "${host_ip}"
 }
 
-function ipa::host_rm()
+function ipa::host-rm()
 {
     local fqdn="${1}"
     local deregister="${2}"
 
     if ! ipa::require-ticket admin
     then 
-        return 1
+        return 2
     fi
     
     if (( deregister ))
@@ -313,14 +308,21 @@ function ipa::host_rm()
         msg "Searching for ${fqdn%.}"
         if ipa host-find "${fqdn%.}" 2> /dev/null > /dev/null
         then 
-            run ipa host-del "${fqdn%.}"
+            # ipa host-del used to delete DNS SSHFP entries at least
+            # but now it doesn't so we need --updatedns
+            run ipa host-del "${fqdn%.}" --updatedns
         else 
             msg "Host ${fqdn} was not registered"
         fi 
     fi 
 
-    ipa::delete_dnsrecords "${fqdn}" "${host_ip}" 2> /dev/null
-    echo $?
+    ipa::delete-dnsrecords "${fqdn}" "${host_ip}" 2> /dev/null
+
+    if [[ -f ~/.ssh/known_hosts ]]
+    then
+        egrep "${fqdn}" ~/.ssh/known_hosts >> ~/.ssh/known_hosts_deleted
+        sed -i "/@${fqdn}/ d" ~/.ssh/known_hosts
+    fi
 }
 
 function ipa::require-ticket()
@@ -340,7 +342,7 @@ function ipa::require-ticket()
     fi
 }
 
-function ipa::is_bind_user()
+function ipa::is-bind-user()
 {
     local user_name="${1}"
     if groups "${user_name}" | egrep '[[:space:]]bind-users([[:space:]]|$)'
@@ -351,7 +353,7 @@ function ipa::is_bind_user()
     fi 
 }
 
-function ipa::save_bind_user_pw()
+function ipa::save-bind-user-pw()
 {
     local user_name="${1}"
     local secret_name="pw-bind-user-${user_name}"
@@ -368,7 +370,7 @@ function ipa::save_bind_user_pw()
     salt-secret -save "${secret_name}" -stdin <<< "${pw}"
 }
 
-function ipa::send_password_email()
+function ipa::send-password-email()
 {
     local user_name="${1}"
     local new_pw="${2}"
@@ -376,7 +378,7 @@ function ipa::send_password_email()
     if ! [[ "${emailaddr}" =~ @ ]]
     then 
         err "Invalid email '${emailaddr}'"
-        return 1
+        return 2
     fi
     # TODO - support half/half passwords
     # TODO - support email template from pillar
@@ -393,7 +395,7 @@ function ipa::send_password_email()
         return 0
     else 
         msg "Not sent (failed)."
-        return 1
+        return 2
     fi 
 }
 
@@ -404,14 +406,14 @@ function ipa::reset-user-passwd()
 
     if ! ipa::require-ticket admin
     then 
-        return 1
+        return 2
     fi
 
     local new_password=$(mktemp -u XXXXXXXXXX)
     if [[ -z "${new_password}" ]]
     then 
         err "Failed to generate a random password"
-        return 1
+        return 2
     fi
 
     local password_input=""
@@ -424,11 +426,11 @@ function ipa::reset-user-passwd()
     if ! ipa passwd "${user_name}" <<< "${password_input}"
     then 
         err "Failed setting password for user '${user_name}'"
-        return 1
+        return 2
     fi
-    if ipa::is_bind_user "${user_name}"
+    if ipa::is-bind-user "${user_name}"
     then 
-        ipa::save_bind_user_pw "${user_name}" "${new_password}"
+        ipa::save-bind-user-pw "${user_name}" "${new_password}"
     fi  
 
     local email_address=$(ipa user-show "${user_name}" --raw | grep mail: | cut -d ':' -f2- | tr -d ' ')
@@ -438,7 +440,7 @@ function ipa::reset-user-passwd()
     then
         if [[ -n "${email_address}" ]]
         then 
-            if ipa::send_password_email "${user_name}" "${new_password}" "${email_address}"
+            if ipa::send-password-email "${user_name}" "${new_password}" "${email_address}"
             then 
                 sent=1
             else 
@@ -455,7 +457,7 @@ function ipa::reset-user-passwd()
     fi
 }
 
-function ipa::create_user()
+function ipa::create-user()
 {
     local u="${1}"
     local email="${2}"
@@ -473,6 +475,7 @@ function ipa::create_user()
             ipa::set-password "${u}" "" "${save_it}"
         else
             err "Failed adding user ${u}"
+            return 2
         fi
     elif (( verbose ))
     then 
@@ -509,20 +512,17 @@ function ipa::set-password()
     fi
 }
 
-function ipa::check_group_member()
+function ipa::check-group-member()
 {
-    #ipa group-show "${1}" 2> /dev/null | egrep -q "[:,] ${2}(,|\$)"
-    if ipa group-show "${1}" 2> /dev/null | egrep "[:,] ${2}(,|\$)"
+    if ipa group-show "${1}" 2> /dev/null | egrep -q "[:,] ${2}(,|\$)"
     then 
-        echo "yes"
         return 0
     else 
-        echo "no"
         return 1
     fi
 }
 
-function ipa::load_admin_passwords()
+function ipa::load-admin-passwords()
 {
     . /etc/sysconfig/ipa-passwords
     local p
@@ -538,7 +538,7 @@ function ipa::load_admin_passwords()
 }
 
 
-function ipa::list_ticket()
+function ipa::list-ticket()
 {
     if [[ -f "${KRB5CCNAME}" ]]
     then 
@@ -549,7 +549,7 @@ function ipa::list_ticket()
     fi
 }
 
-function ipa::renew_ticket()
+function ipa::renew-ticket()
 {
     mkdir -p "${ticket_dir}"
 
@@ -570,7 +570,7 @@ function ipa::renew_ticket()
         kinit -l "${l}d" -r "${r}d" -a admin
     else
         err "Past install phase and a tty is not available for entering the password"
-        return 1
+        return 2
     fi
 }
 
@@ -587,7 +587,7 @@ function ipa::reset-user-passwd::usage()
     echo "  --email|--send             Send the password via email."
 }
 
-function ipa::reset-user-passwd::process_argv()
+function ipa::reset-user-passwd::process-argv()
 {
     local arg i d f n 
 
@@ -598,8 +598,8 @@ function ipa::reset-user-passwd::process_argv()
         
         case "${arg}" in
             -h|-help|--help) 
-                usage
-                exit 0
+                ipa::reset-user-passwd::usage
+                return 1
                 ;;
             -u|--user|-user)
                 username="${1}"
@@ -616,13 +616,23 @@ function ipa::reset-user-passwd::process_argv()
                 ;;
             *)
                 ipa::reset-user-passwd::usage
-                die "Unrecognised option: '${arg}'"
+                err "Unrecognised option: '${arg}'"
+                return 2
                 ;;
         esac
     done 
 
-    [[ -n "${username}" ]] || die "No username specified"
-    [[ "${username}" =~ ${valid_username_regex} ]] || die "Invalid username"
+    if [[ -z "${username}" ]]
+    then
+        err "No username specified"
+        return 2
+    fi
+
+    if ! [[ "${username}" =~ ${valid_username_regex} ]]
+    then 
+        err "Invalid username"
+        return 2
+    fi
 }
 
 function ipa::reset-user-passwd::main()
@@ -630,7 +640,20 @@ function ipa::reset-user-passwd::main()
     local username=""
     local send_email=0
 
-    ipa::reset-user-passwd::process_argv "${@}"
+    local status
+    ipa::reset-user-passwd::process-argv "${@}"
+    status=$?
+    
+    if [[ "${status}" == 1 ]]
+    then
+        # Usage was printed
+        return 0
+    elif [[ "${status}" != 0 ]]
+    then 
+        # failed arg processing
+        return 2
+    fi
+
     ipa::reset-user-passwd "${username}" ${send_email}
 }
 
@@ -658,7 +681,7 @@ function ipa::host-add::usage()
     echo ""
 }
 
-function ipa::host-add::process_argv()
+function ipa::host-add::process-argv()
 {
     local arg i m d f n s
     local opt 
@@ -670,8 +693,8 @@ function ipa::host-add::process_argv()
         
         case "${arg}" in
             -h|-help|--help) 
-                usage
-                exit 0
+                ipa::host-add::usage
+                return 1
                 ;;
             -dns-only|--dns-only)
                 mode="dns"
@@ -727,20 +750,31 @@ function ipa::host-add::process_argv()
                 n="${arg}"
                 ;;
             *)
-                usage
-                die "Unrecognised option: '${arg}'"
+                ipa::host-add::usage
+                err "Unrecognised option: '${arg}'"
+                return 2
                 ;;
         esac
     done 
 
-    [[ -n "${m}" && ! "${m}" =~ ${mac_regex} ]] && die "Invalid MAC address: '${m}'"
-    [[ -n "${i}" && ! "${i}" =~ ${ip_regex} ]] && die "Invalid IP address: '${i}'" 
-    [[ -n "${f}" && ! "${f}" =~ [.] ]] && die "FQDN does not include a domain: '${f}'"
-    [[ -n "${f}" && ! "${f}" =~ [.][^.] ]] && die "FQDN does include a domain: '${f}'"
-    [[ -n "${f}" && "${f}" =~ ^[.] ]] && die "FQDN cannot start with a dot: '${f}'"
+    errs=()
+    [[ -n "${m}" && ! "${m}" =~ ${mac_regex} ]] && errs+=("Invalid MAC address: '${m}'")
+    [[ -n "${i}" && ! "${i}" =~ ${ip_regex} ]] && errs+=("Invalid IP address: '${i}'")
+    [[ -n "${f}" && ! "${f}" =~ [.] ]] && errs+=("FQDN does not include a domain: '${f}'")
+    [[ -n "${f}" && ! "${f}" =~ [.][^.] ]] && errs+=("FQDN does include a domain: '${f}'")
+    [[ -n "${f}" && "${f}" =~ ^[.] ]] && errs+=("FQDN cannot start with a dot: '${f}'")
+    [[ -n "${d}" && -n "${f}" ]] && errs+=("Mutually exclusive options (domain and fqdn).")
+    [[ "${n}" =~ [.] ]] && errs+=("Name option does not accept fully qualified names. Use the -f option")
 
-    [[ -n "${d}" && -n "${f}" ]] && die "Mutually exclusive options (domain and fqdn)."
-    [[ "${n}" =~ [.] ]] && die "Name option does not accept fully qualified names. Use the -f option"
+    if (( {%raw%}${#errs[@]}{%endraw%} ))
+    then 
+        local e
+        for e in "${errs[@]}"
+        do
+            err "${e}"
+        done
+        return 2
+    fi
 
     if [[ -z "${f}" ]]
     then
@@ -753,7 +787,8 @@ function ipa::host-add::process_argv()
             d="${default_regular_zone%.}"
             f="${n}.${d}."
         else
-            die "At least a node name must be specified!"
+            err "At least a node name must be specified!"
+            return 2
         fi
     else
         # Break down the fqdn into domain, name, and make sure it has the dot at the end
@@ -762,7 +797,11 @@ function ipa::host-add::process_argv()
         f="${f%.}."
     fi
 
-    [[ ! "${f}" =~ ${fqdn_regex} ]] && die "Invalid host name: '${f}'"
+    if [[ ! "${f}" =~ ${fqdn_regex} ]]
+    then 
+        err "Invalid host name: '${f}'"
+        return 2
+    fi
     
     fqdn="${f%.}."
 
@@ -771,13 +810,22 @@ function ipa::host-add::process_argv()
 
     if [[ -z "${mac}" || -z "${host_ip}" ]]
     then 
-        local -a lookup_results=( $(ipa::lookup_host_info "${fqdn}") )
+        local -a lookup_results=( $(ipa::lookup-host-info "${fqdn}") )
         [[ -z "${host_ip}" && "${lookup_results[0]}" != "-" ]] && host_ip="${lookup_results[0]}"
         [[ -z "${mac}" && "${lookup_results[1]}" != "-" ]] && mac="${lookup_results[1]}"
     fi
 
-    (( register )) && [[ -z "${mac}" ]] && die "No MAC information specified and not found from salt host lookup"
-    [[ -z "${host_ip}" ]] && die "No MAC information specified and not found from salt host lookup"
+    if (( register )) && [[ -z "${mac}" ]]
+    then 
+        err "No MAC information specified and not found from salt host lookup"
+        return 2
+    fi 
+
+    if [[ -z "${host_ip}" ]]
+    then
+        err "No MAC information specified and not found from salt host lookup"
+        return 2
+    fi
 
     site="${s}"
 
@@ -788,7 +836,7 @@ function ipa::host-add::process_argv()
     #   mac
 }
 
-function ipa::host-add::create_keystore_for_host()
+function ipa::host-add::create-keystore-for-host()
 {
     warn "${FUNCNAME[0} - unimplemented"
 }
@@ -805,22 +853,129 @@ function ipa::host-add::main()
     local special=""
     local kind="host"
 
-    ipa::host-add::process_argv "${@}"
-
+    local status
+    ipa::host-add::process-argv "${@}"
+    status=$?
+    
+    if [[ "${status}" == 1 ]]
+    then
+        # Usage was printed
+        return 0
+    elif [[ "${status}" != 0 ]]
+    then 
+        # failed arg processing
+        return 2
+    fi
 
     case "${mode}" in
         promote)
             msg "Prepping host ${fqdn} for promotion"
-            ipa::host_promote "${fqdn}"
+            ipa::host-promote "${fqdn}"
             ;;
         dns)
             msg "Performing DNS additions only (no host enrollment)"
-            ipa::dns_add "${fqdn}" "${host_ip}"
+            ipa::dns-add "${fqdn}" "${host_ip}"
             ;;
         register)
-            ipa::host_add "${kind}" "${reregister}" "${fqdn}" "${host_ip}" "${mac}" "${special}" "${site}" 
+            ipa::host-add "${kind}" "${reregister}" "${fqdn}" "${host_ip}" "${mac}" "${special}" "${site}" 
             ;;
     esac 
+}
+
+function ipa::host-rebuild::usage()
+{
+    echo "Usage: host-rebuild [<hostname>]"
+    echo ""    
+    echo "Delete and re-add a host (salt and IPA)"
+    echo ""
+    echo "Options:"
+    echo ""
+    echo "  <hostname>    The short hostname"
+}
+
+function ipa::host-rebuild::process-argv()
+{
+    local arg n 
+
+    while (( $# ))
+    do
+        arg="${1}"
+        shift 
+        
+        case "${arg}" in
+            -h|-help|--help) 
+                ipa::host-rebuild::usage
+                return 1
+                ;;
+            -n|--name|-name)
+                n="${1}"
+                shift
+                ;;
+            [a-zA-Z]*)
+                n="${arg}"
+                ;;
+            *)
+                ipa::host-rebuild::usage
+                err "Unrecognised option: '${arg}'"
+                return 2
+                ;;
+        esac
+    done 
+
+    if [[ "${n}" =~ [.] ]] 
+    then
+        err "Name option does not accept fully qualified names. Use the -f option"
+        return 2
+    fi
+
+    local d="${default_regular_zone%.}"
+    local f="${n}.${d}."
+
+    if [[ ! "${f}" =~ ${fqdn_regex} ]]
+    then
+        err "Invalid host name: '${f}'"
+        return 2
+    fi
+    
+    fqdn="${f%.}."
+
+    # At the end of argument processing, we need to have a valid:
+    #   fqdn (with dot at the end)
+}
+
+function ipa::host-rebuild()
+{
+    local fqdn="${1}"
+    
+    if [[ -z "${fqdn}" ]]
+    then
+        err "No fqdn specified."
+        return 2
+    fi
+
+    if salt-key -d "${fqdn%%.*}"
+    then
+        ipa::host-rm::main "${fqdn}"
+        ipa::host-add::main "${fqdn}"
+    fi
+}
+
+function ipa::host-rebuild::main()
+{
+    local fqdn=""
+    local status
+    ipa::host-rebuild::process-argv "${@}"
+    status=$?
+    if [[ "${status}" == 1 ]]
+    then 
+        # usage was printed
+        return 0
+    elif [[ "${status}" != 0 ]]
+    then 
+        return 2
+    fi
+
+    ipa::host-rebuild "${fqdn}"
 }
 
 function ipa::host-rm::usage()
@@ -835,9 +990,10 @@ function ipa::host-rm::usage()
     echo "  -n <name>     Specify the host name."
     echo "  -d <domain>   Specify the domain name."
     echo "  -f <fqdn>     Specify the fully qualified domain name (hostname.domain)."
+    echo "  --dns-only    Only delete DNS records"
 }
 
-function ipa::host-rm::process_argv()
+function ipa::host-rm::process-argv()
 {
     local arg i d f n 
 
@@ -848,8 +1004,8 @@ function ipa::host-rm::process_argv()
         
         case "${arg}" in
             -h|-help|--help) 
-                usage
-                exit 0
+                ipa::host-rm::usage
+                return 1
                 ;;
             -dns-only|--dns-only)
                 deregister=0
@@ -881,19 +1037,48 @@ function ipa::host-rm::process_argv()
                 n="${arg}"
                 ;;
             *)
-                usage
-                die "Unrecognised option: '${arg}'"
+                ipa::host-rm::usage
+                err "Unrecognised option: '${arg}'"
+                return 2
                 ;;
         esac
     done 
 
-    [[ -n "${i}" && ! "${i}" =~ ${ip_regex} ]] && die "Invalid IP address: '${i}'" 
-    [[ -n "${f}" && ! "${f}" =~ [.] ]] && die "FQDN does not include a domain: '${f}'"
-    [[ -n "${f}" && ! "${f}" =~ [.][^.] ]] && die "FQDN does include a domain: '${f}'"
-    [[ -n "${f}" && "${f}" =~ ^[.] ]] && die "FQDN cannot start with a dot: '${f}'"
+    if [[ -n "${i}" && ! "${i}" =~ ${ip_regex} ]]
+    then
+        err "Invalid IP address: '${i}'" 
+        return 2
+    fi
+    
+    if [[ -n "${f}" && ! "${f}" =~ [.] ]]
+    then
+        err "FQDN does not include a domain: '${f}'"
+        return 2
+    fi
+    
+    if [[ -n "${f}" && ! "${f}" =~ [.][^.] ]]
+    then
+        err "FQDN does include a domain: '${f}'"
+        return 2
+    fi
 
-    [[ -n "${d}" && -n "${f}" ]] && die "Mutually exclusive options (domain and fqdn)."
-    [[ "${n}" =~ [.] ]] && die "Name option does not accept fully qualified names. Use the -f option"
+    if [[ -n "${f}" && "${f}" =~ ^[.] ]]
+    then
+        err "FQDN cannot start with a dot: '${f}'"
+        return 2
+    fi
+
+    if [[ -n "${d}" && -n "${f}" ]]
+    then
+        err "Mutually exclusive options (domain and fqdn)."
+        return 2
+    fi
+    
+    if [[ "${n}" =~ [.] ]]
+    then
+        err "Name option does not accept fully qualified names. Use the -f option"
+        return 2
+    fi
 
     if [[ -z "${f}" ]]
     then
@@ -905,7 +1090,8 @@ function ipa::host-rm::process_argv()
             d="${default_regular_zone%.}"
             f="${n}.${d}."
         else
-            die "At least a node name must be specified!"
+            err "At least a node name must be specified!"
+            return 2
         fi
     else
         d="${f#*.}"
@@ -913,8 +1099,17 @@ function ipa::host-rm::process_argv()
         f="${f%.}."
     fi
 
-    [[ ! "${f}" =~ ${fqdn_regex} ]] && die "Invalid host name: '${f}'"
-    [[ -n "${i}" && ! "${i}" =~ ${ip_regex} ]] && die "Invalid IP address: '${i}'"
+    if [[ ! "${f}" =~ ${fqdn_regex} ]]
+    then
+        err "Invalid host name: '${f}'"
+        return 2
+    fi
+
+    if [[ -n "${i}" && ! "${i}" =~ ${ip_regex} ]]
+    then 
+        err "Invalid IP address: '${i}'"
+        return 2
+    fi
     
     fqdn="${f%.}."
 
@@ -922,11 +1117,15 @@ function ipa::host-rm::process_argv()
 
     if [[ -z "${host_ip}" ]]
     then 
-        local -a lookup_results=( $(ipa::lookup_host_info "${fqdn}") )
+        local -a lookup_results=( $(ipa::lookup-host-info "${fqdn}") )
         [[ -z "${host_ip}" && "${lookup_results[0]}" != "-" ]] && host_ip="${lookup_results[0]}"
     fi
 
-    [[ -z "${host_ip}" ]] && die "No MAC information specified and not found from salt host lookup"
+    if [[ -z "${host_ip}" ]]
+    then 
+        err "No MAC information specified and not found from salt host lookup"
+        return 2
+    fi
 
     # At the end of argument processing, we need to have a valid:
     #   fqdn (with dot at the end)
@@ -939,10 +1138,22 @@ function ipa::host-rm::main()
     local host_ip=""
     local deregister=1
 
-    ipa::host-rm::process_argv "${@}"
+    local status
+    ipa::host-rm::process-argv "${@}"
+    status=$?
+    
+    if [[ "${status}" == 1 ]]
+    then
+        # Usage was printed
+        return 0
+    elif [[ "${status}" != 0 ]]
+    then 
+        # failed arg processing
+        return 2
+    fi
+
     ipa::host-rm "${fqdn}" "${deregister}"
 }
-
 
 function ipa::salt-ipa-ticket::usage()
 {
@@ -962,19 +1173,19 @@ function ipa::salt-ipa-ticket::main()
     if ! (( $# ))
     then
         ipa::salt-ipa-ticket::usage 
-        exit 1
+        return 2
     elif [[ "${*}" =~ ${HELP_REGEX} ]]
     then
         ipa::salt-ipa-ticket::usage
-        exit 0
+        return 1
     else
         export KRB5CCNAME
         case "${1}" in 
             -l|-list|--list|list)
-                ipa::list_ticket
+                ipa::list-ticket
                 ;;
             -r|-renew|--renew|renew)
-                ipa::renew_ticket
+                ipa::renew-ticket
                 ;;
             -s|-shell|--shell|shell)
                 shift
@@ -982,7 +1193,8 @@ function ipa::salt-ipa-ticket::main()
                 ;;
             *)
                 ipa::salt-ipa-ticket::usage
-                exit 1
+                err "Unrecognised argument."
+                return 2
                 ;;
         esac 
     fi 
@@ -1031,7 +1243,7 @@ function ipa::user-create::usage()
     echo "  -u|-user <username>"
 }
 
-function ipa::user-create::process_argv()
+function ipa::user-create::process-argv()
 {
     local arg
     local opt 
@@ -1044,7 +1256,7 @@ function ipa::user-create::process_argv()
         case "${arg}" in
             -h|-help|--help) 
                 ipa::user-create::usage
-                exit 0
+                return 1
                 ;;
             [a-z]*)
                 username="${arg}"
@@ -1070,15 +1282,36 @@ function ipa::user-create::process_argv()
                 ;;
             *)
                 ipa::user-create::usage
-                die "Unrecognised option: '${arg}'"
+                err "Unrecognised option: '${arg}'"
+                return 2
                 ;;
         esac
     done 
 
-    [[ -z "${username}"  ]] && die "No username specified!"
-    [[ "${username}" =~ ${valid_username_regex} ]] || die "Invalid username '${username}' specified!"
-    [[ -z "${firstname}" ]] && die "No first name specified!"
-    [[ -z "${surname}"   ]] && die "No surname specified!"
+    if [[ -z "${username}"  ]]
+    then 
+        err "No username specified!"
+        return 2
+    fi
+
+    if ! [[ "${username}" =~ ${valid_username_regex} ]]
+    then
+        err "Invalid username '${username}' specified!"
+        return 2
+    fi
+    
+    if [[ -z "${firstname}" ]]
+    then 
+        err "No first name specified!"
+        return 2
+    fi
+
+    if [[ -z "${surname}"   ]]
+    then 
+        err "No surname specified!"
+        return 2
+    fi
+
     [[ -z "${email}"     ]] && email="${username}@${IPA_EMAIL_DOMAIN}"
 }
 
@@ -1089,8 +1322,8 @@ function ipa::user-create::integrations()
     local is_gitlab_user=0
     local is_gitlab_admin=0
 
-    ipa::check_group_member "gitlab-users" "${username}" && is_gitlab_user=1
-    ipa::check_group_member "gitlab-admins" "${username}" && is_gitlab_admin=1
+    ipa::check-group-member "gitlab-users" "${username}" && is_gitlab_user=1
+    ipa::check-group-member "gitlab-admins" "${username}" && is_gitlab_admin=1
 
     if (( is_gitlab_user + is_gitlab_admin ))
     then 
@@ -1110,24 +1343,37 @@ function ipa::user-create::main()
     local surname=""
     local send_email="${IPA_PW_SEND_EMAIL}"
 
-    ipa::user-create::process_argv "${@}"
+    local status
+    ipa::user-create::process-argv "${@}"
+    status=$?
+    
+    if [[ "${status}" == 1 ]]
+    then
+        # Usage was printed
+        return 0
+    elif [[ "${status}" != 0 ]]
+    then 
+        # failed arg processing
+        return 2
+    fi
 
     if ! ipa::require-ticket admin
     then 
-        return 1
+        return 2
     fi
     
     if quiet ipa user-find --login="${username}"
     then
         msg "User '${username}' already exists."
-    elif ! ipa::create_user "${username}" "${email}" "${firstname}" "${surname}" ""
+    elif ! ipa::create-user "${username}" "${email}" "${firstname}" "${surname}" ""
     then
-        die "User creation failed for user '${username}'"
+        err "User creation failed for user '${username}'"
+        return 2
     else 
         local g
         for g in "${IPA_DEFAULT_GROUPS[@]}"
         do 
-            ipa::check_group_member "${g}" "${username}" || verbose ipa group-add-member "${g}" --user "${username}"
+            ipa::check-group-member "${g}" "${username}" || verbose ipa group-add-member "${g}" --user "${username}"
         done
 
         ipa::user-create::integrations "${username}"

@@ -25,4 +25,4 @@ TIMEZONE=UTC
 HWCLOCK=UTC
 #WAIT=1
 BOOTSTRAP_REPOS=bootstrap-centos.repo
-DOCKER_REGISTRIES=nexus:7082,nexus:7083,nexus:7084,nexus:7085
+REGISTRIES=nexus:7082,nexus:7083,nexus:7084,nexus:7085

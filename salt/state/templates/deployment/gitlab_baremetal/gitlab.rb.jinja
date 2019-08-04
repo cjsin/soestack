@@ -66,6 +66,10 @@ node_exporter['enable']            = {{ 'true' if config.node_exporter.enabled e
 node_exporter['listen_address']    = 'localhost:{{config.ports.node_exporter_listen_port}}'
 {%- endif %}
 
+grafana['enable']                  = {{ 'true' if config.grafana.enabled else 'false' }}
+{%- if config.grafana.enabled %}
+{%- endif %}
+
 mattermost['enable']               = {{ 'true' if config.mattermost.enabled else 'false' }}
 {%- if config.mattermost.enabled %}
 {%-     set protocol = 'http' if config.mattermost.port not in [443] else 'https' %}

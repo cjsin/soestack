@@ -67,42 +67,23 @@
 
 {{sls}}.gitlab-baremetal-configured:
     cmd.run:
-        - name: gitlab-ctl reconfigure >> /var/log/gitlab-reconfigure.log 2>&1 ; gitlab-retrieve-runner-token
+        - name: gitlab-ctl reconfigure >> /var/log/gitlab-reconfigure.log 2>&1 ; gitlab-retrieve-runner-token gitlab-runner-registration-token
         - onlyif:   test -f /usr/bin/gitlab-ctl
         - onchanges:
             - file: {{sls}}.gitlab-baremetal-config-file
 
-{#-    #This code is ready to be removed because the auto integration is now working - once the slash at the end of the mattermost URL was removed. #}
-{%-    set obsolete = True %}
-{%-    if not obsolete %}
-{%-        if 'mattermost' in config and 'app_id' in config.mattermost and 'token' in config.mattermost %}
-{%-            set mattermost = config.mattermost %}
-{%-            if mattermost.app_id and mattermost.token and mattermost.app_id != 'unset' and mattermost.token != 'unset' %}
 
-{{sls}}.gitlab-mattermost-integration-appid:
+{{sls}}.test-data-import-script:
     file.managed:
-        - name: /var/opt/gitlab/mattermost/env/MM_GITLABSETTINGS_ID
-        - contents: |
-            {{config.mattermost.app_id}} 
+        - name: /usr/local/bin/gitlab-import-test-repos
+        - source: salt://templates/deployment/gitlab_baremetal/gitlab-import-test-repos.sh.jinja
+        - user: root
+        - group: root 
+        - mode: '0750'
 
-{{sls}}.gitlab-mattermost-integration-token:
-    file.managed:
-        - name: /var/opt/gitlab/mattermost/env/MM_GITLABSETTINGS_SECRET
-        - contents: |
-            {{config.mattermost.token}}
-
-{{sls}}.gitlab-mattermost-restarted:
+{{sls}}.test-data-import:
     cmd.run:
-        - name: |
-            gitlab-ctl stop mattermost
-            sleep 10
-            gitlab-ctl start mattermost
-        - onchanges:
-            - file: {{sls}}.gitlab-mattermost-integration-token
-            - file: {{sls}}.gitlab-mattermost-integration-appid
-{%-            endif %}
-{%-        endif %}
-{%-     endif %}
+        - name:     /usr/local/bin/gitlab-import-test-repos
 
 {%- endif %}
 

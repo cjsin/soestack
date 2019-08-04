@@ -55,6 +55,8 @@ include:
     - defaults.service-sets
     - defaults.services
     - defaults.sudoers
-    - defaults.versions
     - defaults.timezone
     - defaults.thunderbird
+    - defaults.versions
+    - defaults.yum
+ 

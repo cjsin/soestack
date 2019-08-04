@@ -61,7 +61,7 @@ function gitlab::configure-user-script()
         then
             echo "user = User.where(${criteria}).first"
         else
-            err "No criteria for selecting the user, and create mode not specified!"
+            err 'No criteria for selecting the user, and create mode not specified!'
             return 1
         fi
 
@@ -101,6 +101,42 @@ function gitlab::configure-user-script()
     }
 }
 
+function gitlab::grant-group-access-script()
+{
+    local grp="${1}"
+    local username="${2:-adminuser}"
+    local visibility_level_private="0"
+    local visibility_level_internal="10"
+    local visibility_level_public="20"
+    local access_level_guest="10"
+    local access_level_reporter="20"
+    local access_level_developer="30"
+    local access_level_maintainer="40"
+    local access_level_owner="50"
+    cat <<-EOF 
+		p = Group.where(name:'${grp}').first
+		p.visibility_level = ${visibility_level_public}
+		p.save!
+		u = User.where(username:'${username}').first
+		n = Namespace.where(name:'${grp}').first
+		m = Member.new(user_id: u.id, access_level: ${access_level_owner}, source_type: "Namespace", source_id: n.id, type: "GroupMember")
+		m.save!
+	EOF
+}
+
+function gitlab::grant-group-access()
+{
+    local group="${1}"
+    shift 
+    local rails_script=""
+    local user
+    for user in "${@}"
+    do 
+        rails_script+=$(gitlab::grant-group-access-script "${group}" "${user}")
+        rails_script+=$'\n'
+    done
+    gitlab::run-rails-script "${rails_script}"
+}
 
 function gitlab::configure-user()
 {
@@ -144,16 +180,25 @@ function gitlab::configure-user()
 
     if [[ $? == 0 ]]
     then
-        if gitlab-rails console production <<< "${rails_script}"
-        then 
-            msg "Success."
-            return 0
-        else
-            err "Something went wrong"
-            return 2
-        fi
+        gitlab::run-rails-script "${rails_script}"
     else 
         err "Cannot generate a script for configuring the user. Please correct the above problems."
+        return 2
+    fi
+}
+
+function gitlab::run-rails-script()
+{
+    local rails_script="${1}"
+    
+    msg "Rails script is ${rails_script}"
+
+    if gitlab-rails console production <<< "${rails_script}"
+    then 
+        msg "Success."
+        return 0
+    else
+        err "Something went wrong"
         return 2
     fi
 }
@@ -170,7 +215,7 @@ function gitlab::initial-setup()
     else
         generate-passwords -random "${secret_name}"
     fi
-    set -vx
+
     gitlab::configure-user root --existing --email "localhost@localdomain" #"admin@${IPA_EMAIL_DOMAIN}"
 }
 
@@ -208,7 +253,7 @@ function gitlab-user-util::main()
         case "${arg}" in
             -help|--help|-h|help)
                 gitlab-user-util::usage
-                return 0
+                return 1
                 ;;
             -initial-setup|--initial-setup|--setup|setup|initial-setup)
                 mode="initial-setup"
@@ -216,7 +261,7 @@ function gitlab-user-util::main()
             [a-z]*)
                 if [[ -n "${username}" ]]
                 then 
-                    err "Username already specified once!"
+                    err 'Username already specified once!'
                     gitlab-user-util::usage
                     return 1
                 fi
@@ -226,7 +271,7 @@ function gitlab-user-util::main()
             *)
                 if [[ -z "${mode}" ]]
                 then 
-                    err "One of a username or --initial-setup must be specified first!"
+                    err 'One of a username or --initial-setup must be specified first!'
                     gitlab-user-util::usage
                     return 1
                 fi 
@@ -265,3 +310,68 @@ function gitlab-user-util::main()
     fi
 }
 
+
+function gitlab::create-bare-repo()
+(
+    local sources="${1}"
+    local dest="${2}"
+    set -e
+    local tmpd=$(mktemp -d -t tmp_repo.XXXXX)
+
+    mkdir -p "${tmpd}" 
+    (
+        cd "${tmpd}" || return 1
+        git init .
+        rsync -av "${sources}/" ./
+        date > import-date.txt
+        git add .
+        git commit -m "initial checkin"
+        sed -i '/bare =/ s/false/true/' .git/config
+        mv .git "${dest}"
+    )
+
+    [[ -n "${tmpd}" ]] && [[ -d "${tmpd}" ]] && [[ "${tmpd}" =~ tmp_repo ]] && rm -rf "${tmpd}"
+
+    return 0
+)
+
+function gitlab::copy-source-as-projects()
+{
+    local src_dir="${1}"
+    local grp_name="${2}"
+    local data_dir="${3}"
+    local proj_dir="${data_dir}/${grp_name}"
+    mkdir -p "${proj_dir}"
+    local src_dir
+    for src_dir in "${src_dir}/${grp_name}"/*/
+    do
+        # Strip the trailing slash
+        local src_path="${src_dir%/}"
+        gitlab::create-bare-repo "${src_path}" "${proj_dir}/${src_path##*/}.git"
+    done
+    chown -R git.git "${proj_dir}"
+}
+
+function gitlab::import-repos::main()
+{
+    local src_dir="${1}"
+    local group_name="${2}"
+
+    # NOTE that unlike what the Gitlab documentation says, 
+    # the files to be imported should NOT be placed within the
+    # existing repositories data area.
+    # Because gitlab will try to copy them there and will fail
+    # if they are already there because we put them there ourselves.
+    # So instead, they are imported from a different dir, here:
+    local data_dir=/d/local/data/gitlab-import
+    mkdir -p "${data_dir}"
+
+    msg "Generating new git repos from source folders"
+    gitlab::copy-source-as-projects "${src_dir}" "${group_name}" "${data_dir}"
+
+    msg "Asking gitlab to import the projects"
+    gitlab-rake "gitlab:import:repos[${data_dir}]"
+
+    msg "Setting up group access for adminuser, devuser"
+    gitlab::grant-group-access "test" adminuser devuser
+}

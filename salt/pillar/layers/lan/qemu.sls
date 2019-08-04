@@ -9,6 +9,7 @@
 demo:
     vars:
         lan_name:         qemu
+        soe_layers:       soe:demo,role:G@roles,site:testing,lan:qemu,host:G@host,lan-host:lan:G@layers:lan+host:G@host,private:example.private
     ips:
         gateway:          192.168.121.1
         infra-gateway-ip: 192.168.121.1
@@ -21,11 +22,11 @@ deployments:
                     entries:
                         netinstall:
                             ss_settings:
-                                LAYERS:            soe:demo,role:G@roles,site:testing,lan:qemu,host:G@host,lan-host:lan:G@layers:lan+host:G@host,private:example.private
+                                LAYERS:    '!!demo.vars.soe_layers'
                 # Extra lan for testing on 10.0.2.x
                 devlan:
-                    kernel:                os/minimal/images/pxeboot/vmlinuz
-                    initrd:                os/minimal/images/pxeboot/initrd.img
+                    kernel:                os/dvd/images/pxeboot/vmlinuz
+                    initrd:                os/dvd/images/pxeboot/initrd.img
                     iface:                 eth1
                     static:                True
                     subnet:                10.0.2
@@ -36,7 +37,7 @@ deployments:
                     #         ss_settings:
                     #             DOMAIN:            demo.com
                     #             ROLES:             role-set:developer-workstation-node
-                    #             LAYERS:            soe:demo,site:testing,lan:qemu,private:example.private
+                    #             LAYERS:            soe:demo,site:testing,lan:custom,private:example.private
                     #         ss_hosts:
                     #             # To nodes booting within the libvirt/qemu/vagrant test network the nexus server and gateway are 10.0.2.2
                     #             192.168.121.1:     gateway gateway.demo.com
@@ -58,16 +59,6 @@ ipa-configuration:
             2.0.10.in-addr.arpa: 
 
 network:
-    
     hostfile-additions:
         192.168.121.1:   gateway.demo.com gateway
 
-    classes:
-        gateway:
-            sysconfig:
-                GATEWAY: '!!demo.ips.gateway'
-        infra-dns:
-            sysconfig:
-                DNS1: 127.0.0.1
-                DNS2: '!!demo.ips.gateway'
-                DNS3: ''

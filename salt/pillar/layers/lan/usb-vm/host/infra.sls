@@ -1,5 +1,8 @@
 {{ salt.loadtracker.load_pillar(sls,'host infra') }}
 
+{# 
+# This is for testing a salt bug
+
 _layers_test:
     lan-host:        {{sls}}
     lan-host-value:  'lan-usb-vm-host-infra'
@@ -14,6 +17,7 @@ layers_test:
     test_value:      'lan-usb-vm-host-infra'
     additive:
         - lan-usb-vm-host-infra
+#}
 
 deployments:
     ss-gitlab:
@@ -24,6 +28,8 @@ deployments:
 
 
 network:
+    hostfile-additions:
+        192.168.121.1:   gateway.demo.com gateway
     devices:
         # Can't just ignore this device as we need to use PEERDNS=no 
         # to stop stupid NetworkManager overwriting the resolv.conf

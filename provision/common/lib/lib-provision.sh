@@ -67,13 +67,13 @@ function enable_ssh_during_development()
 
 function successful_provision()
 {
-    systemctl disable ss-provision
+    systemctl disable soestack-provision
 }
 
 function failed_provision()
 {
-    systemctl disable ss-provision
-    err "system service ss-provision has run but failed."
+    systemctl disable soestack-provision
+    err "system service soestack-provision has run but failed."
     err "To retry, manually run ${SS_DIR}/provision/common/provision.sh"
 }
 
@@ -128,7 +128,7 @@ function soestack_provision()
     . "${SS_DIR}"/provision/common/lib/lib-salt.sh
 
     local salt_failed
-    provision_salt
+    provision::salt
     salt_failed=$?
 
     local nexus_failed=0
@@ -225,7 +225,7 @@ function configure_soestack_provision()
 {
     msg "Configure soestack postinstall provisioning"
     local systemd_dir="/etc/systemd/system"
-    local unit_name="ss-provision"
+    local unit_name="soestack-provision"
     local unit_file="${systemd_dir}/${unit_name}.service"
     sed -e "s%\$SS_DIR%${SS_DIR}%" < "${SS_DIR}/provision/common/inc/${unit_name}.service" > "${unit_file}"
     chmod a-x  "${unit_file}"

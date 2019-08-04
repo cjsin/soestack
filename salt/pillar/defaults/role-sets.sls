@@ -15,10 +15,12 @@ role-sets:
             all-in-one-sde server role type is one which provides all the basic functions 
             of a software development environment in one node
         combine:
+            - basic-node
             - kubernetes-node
+            - desktop-node
             - workstation-node
-            - software-development-node
             - docker-node
+            - software-development-node
             - login-processor-node
             - login-node
             - processor-node
@@ -35,7 +37,6 @@ role-sets:
             - kibana-node
             - gitlab-server-node
             - ipa-member-node
-            - desktop-node
 
     usb-infra-server-node:
         purpose: |
@@ -68,6 +69,7 @@ role-sets:
         purpose: |
             similar to an infra node but intended as a secondary or failover. NOTE only ripa services are currently implemented for the secondary
         combine:
+            - basic-node
             - docker-node
             - jumpserver-node
             - email-server-node
@@ -82,6 +84,7 @@ role-sets:
             an infrastructure server with a connection to the internet - uses regular repos
             instead of a configuring a nexus server
         combine:
+            - basic-node
             - docker-node
             - workstation-node
             - software-development-node
@@ -107,6 +110,7 @@ role-sets:
         purpose: |
             a login processor node is a workhorse node which also allows logins
         combine:
+            - basic-node
             - processor-node
             - login-node
             - ipa-member-node
@@ -117,6 +121,7 @@ role-sets:
             developer-workstation role type is one which supports regular
             workstation functions as well as having software development tools
         combine:
+            - basic-node
             - software-development-node
             - workstation-node
             - ipa-member-node

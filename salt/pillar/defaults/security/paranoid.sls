@@ -9,7 +9,9 @@ firewall:
 
 screensaver:
     x11:
+        idle-enabled: True
         idle-timeout: 300
+        lock-enabled: True
         lock-timeout: 300
 
 legal:

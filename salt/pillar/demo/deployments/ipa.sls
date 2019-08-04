@@ -7,7 +7,7 @@ deployments:
         activated:   True
         activated_where: {{sls}}
         config:
-            type:    server
+            type:    client
             realm:   '!!ipa.realm'
             domain:  '!!ipa.domain'
             reverse_zone: 121.168.192.in-addr.arpa.

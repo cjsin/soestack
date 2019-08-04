@@ -17,7 +17,7 @@ include:
     - demo.deployments.pxeboot
     - demo.deployments.ss-pxe
     - demo.deployments.ss-docs
-    - demo.deployments.ss-epel
+    - demo.deployments.ss-bundled
     - demo.deployments.pgp-keyserver
     - demo.hosts
 
