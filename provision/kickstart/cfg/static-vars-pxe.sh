@@ -26,5 +26,5 @@ SELINUX=permissive
 TIMEZONE=UTC
 HWCLOCK=UTC
 BOOTSTRAP_REPOS=bootstrap-centos.repo
-REGISTRIES=nexus:7082,nexus:7083,nexus:7084,nexus:7085
+REGISTRIES=nexus:7082,nexus:7083,nexus:7084,nexus:7085,gitlab-registry:5000
 DISABLE_REPOS=CentOS

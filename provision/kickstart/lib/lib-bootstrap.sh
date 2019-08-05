@@ -283,7 +283,6 @@ function generate_partitioning()
         bmsg "Preconfigured partitioning for ${tags} was not found!" 1>&2
         return 1
     fi
-
 }
 
 function select_partitioning()

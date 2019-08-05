@@ -92,6 +92,8 @@ function provision_client()
 function provision_common_early()
 {
     configure_timezone
+
+    configure_wireless
     
     setup_root_ssh
     

@@ -91,7 +91,7 @@ class ArgParsingMetaData:
     }
 
     # parent mode -> minor mode lookup:
-    # There doesn't seem to be any reasonable way in python to split this over multiple lines
+    # Maybe I'm missing something but there doesn't seem to be any reasonable way in python to split this over multiple lines
     OPERATIONS = [ 'global' ] + INSPECT_OPERATIONS + COPY_OPERATIONS + SMART_OPERATIONS + EDIT_OPERATIONS    
 
     LIFT_UP = {
@@ -213,7 +213,7 @@ class ArgParsingBase:
     Break up an argv array into small chunks which can then be
     passed to the argparse routines without bailing from 'duplicate' flags.
     """
-    def __init__(self, metadata, defaultmode,mode_names):
+    def __init__(self, metadata, defaultmode, mode_names):
         self.lookup = {} 
         self.metadata = metadata 
         self.defaultmode = defaultmode 
@@ -246,7 +246,7 @@ class ArgParsingBase:
         return root.parse(self.lookup)
 
 
-    def empty_parser(self,name):
+    def empty_parser(self, name):
         p = argparse.ArgumentParser()
         p.set_defaults(func=name)
         return p
@@ -256,11 +256,11 @@ class ArgParsingBase:
         sub.set_defaults(func=name)
         return self.store_parser(name,sub)
 
-    def find_setup_args_routine(self,name):
+    def find_setup_args_routine(self, name):
         method = getattr(self, 'setup_' + munge_name(name))
         return method
 
-    def find_setup_subs_routine(self,name):
+    def find_setup_subs_routine(self, name):
         method = getattr(self, 'setup_' + munge_name(name) + '_subs')
         return method
 
@@ -272,7 +272,7 @@ class ArgParsingBase:
         assert parser
         return parser 
 
-    def register_modes(self, parser, names=None,default_mode=None):
+    def register_modes(self, parser, names=None, default_mode=None):
         if names is None:
             names=[]
         if default_mode:
@@ -285,7 +285,7 @@ class ArgParsingBase:
             ret[name] = result 
         return (parser,subs,ret)
 
-    def complete_setup(self, name,parser):
+    def complete_setup(self, name, parser):
         if parser is None:
             parser = self.lookup[name]
         method = self.find_setup_args_routine(name)
@@ -296,7 +296,7 @@ class ArgParsingBase:
     def sub_helper(self, name, sub):
         self.complete_setup(name, self.store_sub_add(sub, name))
 
-    def mode_helper(self, a,names):
+    def mode_helper(self, a, names):
         subs = a.add_subparsers()
         for name in names:
             self.sub_helper(name, subs)
@@ -353,7 +353,7 @@ class ArgParsing(ArgParsingBase):
     def __init__(self):
         super().__init__(ArgParsingMetaData,'modify',['modify','inspect'])
 
-    def setup_global(self,a):
+    def setup_global(self, a):
         a.add_argument('--img', '-o',
                        dest='imgfile', type=str, default='', 
                        help='image file (or possibly device?)')
@@ -381,47 +381,47 @@ class ArgParsing(ArgParsingBase):
         return a
 
     def setup_modify_subs(self, a):
-        return self.mode_helper(a, MODIFY_OPERATIONS+INSPECT_OPERATIONS)
+        return self.mode_helper(a, MODIFY_OPERATIONS + INSPECT_OPERATIONS)
 
     def setup_inspect(self, a):
         return a
 
-    def setup_inspect_subs(self, a):
+    def setup_inspect_subs(self,  a):
         return self.mode_helper(a, INSPECT_OPERATIONS)
 
-    def setup_copy_iso_files(self,a):
+    def setup_copy_iso_files(self, a):
         return a
 
-    def setup_copy_isolinux_as_syslinux(self,a):
+    def setup_copy_isolinux_as_syslinux(self, a):
         return a
 
-    def setup_patch_syslinux(self,a):
+    def setup_patch_syslinux(self, a):
         return a
 
-    def setup_syslinux(self,a):
+    def setup_syslinux(self, a):
         a.add_argument('src',   type=str, nargs='?', help="Path to syslinux files")
         a.add_argument('--mbr', type=str, nargs='?', help='Name of a syslinux mbr file')
         a.add_argument('--menu-files', dest='menufiles', type=str, nargs='*', help='One or more syslinux menu or c32 files to copy')
         a.add_argument('--overwrite',  dest='overwrite', action='store_true', default=False, help='Seems like you need to overwrite the existing vesamenu.c32')
         return a
     
-    def setup_copydir(self,a):
+    def setup_copydir(self, a):
         return self.setup_copy_with_excludes(a)
 
-    def setup_copytar(self,a):
+    def setup_copytar(self, a):
         return self.setup_copy_with_excludes(a)
         
-    def setup_copy_with_excludes(self,a):
+    def setup_copy_with_excludes(self, a):
         self.setup_copy(a)
         self.setup_exclude_option(a)
         return a
 
-    def setup_exclude_option(self,a):
+    def setup_exclude_option(self, a):
         a.add_argument('--exclude',   
                         dest='exclude', type=str,nargs='*', action='append', # This is required so that later specified args don't replace earlier ones
                         help='Exclude items when copying in dirs (--copy-dir mode). Use :<tar-exclude-option> for tar-specific options. See the tar man page. For example -   --exclude :vcs-ignores to ignore files specified in your .gitignore ')
 
-    def setup_copy_common(self,a):
+    def setup_copy_common(self, a):
         a.add_argument('--overwrite', 
                        dest='overwrite', action='store_true', default=None, 
                        help='Overwrite files when copying data into the image')
@@ -432,17 +432,17 @@ class ArgParsing(ArgParsingBase):
                        dest='dstdir', type=str, default=None,
                        help='Specify a destination folder for a copy operation')
 
-    def setup_editdef(self,a):
+    def setup_editdef(self, a):
         """ Edit defaults """
-        return self.setup_edit_func(a,'path','match','search','text','location')
+        return self.setup_edit_func(a, 'path', 'match', 'search', 'text', 'location')
 
-    def setup_copydef(self,a):
+    def setup_copydef(self, a):
         """ Copy defaults """
         self.setup_copy_common(a)
         self.setup_exclude_option(a)
         return a
     
-    def setup_copy(self,a):
+    def setup_copy(self, a):
         a.add_argument('src',
                        type=str, nargs='+', 
                        help='The source path to copy')
@@ -452,7 +452,7 @@ class ArgParsing(ArgParsingBase):
                        help='Specify a destination filename for a copy operation')
         return a
 
-    def setup_create(self,a):
+    def setup_create(self, a):
         a.add_argument('--size',
                         dest='size', type=int, default=10000, 
                         help='Image size (in MB)')
@@ -461,7 +461,7 @@ class ArgParsing(ArgParsingBase):
                         help='Allow create mode with an existing image (delete it)')
         return a
 
-    def setup_label(self,a):
+    def setup_label(self, a):
         a.add_argument('label',
                        nargs='?', type=str, default='auto',
                        help='Set a disk label, (or auto).') 
@@ -470,37 +470,37 @@ class ArgParsing(ArgParsingBase):
                        help='Update the syslinux.cfg file also')
         return a
 
-    def setup_edit(self,a):
-        return self.setup_edit_func(a,'path?','action','match','search','text','location')
+    def setup_edit(self, a):
+        return self.setup_edit_func(a, 'path?', 'action', 'match', 'search', 'text', 'location')
 
-    def setup_replace(self,a):
-        return self.setup_edit_func(a,'path?','match','search','text','location')
+    def setup_replace(self, a):
+        return self.setup_edit_func(a, 'path?', 'match', 'search', 'text', 'location')
 
-    def setup_append(self,a):
-        return self.setup_edit_func(a,'path?','match','text')
+    def setup_append(self, a):
+        return self.setup_edit_func(a, 'path?', 'match', 'text')
 
-    def setup_prepend(self,a):
-        return self.setup_edit_func(a,'path?','match','text')
+    def setup_prepend(self, a):
+        return self.setup_edit_func(a, 'path?', 'match', 'text')
 
-    def setup_insert_start(self,a):
-        return self.setup_edit_func(a,'path?','text')
+    def setup_insert_start(self, a):
+        return self.setup_edit_func(a, 'path?', 'text')
 
-    def setup_insert_end(self,a):
-        return self.setup_edit_func(a,'path?','text')
+    def setup_insert_end(self, a):
+        return self.setup_edit_func(a, 'path?', 'text')
 
-    def setup_insert_line(self,a):
-        return self.setup_edit_func(a,'path?','text','location')
+    def setup_insert_line(self, a):
+        return self.setup_edit_func(a, 'path?', 'text', 'location')
 
-    def setup_insert_near(self,a):
-        return self.setup_edit_func(a,'path?','match','text','location')
+    def setup_insert_near(self, a):
+        return self.setup_edit_func(a, 'path?', 'match', 'text', 'location')
 
-    def setup_delete_line(self,a):
-        return self.setup_edit_func(a,'path?','location')
+    def setup_delete_line(self, a):
+        return self.setup_edit_func(a, 'path?', 'location')
 
-    def setup_delete_near(self,a):
-        return self.setup_edit_func(a,'path?','match','location')
+    def setup_delete_near(self, a):
+        return self.setup_edit_func(a, 'path?', 'match', 'location')
 
-    def setup_edit_func(self,a, *items):
+    def setup_edit_func(self, a, *items):
         for x in items:
             if x == 'path':
                 a.add_argument('path',     default=None, help='The file to edit')
@@ -536,25 +536,25 @@ class ArgParsing(ArgParsingBase):
                        dest='clear',   action='store_true', 
                        help='Clear any automated actions and only perform those specified on the commandline')
         a.add_argument('--centos7',        
-                       dest='canned',  const='centos7',action='store_const', 
+                       dest='canned',  const='centos7', action='store_const', 
                        help='Select auto setup for a centos7 ISO')
         a.add_argument('--defaults',       
-                       dest='canned',  const='defaults',action='store_const', 
+                       dest='canned',  const='defaults', action='store_const', 
                        help='Select auto setup')
         a.add_argument('--minimal',        
-                       dest='canned',  const='minimal',action='store_const', 
+                       dest='canned',  const='minimal', action='store_const', 
                        help='Select image creation without any other auto setup (file copying, label updating, syslinux operations).')
         a.add_argument('--fstype',  '-f',  
                        dest='fstype',  type=str, default=Defaults.FSTYPE, 
                        help='Specify filesystem type')
         a.add_argument('--vfat',           
-                       dest='fstype',  const='vfat',action='store_const', 
+                       dest='fstype',  const='vfat', action='store_const', 
                        help='Specify vfat filesystem format. Shortcut for --fstype vfat.')
         a.add_argument('--ext4',           
-                       dest='fstype',  const='ext4',action='store_const', 
+                       dest='fstype',  const='ext4', action='store_const', 
                        help='Specify ext4 filesystem format. Shortcut for --fstype ext4.')
         a.add_argument('--ext2',           
-                       dest='fstype',  const='ext2',action='store_const', 
+                       dest='fstype',  const='ext2', action='store_const', 
                        help='Specify ext4 filesystem format. Shortcut for --fstype ext2.')
         a.add_argument('--patch', '-p', 
                        dest='patch',   action='store_true', 
@@ -783,13 +783,13 @@ class Syslinux:
     """
     Assists in locating syslinux files
     """
-    def __init__(self,rootpath=Defaults.SYSLINUX_PATH,menufiles=Defaults.SYSLINUX_MENU_FILES,mbrfile=Defaults.SYSLINUX_MBR_FILE):
+    def __init__(self, rootpath=Defaults.SYSLINUX_PATH, menufiles=Defaults.SYSLINUX_MENU_FILES, mbrfile=Defaults.SYSLINUX_MBR_FILE):
         self.rootpath = rootpath
-        self.menufiles = menufiles.split(',') if menufiles and isinstance(menufiles,str) else menufiles if menufiles else []
+        self.menufiles = menufiles.split(',') if menufiles and isinstance(menufiles, str) else menufiles if menufiles else []
         self.mbrfile = mbrfile 
 
-    def file_path(self,name):
-        path = path_join(self.rootpath,name)
+    def file_path(self, name):
+        path = path_join(self.rootpath, name)
         if os.path.exists(path):
             return path
         else:
@@ -799,7 +799,7 @@ class Syslinux:
     def mbr_file(self):
         return self.file_path(self.mbrfile)
 
-    def file_paths(self,names=None):
+    def file_paths(self, names=None):
         if names is None:
             names=self.menufiles
         
@@ -814,7 +814,7 @@ class Syslinux:
 
 
 class Action:
-    def run(self,builder):
+    def run(self, builder):
         return False
 
 class EditFileAction(Action):
@@ -834,33 +834,33 @@ class EditFileAction(Action):
                          text=self.text,
                          location=self.location)
 
-    def GenericEdit(path, line_match, search, text,location):
+    def GenericEdit(path, line_match, search, text, location):
         return EditFileAction(path, action='search-replace', line_match=line_match, search=search, text=text, location=location)
 
-    def Sed(path, line_match, search, text,location):
+    def Sed(path, line_match, search, text, location):
         return EditFileAction(path, action='search-replace', line_match=line_match, search=search, text=text, location=location)
 
-    def Replace(path, line_match, search, text,location):
+    def Replace(path, line_match, search, text, location):
         return EditFileAction(path, action='search-replace', line_match=line_match, search=search, text=text, location=location)
 
     def Append(path, line_match, text):
         return EditFileAction(path, action='search-replace', line_match=line_match, search='~$', text=text)
 
-    def Prepend(path,line_match, text):
+    def Prepend(path, line_match, text):
         return EditFileAction(path, action='search-replace', line_match=line_match, search='~^', text=text)
 
-    def InsertAtStart(path,text):
+    def InsertAtStart(path, text):
         """ Insert a line somewhere from the start of the file """
         return EditFileAction(path, action='insert-line', line_match='^^', text=text, location=0)
 
-    def InsertAtEnd(path,text):
+    def InsertAtEnd(path, text):
         """ Insert a line somewhere from the end of the file """
         return EditFileAction(path, action='insert-line', line_match='$$', text=text, location=-1)
 
-    def InsertAtLine(path,text,location):
+    def InsertAtLine(path, text, location):
         return EditFileAction(path, action='insert-line', line_match='', search='', text=text, location=location)
 
-    def InsertNear(path,line_match,text,location):
+    def InsertNear(path, line_match, text, location):
         return EditFileAction(path, action='insert-line', line_match=line_match, text=text, location=location)
 
     def DeleteLine(path, location):
@@ -870,17 +870,17 @@ class EditFileAction(Action):
         return EditFileAction(path, action='delete-line', line_match=line_match, location=location)
 
 
-    def run(self,builder):
-        builder.edit_path(self.path,self.edit);
+    def run(self, builder):
+        builder.edit_path(self.path, self.edit);
         return True
 
     def __str__(self):
-        return "Patch file {} with edit {}".format(self.path,self.edit)
+        return "Patch file {} with edit {}".format(self.path, self.edit)
 
 class BaseCopyAction(Action):
     FALLBACK = AttrDict({'src': [], 'dstdir': '', 'dstname': '', 'exclude': [], 'overwrite': False})
     
-    def __init__(self,*src,args=None,defaults=None, dstname="",dstdir="",overwrite=False, exclude=None):
+    def __init__(self, *src, args=None, defaults=None, dstname="",dstdir="", overwrite=False, exclude=None):
         """ 
         if args is specified it will be used instead of all other parameters, and should
         be a dict or an argparse Namespace, but the parameter will be used as a 
@@ -888,15 +888,15 @@ class BaseCopyAction(Action):
         """
         
         if not args:
-            args= BaseCopyAction.FALLBACK
+            args = BaseCopyAction.FALLBACK
         if not defaults:
-            defaults= BaseCopyAction.FALLBACK
+            defaults = BaseCopyAction.FALLBACK
 
-        self.items=args.src or src or defaults.src
-        self.dstdir=args.dstdir or dstdir or defaults.dstdir
-        self.dstname=args.dstname or dstname # No dstname from defaults - this is an individual parameter
-        self.overwrite=args.overwrite or overwrite or defaults.overwrite
-        self.exclude=list(itertools.chain.from_iterable(args.exclude or exclude or defaults.exclude))
+        self.items = args.src or src or defaults.src
+        self.dstdir = args.dstdir or dstdir or defaults.dstdir
+        self.dstname = args.dstname or dstname # No dstname from defaults - this is an individual parameter
+        self.overwrite = args.overwrite or overwrite or defaults.overwrite
+        self.exclude = list(itertools.chain.from_iterable(args.exclude or exclude or defaults.exclude))
 
 
     def _dst_str(self):
@@ -907,82 +907,82 @@ class BaseCopyAction(Action):
         return "Copy {}{}.".format(",".join(self.items or []), self._dst_str())
 
 class CopyAction(BaseCopyAction):
-    def run(self,builder):
-        builder.copy_files_generic(self.items,dstdir=self.dstdir,dstpath=self.dstname,overwrite=self.overwrite)
+    def run(self, builder):
+        builder.copy_files_generic(self.items, dstdir=self.dstdir, dstpath=self.dstname, overwrite=self.overwrite)
         return True
 
 class CopyTarAction(BaseCopyAction):
-    def run(self,builder):
+    def run(self, builder):
         if self.dstname:
             msg("Warning: destination naming does not work for copy tar action!")
-        builder.copy_tar_in(self.item[0],dstdir=self.dstdir,overwrite=self.overwrite)
+        builder.copy_tar_in(self.item[0], dstdir=self.dstdir, overwrite=self.overwrite)
         return True
     def __str__(self):
-        return "Copy tar {} in{}.".format(self.items[0],self._dst_str())
+        return "Copy tar {} in{}.".format(self.items[0], self._dst_str())
 
 class CopyDirAction(BaseCopyAction):
-    def run(self,builder):
-        builder.copy_dir_in(self.items[0],dstdir=self.dstdir,dstpath=self.dstname,overwrite=self.overwrite,exclude=self.exclude)
+    def run(self, builder):
+        builder.copy_dir_in(self.items[0], dstdir=self.dstdir, dstpath=self.dstname, overwrite=self.overwrite, exclude=self.exclude)
         return True
     def __str__(self):
-        return "Copy dir {} in{}.".format(self.items[0],self._dst_str())
+        return "Copy dir {} in{}.".format(self.items[0], self._dst_str())
 
 class CopyGlobAction(BaseCopyAction):
-    def __init__(self,glob,**kwargs):
+    def __init__(self, glob, **kwargs):
         super().__init__(**kwargs)
-        self.glob=glob 
-    def run(self,builder):
-        builder.copy_files_generic(self.glob,dstdir=self.dstdir,dstpath=self.dstname,overwrite=self.overwrite)
+        self.glob = glob 
+    def run(self, builder):
+        builder.copy_files_generic(self.glob, dstdir=self.dstdir, dstpath=self.dstname, overwrite=self.overwrite)
         return True
     def __str__(self):
-        return "Copy paths matching {} {}.".format(self.glob,self._dst_str())
+        return "Copy paths matching {} {}.".format(self.glob, self._dst_str())
 
 class CopyAllIsoFilesAction(BaseCopyAction):
-    def run(self,builder):
+    def run(self, builder):
         if self.dstname:
             msg("Warning - dstname {} is ignored while copying iso files - use dstdir instead".format(self.dstname))
-        builder.copy_all_from_iso_to_dir(dstdir=self.dstdir,ignore_isolinux=True,overwrite=self.overwrite)
+        builder.copy_all_from_iso_to_dir(dstdir=self.dstdir, ignore_isolinux=True, overwrite=self.overwrite)
         return True
     def __str__(self):
         return "Copy all files from within the primary ISO (excepts isolinux dir) to the image"
 
 class CopyIsoFileAction(BaseCopyAction):
-    def run(self,builder):
-        builder.copy_iso_file(dstdir=self.dstdir,dstname=self.dstname,overwrite=self.overwrite)
+    def run(self, builder):
+        builder.copy_iso_file(dstdir=self.dstdir, dstname=self.dstname, overwrite=self.overwrite)
         return True
     def __str__(self):
         return "Copy ISO File"
 
 class CopyIsolinuxAsSyslinuxAction(BaseCopyAction):
-    def __init__(self,args=None,overwrite=False):
+    def __init__(self, args=None, overwrite=False):
         if args:
             args['src']='/iso'
-        super().__init__('/iso',args=args,overwrite=overwrite)
-    def run(self,builder):
+        super().__init__('/iso', args=args, overwrite=overwrite)
+    def run(self, builder):
         builder.copy_isolinux_as_syslinux(overwrite=self.overwrite)
         return True
     def __str__(self):
         return "Copy isolinux dir as syslinux"
         
 class SyslinuxAction(Action):
-    def __init__(self,src=None,mbr=None,menufiles=None,overwrite=False):
-        self.src=src or Defaults.SYSLINUX_PATH
-        self.mbr=mbr or Defaults.SYSLINUX_MBR_FILE
-        self.menufiles=menufiles or Defaults.SYSLINUX_MENU_FILES
-        self.overwrite=overwrite
-    def run(self,builder):
-        builder.install_syslinux(self.src,self.mbr,self.menufiles,overwrite=self.overwrite)
+    def __init__(self, src=None, mbr=None, menufiles=None, overwrite=False):
+        self.src = src or Defaults.SYSLINUX_PATH
+        self.mbr = mbr or Defaults.SYSLINUX_MBR_FILE
+        self.menufiles = menufiles or Defaults.SYSLINUX_MENU_FILES
+        self.overwrite = overwrite
+    def run(self, builder):
+        builder.install_syslinux(self.src, self.mbr, self.menufiles, overwrite=self.overwrite)
         return True
     def __str__(self):
         return "Install syslinux files"
 
 class UpdateLabelAction(Action):
     """ Update the image label, and update the boot file (optional) """
-    def __init__(self,label,patch_sysconfig_labels):
-        self.label=label
-        self.patch_sysconfig_labels=patch_sysconfig_labels
-    def run(self,builder):
-        builder.update_label(oldlabel='auto',newlabel=self.label,patch_sysconfig_labels= self.patch_sysconfig_labels)
+    def __init__(self, label, patch_sysconfig_labels):
+        self.label = label
+        self.patch_sysconfig_labels = patch_sysconfig_labels
+    def run(self, builder):
+        builder.update_label(oldlabel='auto', newlabel=self.label, patch_sysconfig_labels=self.patch_sysconfig_labels)
         return True
     def __str__(self):
         return "Update volume label ({}){}".format(self.label, ' (updating sysconfig boot lines too)' if self.patch_sysconfig_labels else '')
@@ -991,7 +991,7 @@ class AutoLabelAction(Action):
     """ Automatically try to make sure the boot label and image label match """
     def __init__(self):
         pass
-    def run(self,builder):
+    def run(self, builder):
         builder.auto_label()
         return True
     def __str__(self):
@@ -1001,34 +1001,34 @@ class AutoSyslinuxPatchAction(Action):
     """ Automatically try to update the labels in the syslinux.cfg to  make sure the boot label and image label match """
     def __init__(self):
         pass
-    def run(self,builder):
-        builder.update_label(oldlabel=None,newlabel=None,patch_sysconfig_labels=True)
+    def run(self, builder):
+        builder.update_label(oldlabel=None, newlabel=None, patch_sysconfig_labels=True)
         return True
     def __str__(self):
         return "Update configured boot label to match volume label if possible"
 
 class InspectAction(Action):
-    def __init__(self,*paths,display_contents=False):
-        self.paths=paths
-        self.display_contents=display_contents
-    def run(self,builder):
-        builder.inspect_paths(self.paths,display_contents=self.display_contents)
+    def __init__(self, *paths, display_contents=False):
+        self.paths = paths
+        self.display_contents = display_contents
+    def run(self, builder):
+        builder.inspect_paths(self.paths, display_contents=self.display_contents)
         return True
     def __str__(self):
         return "Inspect paths {}".format(self.paths)
 
 class CreateImageAction(Action):
-    def __init__(self,size,force):
-        self.size=size
-        self.force=force
-    def run(self,builder):
-        builder.prepare_for_build(self.size,self.force)
+    def __init__(self, size, force):
+        self.size = size
+        self.force = force
+    def run(self, builder):
+        builder.prepare_for_build(self.size, self.force)
         return True
     def __str__(self):
         return "Create image file (size {} MB)".format(self.size)
 
 class BeginUpdateAction(Action):
-    def run(self,builder):
+    def run(self, builder):
         builder.prepare_for_update()
         return True
     def __str__(self):
@@ -1041,20 +1041,20 @@ class VerboseBase:
                  quiet=False,
                  indent_base="    "
                  ):
-        self.verbose=verbose
-        self.quiet=quiet
-        self.indent=""
-        self.indent_base=indent_base
+        self.verbose = verbose
+        self.quiet = quiet
+        self.indent = ""
+        self.indent_base = indent_base
 
-    def msg(self,message):
-        print(self.indent+message,file=sys.stderr)
+    def msg(self, message):
+        print(self.indent + message, file=sys.stderr)
 
-    def begin(self,msg):
+    def begin(self, msg):
         if self.verbose:
             print(self.indent + msg, file=sys.stderr)
             self.indent += self.indent_base
 
-    def end(self,ok=True):
+    def end(self, ok=True):
         if self.verbose:
             unindent = len(self.indent_base)
             self.indent = self.indent[:-unindent]
@@ -1080,21 +1080,21 @@ class ImageAccess(VerboseBase):
                  quiet=False,
                  indent_base="    "
                  ):
-        super().__init__(verbose=verbose,quiet=quiet,indent_base=indent_base)
+        super().__init__(verbose=verbose, quiet=quiet, indent_base=indent_base)
 
-        self.isofile=isofile
-        self.usbfile=usbfile
-        self.imgformat=imgformat or 'auto'
-        self.fstype=fstype or 'vfat'
-        self.force=force
+        self.isofile = isofile
+        self.usbfile = usbfile
+        self.imgformat = imgformat or 'auto'
+        self.fstype = fstype or 'vfat'
+        self.force = force
 
-        self.iso_index=None
-        self.usb_index=None
-        self.usbpart=None
-        self.g=None
-        self.usb=None
-        self.iso=None
-        self.mounts={}
+        self.iso_index = None
+        self.usb_index = None
+        self.usbpart = None
+        self.g = None
+        self.usb = None
+        self.iso = None
+        self.mounts = {}
 
     def startup(self):
         self.begin("Startup guestfs")
@@ -1127,7 +1127,7 @@ class ImageAccess(VerboseBase):
 
         self.end()
 
-    def define_images(self,create=False,size=None,imgformat=None,iso_mandatory=False,usb_mandatory=False):
+    def define_images(self, create=False, size=None, imgformat=None, iso_mandatory=False, usb_mandatory=False):
         g = self.g
 
         self.begin("Access images")
@@ -1144,9 +1144,9 @@ class ImageAccess(VerboseBase):
         if self.usb or self.iso:
             self.msg("Already defined.")
         else:
-            filename_format='unknown'
-            fname_ext=''
-            extension=''
+            filename_format = 'unknown'
+            fname_ext = ''
+            extension = ''
             self.msg(f"Checking image file {self.usbfile} against imgformat {imgformat}")
             if self.usbfile.startswith("/dev"):
                 filename_format = 'device'
@@ -1154,7 +1154,7 @@ class ImageAccess(VerboseBase):
                     imgformat = 'raw'
                 elif imgformat != 'raw':
                     die("Only raw imgformat supported for real devices")
-                if not os.access(self.usbfile,os.W_OK):
+                if not os.access(self.usbfile, os.W_OK):
                     self.msg("You do not have write access to device {self.usbfile}")
                     self.msg("You need to either run as root, or get access to this device.")
                     self.msg("Example commands:")
@@ -1164,26 +1164,26 @@ class ImageAccess(VerboseBase):
                     self.msg(f"  (then as your user, before retrying): ")
                     self.msg(f"       newgrp adm")
                     die("Cannot continue.")
-                with open('/proc/mounts','r') as procmounts:
+                with open('/proc/mounts', 'r') as procmounts:
                     mountlines = procmounts.read().splitlines()
                     for mountline in mountlines:
                         if mountline.startswith(self.usbfile):
                             self.msg(f"Device {self.usbfile} appears to be mounted.")
                             die("Refusing to continue.")
             else:
-                fname_main,fname_ext=os.path.splitext(self.usbfile)
+                fname_main, fname_ext = os.path.splitext(self.usbfile)
                 if fname_ext:
                     if fname_ext[0] == '.':
-                        fname_ext=fname_ext[1:]
+                        fname_ext = fname_ext[1:]
                     extension = fname_ext.lower()
                     if extension in Defaults.SUPPORTED_IMAGE_FORMATS:
-                        filename_format=extension
+                        filename_format = extension
 
             if imgformat == 'auto' or imgformat== '':
                 if filename_format == 'unknown':
                     if create:
                         self.msg("I didn't know what filesystem format to use - defaulting to qcow2")
-                        imgformat=Defaults.IMAGE_FORMAT
+                        imgformat = Defaults.IMAGE_FORMAT
                     else:
                         raise ValueError("Please name the file with a recognised extension or specify the image format on the commandline")
                 else:

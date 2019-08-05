@@ -236,6 +236,35 @@ package-sets:
             #- fluxbox
             #- terminator
             - lightdm
+            - xorg-x11-server-Xorg
+            - xorg-x11-utils
+            - xorg-x11-xinit
+            - xorg-x11-xkb-extras
+            - xorg-x11-xkb-utils
+            - xorg-x11-util-macros
+            - xorg-x11-server-utils
+            - xorg-x11-fonts-100dpi
+            - xorg-x11-apps
+            - xorg-x11-docs
+            - xorg-x11-drivers
+            - xorg-x11-drv-evdev
+            - xorg-x11-drv-keyboard
+            - xorg-x11-drv-intel
+            - xorg-x11-drv-fbdev
+            - xorg-x11-drv-ati
+            - xorg-x11-drv-libinput
+            - xorg-x11-drv-mouse
+            - xorg-x11-drv-nouveau
+            - xorg-x11-drv-qxl
+            - xorg-x11-drv-synaptics
+            - xorg-x11-drv-vesa
+            - xorg-x11-drv-vmmouse
+            - xorg-x11-font-utils
+            - xorg-x11-xauth
+            - xorg-x11-xbitmaps
+            - xorg-x11-xkb-extras
+            - xorg-x11-xkb-utils
+            - xorg-x11-fonts-ISO8859-1-100dpi
             - xorg-x11-xinit-session
             - xfce4-session
             - xfce4-panel

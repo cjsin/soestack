@@ -4,16 +4,16 @@ mkdir -p prior
 
 if ls | egrep '[.]tar$' 
 then
-	  mv -i *.tar prior/
+    mv -i *.tar prior/
 fi
 
 host=192.168.121.101
-datadir="/d/local/data/nexus"
+datadir="/d/local/data/ss-nexus-mirror"
 
 set -vx
 ssh-copy-id -i ~/.ssh/id_rsa "root@${host}"
 
-datestring=$(ssh "root@{host}" "cd '${datadir}/backups' && ls -tr config* | tail -n1 |cut -c 8-36")
+datestring=$(ssh "root@${host}" "cd '${datadir}/backups' && ls -tr config* | tail -n1 |cut -c 8-36")
 
 ssh "root@${host}" "cd '${datadir}/backups' && tar cf - *-${datestring}*.bak" > db-backup.tar
 tar tvf db-backup.tar

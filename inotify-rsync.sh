@@ -9,7 +9,21 @@ PROG="${0##*/}"
 HELP_REGEX='(^|[[:space:]])(-h|-help|--help|help)([[:space:]]|$)'
 PERIOD=5
 DELAY=1.5
-WATCH=("salt" "provision" "test" "${BASH_SOURCE[0]}")
+WATCH=(
+    "salt" 
+    "provision" 
+    "test" 
+    "${BASH_SOURCE[0]}"
+)
+EXCLUDE=(
+    "@venv" 
+    --exclude "*.pyc"
+    --exclude "__pycache__"
+    --exclude "*.raw"
+    --exclude "*.qcow2"
+    --exclude "*.iso"
+    --exclude "*.img"
+)
 EVENTS=(
     -e modify
     -e attrib
@@ -27,8 +41,10 @@ RSYNC=(
     --info=all0,skip1,remove1,name1,copy1,stats1,misc0,progress0,symsafe1,mount1,flist0
     --exclude=.git
     --exclude=venv
+    --exclude="**/venv"
     --exclude=bundled
     --exclude="*.pyc"
+    --exclude="__pycache__"
 )
 
 RSYNC_SRC="./"
@@ -130,7 +146,17 @@ function inotify-rsync::enter-script-dir()
 function inotify-rsync::generate-events()
 {
     msg "From ${PWD}, watching ${WATCH[*]} for changes..."
-    run "${@}" inotifywait -m -r --format '%T %e %w' --timefmt "%s" "${EVENTS[@]}" "${WATCH[@]}" | stdbuf -i0 -o0 -e0 uniq 
+    local command=(
+        inotifywait
+        --monitor
+        --recursive
+        --format '%T %e %w' 
+        --timefmt "%s" 
+        "${EVENTS[@]}" 
+        "${WATCH[@]}"
+        "${EXCLUDE[@]}"
+    )
+    run "${@}" "${command[@]}" | stdbuf -i0 -o0 -e0 uniq 
     msg "${FUNCNAME[0]} status ${?}"
 }
 

@@ -377,7 +377,7 @@ function unpack_tar()
 
 function restore_nexus_data()
 {
-    local datadir=/d/local/data/nexus/
+    local datadir=/d/local/data/ss-nexus-mirror/
     local db_dest="${datadir}/restore-from-backup"
     local problems=0
 
@@ -515,12 +515,16 @@ function load_container_file()
 
 function load_nexus_container()
 {
-    sonatype_version="3.16.2"
-    if [[ -n "${BUNDLED_SRC}" ]]
+    local fallback_sonatype_version="3.18.0"
+    if [[ -n "${BUNDLED_SRC}" && "${BUNDLED_SRC}" =~ ^/ ]]
     then 
-        load_container_file "sonatype_nexus3__${sonatype_version}.tar"
+        local sonatype_tarball=$(ls -d /e/bundled/docker/sonatype_nexus3__*.tar | tail -n1)
+        load_container_file "${sonatype_tarball##*/}"
+    elif [[ -n "${BUNDLED_SRC}" ]]
+    then
+        load_container_file "sonatype_nexus3__${fallback_sonatype_version}.tar"
     else
-        docker pull "sonatype/nexus3:${sonatype_version}"
+        docker pull "sonatype/nexus3:${fallback_sonatype_version}"
     fi
 }
 
@@ -546,8 +550,13 @@ function prepare_nexus_service()
     local unit_name="ss-nexus-mirror"
     local idnum="200"
     local idname="nexus"
-    local homedir="/d/local/data/${idname}"
-    /bin/cp "${PROVISION_DIR}/common/inc/${unit_name}.service" /etc/systemd/system/
+    local homedir="/d/local/data/${unit_name}"
+    local sonatype_image=$(docker images --format '{{.Repository}}:{{.Tag}}'| egrep sonatype/nexus | sort | tail -n1)
+    sed \
+        -e "s%sonatype/nexus3:VERSION%${sonatype_image}%" \
+        < "${PROVISION_DIR}/common/inc/nexus-mirror.service" \
+        > "/etc/systemd/system/${unit_name}.service"
+    
     groupadd -g "${idnum}" "${idname}"
     useradd -r -d "${homedir}" -u "${idnum}" -g "${idnum}" "${idname}"
     chown -R "${idname}.${idname}" "${homedir}"
@@ -729,8 +738,12 @@ function switchover_to_nexus()
         # at the start of it (ie the hostname / port part).
         local NEXUS=$(cat /etc/yum/vars/NEXUS)
         sed -r -i 's%\$NEXUS%'"${NEXUS}"'%' "/etc/yum.repos.d/${bootstrap_repo_name}"
+
         msg "Running yum makecache"
-        yum makecache
+        # The epel repo is currently broken due to an EPEL bug and a sonatype nexus bug
+        # So we explicitly ignore errors on the yum makecache here
+        yum --disablerepo=epel makecache || echo "makecache failed"
+        yum makecache || echo "makecache failed"
     else 
         notice "Skipping yum repo switchover because nexus is not available"
     fi

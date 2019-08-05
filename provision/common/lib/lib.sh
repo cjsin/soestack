@@ -241,75 +241,75 @@ function generate_bootstrap_vars()
     echo_return "set +e"
 }
  
-function configure_wireless()
-{
-    local devname="${1}"
-    local devinfo="${2}"
-    local part="" pw="" ssid=""
+# function configure_wireless()
+# {
+#     local devname="${1}"
+#     local devinfo="${2}"
+#     local part="" pw="" ssid=""
 
-    for part in ${devinfo//,/ }
-    do 
-        case "${part}" in 
-            psk=*)
-                psk="${part#psk=}"
-                ;;
-            pw=*)
-                pw="${part#pw=}"
-                ;;
-            ssid=*)
-                ssid="${part#ssid=}"
-                ;;
-        esac 
-    done
+#     for part in ${devinfo//,/ }
+#     do 
+#         case "${part}" in 
+#             psk=*)
+#                 psk="${part#psk=}"
+#                 ;;
+#             pw=*)
+#                 pw="${part#pw=}"
+#                 ;;
+#             ssid=*)
+#                 ssid="${part#ssid=}"
+#                 ;;
+#         esac 
+#     done
 
-    local status=$(nmcli device status | egrep "^${devname}[[:space:]]")
-    if ! [[ "${status}" =~ wifi ]]
-    then 
-        err "Device ${devname} is not a wireless device (or nmcli not available)!"
-        return 1
-    fi
-    if ! nmcli radio | egrep -i 'enabled.*enabled.*enabled.*enabled'
-    then
-        err "The wireless radio is at least partially disabled!"
-        return 1
-    fi
+#     local status=$(nmcli device status | egrep "^${devname}[[:space:]]")
+#     if ! [[ "${status}" =~ wifi ]]
+#     then 
+#         err "Device ${devname} is not a wireless device (or nmcli not available)!"
+#         return 1
+#     fi
+#     if ! nmcli radio | egrep -i 'enabled.*enabled.*enabled.*enabled'
+#     then
+#         err "The wireless radio is at least partially disabled!"
+#         return 1
+#     fi
 
-    # systemctl | egrep hostapd 
-    # This is incomplete because it seems that hostapd cannot configure
-    # the emulated device if NetworkManager already is using it.
-    # However the whole point of simulating the device was to test that
-    # the NetworkManager setup of a wireless device was working, without
-    # any real hardware. So that makes it pointless.
-    if is_wireless_simulated
-    then 
-        if ! systemctl | grep hostapd
-        then 
-            nmcli radio wifi off
-            rfkill unblock wlan
-            ip link add addr 10.0.0.2/24
-            ip link set wlan0 up
+#     # systemctl | egrep hostapd 
+#     # This is incomplete because it seems that hostapd cannot configure
+#     # the emulated device if NetworkManager already is using it.
+#     # However the whole point of simulating the device was to test that
+#     # the NetworkManager setup of a wireless device was working, without
+#     # any real hardware. So that makes it pointless.
+#     if is_wireless_simulated
+#     then 
+#         if ! systemctl | grep hostapd
+#         then 
+#             nmcli radio wifi off
+#             rfkill unblock wlan
+#             ip link add addr 10.0.0.2/24
+#             ip link set wlan0 up
 
-            if ! systemctl start hostapd 
-            then 
-                err "Failed starting hostapd for wireless simulation"
-                return 1
-            fi
-            sleep 5
-        fi 
-    fi 
+#             if ! systemctl start hostapd 
+#             then 
+#                 err "Failed starting hostapd for wireless simulation"
+#                 return 1
+#             fi
+#             sleep 5
+#         fi 
+#     fi 
 
-    nmcli device wifi rescan
-    sleep 5
+#     nmcli device wifi rescan
+#     sleep 5
 
-    nmcli device wifi list
-    if [[ -n "${ssid}" && -n "${pw}" ]]
-    then
-        if ! nmcli device wifi connect "${ssid}" password "${pw}"
-        then 
-            err "wifi connection Failed"
-        fi
-    fi
-}
+#     nmcli device wifi list
+#     if [[ -n "${ssid}" && -n "${pw}" ]]
+#     then
+#         if ! nmcli device wifi connect "${ssid}" password "${pw}"
+#         then 
+#             err "wifi connection Failed"
+#         fi
+#     fi
+# }
 
 
 function simulate_wireless()
@@ -332,6 +332,127 @@ function simulate_wireless()
 
         systemctl status hostapd || systemctl restart hostapd
     fi
+}
+
+function configure_wireless()
+{
+    if [[ -z "${WLAN}" ]]
+    then 
+        msg "No wlan configured."
+        return 0
+    fi 
+
+    ensure_installed wpa_supplicant
+
+    local cfg_str="${WLAN}" #"${WLAN//\//,prefix=}"
+    local cfg_parts=( ${WLAN//,/ } )
+    local part
+    local ssid=""
+    local dev=""
+    local psk=""
+    local prefix=""
+    local gateway=""
+    local dns=""
+    local ip=""
+
+    for part in "${cfg_parts[@]}"
+    do
+        echo "Process WLAN config part '${part}'"
+        case "${part}" in 
+            [0-9]*.[0-9]*.[0-9]*.[0-9]*/[0-9]*)
+                IFS=/ read ip prefix <<< "${part}"
+                ;;
+            prefix=*)
+                prefix="${part#*=}"
+                ;;
+            @*)
+                dns="${part:1}"
+                ;;
+            \!*)
+                gateway="${part:1}"
+                ;;
+            "~"*)
+                psk="${part:1}"
+                ;;
+            dhcp|auto)
+                ip="dhcp"
+                [[ -z "${gateway}" ]] && gateway="dhcp"
+                [[ -z "${dns}" ]] && dns="dhcp"
+                ;;
+            wl*)
+                dev="${part}"
+                ;;
+            [0-9]*.[0-9]*.[0-9]*.[0-9])
+                ip="${part}"
+                ;;
+            *)
+                if [[ -z "${ssid}" ]]
+                then 
+                    ssid="${part}"
+                else 
+                    err "Unrecognised wlan config item: '${part}' in '${cfg_str}'"
+                fi
+                ;;
+        esac
+    done
+
+    if [[ "${ip}" != "auto" ]]
+    then 
+        [[ -z "${prefix}" ]] && prefix="24"
+    fi 
+
+    [[ -z "${gateway}" ]] && gateway="${dns}"
+    [[ -z "${dns}" ]] && dns="${gateway}"
+    
+    [[ -z "${gateway}" ]] && [[ -n "${ip}" ]] && gateway="${ip%.*}.1}"
+    [[ -z "${dns}" ]] && dns="${gateway}"
+
+    [[ -z "${dev}" ]] && dev="wlan0"
+    
+    if [[ -n "${dev}" ]]
+    then
+        # Set network device information
+        sed -r -i \
+            -e "/INTERFACES=/  s/=.*/=\"-i${dev}\"/" \
+            /etc/sysconfig/wpa_supplicant 
+    fi
+
+    if [[ -n "${ssid}" ]]
+    then 
+        # Update network information
+        {
+            echo_data "ctrl_interface=/var/run/wpa_supplicant"
+            echo_data "ctrl_interface_group=wheel"
+            echo_data "network={"
+            echo_data "  ssid=\"${ssid}\""
+            [[ -n "${psk}" ]] && echo_data "  psk=${psk}"
+            echo_data "}"
+        } > /etc/wpa_supplicant/wpa_supplicant.conf
+    fi
+
+    local proto="none"
+    [[ "${ip}" == "dhcp" ]] && proto="dhcp"
+
+    {
+        echo "Type=\"Wireless\""
+        echo "BOOTPROTO=\"${proto}\""
+        echo "DEVICE=\"${dev}\""
+        echo "NAME=\"${dev}\""
+        [[ "${ip}" != "dhcp" ]] && echo_data "IPADDR=\"${ip}\""
+        [[ "${prefix}" != "dhcp" ]] && echo_data "PREFIX=\"${prefix}\""
+        [[ "${gateway}" != "dhcp" ]] && echo_data "GATEWAY=\"${gateway}\""
+        [[ "${dns}" != "dhcp" ]] && echo_data "DNS1=\"${dns}\""
+    } > "/etc/sysconfig/network-scripts/ifcfg-${dev}"
+
+    # Disable NetworkManager dbus integration bullshit
+    sed -r -i \
+        -e 's/ -u / /' \
+        -e '/Type=dbus/ d' \
+        -e '/BusName=/ d' \
+        /usr/lib/systemd/system/wpa_supplicant.service
+    systemctl daemon-reload
+    systemctl restart wpa_supplicant
+    ifup "${dev}"
 }
 
 function bootstrap_repos()
