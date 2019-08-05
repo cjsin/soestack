@@ -358,15 +358,19 @@ function configure_timezone()
 
 function preconfigure_pip()
 {
+    echo_data "[global]" > /etc/pip.conf
+
     if [[ -n "${NEXUS}" ]]
     then
         {
-            echo_data "[global]"
-            echo_data "index http://${NEXUS}/repository/pypi/pypi"
-            echo_data "index-url http://${NEXUS}/repository/pypi/simple"
-            echo_data "trusted-host = nexus"
+            echo_data "index        = http://${NEXUS}/repository/pypi/pypi"
+            echo_data "index-url    = http://${NEXUS}/repository/pypi/simple"
+            echo_data "trusted-host = ${NEXUS%:*}"
         } >> /etc/pip.conf 
+    else
+        notice "NEXUS host is not set - skipping pip config"
     fi
+    echo_data "disable-pip-version-check = True" >> /etc/pip.conf
 }
 
 function with_low_tcp_time_wait()

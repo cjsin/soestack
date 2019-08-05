@@ -26,11 +26,12 @@ enabled=0
 gpgcheck=1
 gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-$releasever
 
-# EPEL repo is somehow broken
-#[epel]
-#name=EPEL-$releasever
+[epel]
+name=EPEL-$releasever
 #baseurl=http://$NEXUS/repository/epel/pub/epel/$releasever/$basearch
-#enabled=1
+#EPEL is switched to a static repo until either Sonatype fix nexus, or EPEL fix their repo generation.
+baseurl=http://infra.demo.com:9002/bootstrap-pkgs/epel
+enabled=1
 #gpgcheck=1
 #gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-EPEL-$releasever
 

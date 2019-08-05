@@ -28,15 +28,8 @@ function provision::salt::fixes()
     # salt log file error messages
     ensure_installed python2-pip # gpgme-devel
     preconfigure_pip
-    pip list | egrep boto || pip install boto boto3
-    pip list | egrep attrdict || pip install attrdict 
-    #pip list | egrep gpg || pip install gpg
-    if ! pip list | egrep attrdict
-    then 
-        # Install bootstrap-pkgs pypi copy of attrdict
-        local files=( /e/bundled/bootstrap-pkgs/pypi/{attrdict,six}-*)
-        pip install "${files[@]}"
-    fi
+    pip_install --upgrade pip
+    pip_ensure_installed boto boto3 attrdict six
     provision::salt::fixes::regressions
 }
 
@@ -309,10 +302,11 @@ function provision::salt::states()
         provision::salt::step grains.set roles "[${preconfigured_roles}]" force=True
     fi
 
-    # Receive secrets which may be used by various states
-    provision::salt::step state.sls secrets
-
     local steps=(
+        # Receive secrets which may be used by various states
+        "state.sls secrets"
+        # Set up yum for package installation as soon as possible
+        "state.sls yum"
         "state.sls provision.pre"
         "state.sls provision.main"
         "state.apply"

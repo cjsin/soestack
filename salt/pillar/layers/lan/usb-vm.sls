@@ -29,7 +29,7 @@ demo:
         infra:            '52:54:00:d5:19:d5'
         replica1:         '52:54:00:96:72:f9'
         processor2:       '52:54:00:b9:b8:d2'
-        workstation3:     '52:54:00:00:01:03'
+        workstation3:     '52:54:00:01:02:03'
 
 deployments:
     pxebooting:

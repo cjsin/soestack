@@ -33,6 +33,29 @@ function install_utils()
     unless_installed bind-utils yum_install bind-utils
 }
 
+function pip_install()
+{
+    # When we have a working 
+    #pip install --find-links /e/bundled/bootstrap-pkgs/pypi/ install "${@}"
+    if [[ -n "${BUNDLED_SRC}" ]] && [[ -d "${BUNDLED_SRC}" ]]
+    then 
+        pip --find-links "${BUNDLED_SRC}/bootstrap-pkgs/pypi" install "${@}"
+    elif [[ -f /etc/pip.conf ]] && grep -q index /etc/pip.conf 
+    then
+        pip install "${@}"
+    fi
+}
+
+function pip_ensure_installed()
+{
+    local p
+    for p in "${@}"
+    do
+        # When we have a working 
+        pip list | egrep "^${p}[[:space:]]" || pip_install "${p}"
+    done
+}
+
 # Requires an array variable 'hosts' to be set
 function add_hosts()
 {

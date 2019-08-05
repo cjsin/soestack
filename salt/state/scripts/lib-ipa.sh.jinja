@@ -320,8 +320,9 @@ function ipa::host-rm()
 
     if [[ -f ~/.ssh/known_hosts ]]
     then
-        egrep "${fqdn}" ~/.ssh/known_hosts >> ~/.ssh/known_hosts_deleted
-        sed -i "/@${fqdn}/ d" ~/.ssh/known_hosts
+        local pattern="^${fqdn%%.*}[[:space:].]"
+        egrep "${pattern}" ~/.ssh/known_hosts >> ~/.ssh/known_hosts_deleted
+        sed -i "/${pattern}/ d" ~/.ssh/known_hosts
     fi
 }
 

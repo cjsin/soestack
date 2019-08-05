@@ -9,7 +9,7 @@ PROG="${0##*/}"
 HELP_REGEX='(^|[[:space:]])(-h|-help|--help|help)([[:space:]]|$)'
 PERIOD=5
 DELAY=1.5
-WATCH=("salt" "provision" "${BASH_SOURCE[0]}")
+WATCH=("salt" "provision" "test" "${BASH_SOURCE[0]}")
 EVENTS=(
     -e modify
     -e attrib
@@ -28,6 +28,7 @@ RSYNC=(
     --exclude=.git
     --exclude=venv
     --exclude=bundled
+    --exclude="*.pyc"
 )
 
 RSYNC_SRC="./"
