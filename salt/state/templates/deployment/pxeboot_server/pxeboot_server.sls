@@ -56,6 +56,7 @@
     pkg.installed:
         - pkgs: 
             - genisoimage
+            - syslinux
 
 {%- endif %}
 
@@ -65,7 +66,7 @@
 
 {{sls}}.pxeboot_server.{{prefix}}.iso-extract:
     file.managed:
-        - name:   /usr/local/sbin/iso-extract
+        - name:   /usr/local/bin/iso-extract
         - user:   root
         - group:  root
         - mode:   '0755'
@@ -99,7 +100,7 @@
 
 {{sls}}.pxeboot_server.{{prefix}}.iso-extracted.{{iso_shortname}}:
     cmd.run:
-        - name:   /usr/local/sbin/iso-extract --allow-loop-mount --mount "{{isopath}}" "{{extractpath}}"
+        - name:   /usr/local/bin/iso-extract --allow-loop-mount --mount "{{isopath}}" "{{extractpath}}"
         - unless: test -f "{{extractpath}}/images/pxeboot/initrd.img"
 {%- else %}
 
@@ -112,8 +113,9 @@
 
 {{sls}}.pxeboot_server.{{prefix}}.setup-pxe-boot-files:
     cmd.script:
-        - source: salt://{{slspath}}/pxedir-prepare.sh.jinja
+        - source: salt://templates/deployment/pxeboot_server/pxedir-prepare.sh.jinja
         - template: jinja
+        - makedirs: True
         - context: 
             # Note these must be quoted in case one is an empty string
             tftpdir: '{{tftpdir}}'
@@ -147,6 +149,7 @@
         - mode: '0644'
         - template: jinja
         - source: salt://templates/deployment/pxeboot_server/dnsmasq.conf.jinja
+        - makedirs: True
         - context: 
             tftpdir:       {{tftpdir}}
             interfaces:    {{interfaces|json}}
@@ -177,7 +180,7 @@
 
 {#-     entry names list is used to maintain the original order #}
 {%-     set incompatible_message = ' is incompatible with the data type inherited from the lan spec or lan defaults, and has replaced it' %}
-{%-     set incompatible=[] %}
+{%-     set incompatible = [] %}
 {%-     set entry_names = [] %}
 {%-     set entries = {} %}
 {%-     for outer in [ 'simple', 'entries' ] %}
@@ -254,6 +257,7 @@
 
 {%-     set lanconfig = {} %}
 {%-     do lanconfig.update(data_base) %}
+{#-     jinja and json are generally a shit with regards to maintaining order #}
 {%-     set ordered_entries = [] %}
 {%-     for entry_name in entry_names %}
 {%-         set named_entry = {} %}
@@ -262,6 +266,10 @@
 {%-         do ordered_entries.append(named_entry) %}
 {%-     endfor %}
 
+{{sls}}.pxeboot_server_{{lan_name}}_entry_order:
+    noop.notice:
+        - text: |
+            {{ entry_names | json}}
 
 {%-     if incompatible %}
 {{sls}}.pxeboot_server.WARNINGS-{{lan_name}}:
@@ -282,16 +290,9 @@
     pkg.installed:
         - name: rsync
 
-{%- set rsync_cmd = "--from '/"~provisioning.scripts~"/' --to '/"~tftpdir~"/"~lan.ss_provisioning~"/' --check '/provision'" %}
-{{sls}}.pxeboot_server.{{prefix}}.update-ss-provisioning.{{lan_name}}:
-    cmd.run:
-        - name:   |
-            echo "Check:"
-            /usr/local/sbin/rsync-uptodate --dry {{rsync_cmd}}
-            echo "Actual:"
-            /usr/local/sbin/rsync-uptodate --real {{rsync_cmd}} || echo "Work was done"
-        - unless: /usr/local/sbin/rsync-uptodate --dry {{rsync_cmd}}
-
+{#- Note the provisioning pw file is done before the rsync update (and the rsync excludes the provisioning password file) 
+    because otherwise the rsync runs every time 
+#}
 {%-             if 'pw' in provisioning and provisioning.pw %}
 
 {{sls}}.pxeboot_server.{{prefix}}.provisioning-pw-dir.{{lan_name}}:
@@ -300,6 +301,7 @@
         - user:     root 
         - group:    root
         - mode:     '0755'
+        - makedirs: True
 
 {{sls}}.pxeboot_server.{{prefix}}.provisioning-pw.{{lan_name}}:
     file.managed:
@@ -307,12 +309,33 @@
         - user:     root 
         - group:    root
         - mode:     '0660'
+        - makedirs: True
         - contents: |
             ROOT_PW='{{provisioning.pw.root if 'root' in provisioning.pw else '' }}'
             GRUB_PW='{{provisioning.pw.grub if 'grub' in provisioning.pw else '' }}'
             SSH_PW='{{provisioning.pw.ssh if 'ssh' in provisioning.pw else '' }}'
 
 {%-             endif %}
+
+{%- set rsync_cmd = "".join([
+    " --from ",
+    "/" ~ provisioning.scripts ~ "/",
+    " --to ",
+    "/" ~ tftpdir ~ "/" ~ lan.ss_provisioning ~ "/",
+    " --check ",
+    "/provision",
+    " ",
+    "--exclude=provisioning-passwords.sh"
+    ]) %}
+
+{{sls}}.pxeboot_server.{{prefix}}.update-ss-provisioning.{{lan_name}}:
+    cmd.run:
+        - name:   |
+            echo "Check:"
+            /usr/local/bin/rsync-uptodate --dry {{rsync_cmd}}
+            echo "Actual:"
+            /usr/local/bin/rsync-uptodate --real {{rsync_cmd}} || echo "Work was done"
+        - unless: /usr/local/bin/rsync-uptodate --dry {{rsync_cmd}}
 
 {%-         endif %}
 {%-     endif %}
@@ -325,6 +348,7 @@
         - mode:     '0644'
         - source:   salt://templates/deployment/pxeboot_server/pxemenu.jinja
         - template: jinja
+        - makedirs: True
         - context: 
             is_default: {{lan_name == 'defaults'}}
             lan_name:   {{lan_name}}
@@ -350,6 +374,7 @@
 
 {{sls}}.pxeboot_server.{{prefix}}.symlink-boot-menu.{{lan_name}}.{{hexstr}}:
     file.symlink:
+        - makedirs: True
         - name:    {{tftpdir}}/{{pxedir}}/{{cfgdir}}/{{hexstr}}
         - target: 'defaults-{{lan_name}}'
 

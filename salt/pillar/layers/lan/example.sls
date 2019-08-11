@@ -4,7 +4,7 @@
 
 demo:
     vars:
-        soe_layers: soe:demo,role:G@roles,site:testing,lan:example,host:G@host,lan-host:lan:G@layers:lan+host:G@host,private:example.private
+        soe_layers: soe:demo,site:testing,private:example.private
     ips:
         gateway: 192.168.188.1
     macs:

@@ -2,15 +2,17 @@
 
 deployments:
     dovecot:
-        deploy_type: dovecot_server
+        activated:       False
+        activated_where: {{sls}}
+        deploy_type:     dovecot_server
         roles:
             - email-server-node
-        activated: False
-        activated_where: {{sls}}
+
         activate:
-            service:
-                enabled:
+            service-sets:
+                running:
                     - dovecot
+
             firewall:
                 basic:
                     dovecot-pop3:

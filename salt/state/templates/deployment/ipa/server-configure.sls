@@ -77,10 +77,11 @@
 
 .script:
     file.managed:
-        - name: /usr/local/sbin/backups/jobs/ipa
+        - name: /usr/local/bin/backups/jobs/ipa
         - user: root
         - group: root
         - mode: '0755'
+        - makedirs: True
         - contents: |
             #!/bin/bash
             ipa-server-backup-job

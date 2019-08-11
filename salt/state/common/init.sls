@@ -48,4 +48,5 @@ include:
     - .sudoers
     - .services
     - .sysctls
+    - .terminator
     - .runlevel

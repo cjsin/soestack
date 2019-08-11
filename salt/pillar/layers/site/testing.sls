@@ -204,6 +204,8 @@ deployments:
     phpldapadmin:
         activated:       True
         activated_where: {{sls}}
+        config:
+            debug: 128
 
     ss-prometheus:
         activated:       True
@@ -269,8 +271,8 @@ docker:
             # but alternatively we can use the '!!' shortcut here and just
             # define those values in the lan layer
             dns: 
-                - '!!demo.ips.gateway'
                 - '!!demo.ips.infra'
+                - '!!demo.ips.gateway'
             #dns-opts:
             #    #- 'ndots:0'
             dns-search:

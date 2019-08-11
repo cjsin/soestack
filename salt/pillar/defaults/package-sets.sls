@@ -12,11 +12,28 @@ package-sets:
             - openbox
             - fluxbox
 
+    admin-minimal-desktop:
+        purpose: |
+            provide minimal desktop tools for an admin
+        centos,redhat,fedora:
+            any:
+                - openbox
+                - firefox
+                - gedit
+                - code
+
+
     basic-tools:
         purpose: |
             tools desired on all boxes
         centos,redhat,fedora:
-            - rsync 
+            - rsync
+            - wget
+            - curl
+            - iputils
+            - net-tools
+            - strace
+            - ltrace
 
     alternative-toolchains:
         purpose: | 
@@ -320,6 +337,18 @@ package-sets:
             - vim-X11
             # xemacs isn't available because epel is broken by zchunk metadata changes
             #- xemacs
+
+    phpldapadmin:
+        purpose: |
+            provide php ldap admin tool
+        centos,redhat,fedora:
+            order: os,epel
+            os:
+                - httpd
+                - php
+                - php-ldap
+            epel:
+                - phpldapadmin
 
     process-tools:
         purpose: |

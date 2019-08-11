@@ -28,7 +28,7 @@ check_for_updates = false
 
 [security]
 admin_user = admin
-admin_password = {{salt['cmd.shell']('salt-secret pw-grafana-admin 2> /dev/null')}}
+admin_password = {{salt['cmd.shell']('salt-secret pw-grafana-admin 2> /dev/null || echo adminadmin')}}
 disable_gravatar = true
 
 [users]

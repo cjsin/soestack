@@ -24,6 +24,10 @@ deployments:
                                 http: 80
                                 https: 443
 
+        require-exists:
+            file:
+                /etc/ipa/ca.crt:
+
         container:
             image:   grafana/grafana:5.2.3
 

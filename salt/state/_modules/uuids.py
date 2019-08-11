@@ -44,7 +44,8 @@ def ids(args=None):
 
     if prefix and prefix[-1] != '.':
         prefix = prefix +'.' 
-        
+    
+    from pprint import pformat
     return prefix, suffix 
 
 #@jinja_filter('blah')

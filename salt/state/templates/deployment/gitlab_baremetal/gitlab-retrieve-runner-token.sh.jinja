@@ -3,12 +3,12 @@ token_setting='{{config.registration_token if 'registration_token' in config els
 
 function retrieve_token_from_gitlab()
 {
-    if command -v gitlab-rails 2> /dev/null
+    if command -v gitlab-rails > /dev/null 2> /dev/null
     then 
         gitlab-rails runner -e production \
             "puts Gitlab::CurrentSettings.current_application_settings.runners_registration_token"
     else
-        echo "The token can only be retrieved on the gitlab server."
+        echo "The token can only be retrieved on the gitlab server." 1>&2
     fi
 }
 
@@ -27,7 +27,7 @@ function main()
         if [[ "${token_setting}" =~ ^salt-secret: ]]
         then
             secret_name="${token_setting#salt-secret:}"
-         fi
+        fi
     fi
 
     if [[ -z "${secret_name}" ]]
@@ -43,12 +43,12 @@ function main()
         if [[ -n "${token}" ]]
         then
             salt-secret "${secret_name}" -save -stdin <<< "${token}"
-            echo "The gitlab registration is as follows. Please update pillar on the master: ${token}"
+            #echo "The gitlab registration is as follows. Please update pillar on the master: ${token}"
         else
-            echo "Failed getting the token"
+            echo "Failed getting the token" 1>&2
         fi
     else
-        echo "The token is stored"
+        echo "The token is stored" 1>&2
     fi
 }
 

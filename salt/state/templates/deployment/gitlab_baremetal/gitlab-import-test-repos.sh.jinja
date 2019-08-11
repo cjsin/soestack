@@ -2,13 +2,4 @@
 
 . /usr/local/bin/lib-gitlab.sh || die "Could not load lib-gitlab.sh"
 
-set -vx
-# Exit on any failure
-set -e
-
-function main()
-{  
-    gitlab::import-repos::main "/soestack/test/repos" "test" 
-}
-
-main 
+gitlab::import-repos::main "/soestack/test/repos" "test" 

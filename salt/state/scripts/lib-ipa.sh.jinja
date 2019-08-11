@@ -533,11 +533,10 @@ function ipa::load-admin-passwords()
         local value="${!varname}"
         if [[ "${value}" =~ ^salt-secret: ]]
         then
-            value=$(salt-secret "${value#salt-secret:}")
+            eval "${p}_password=$(salt-secret "${value#salt-secret:}")"
         fi
     done
 }
-
 
 function ipa::list-ticket()
 {

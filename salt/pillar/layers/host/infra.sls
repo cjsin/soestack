@@ -73,7 +73,7 @@ rsyslog:
 
 # Override the runlevel to multi-user for this node
 # despite configuring it with desktop packages
-runlevel: multi-user
+runlevel: graphical
 
 tftp:
     implementation: dnsmasq
@@ -90,3 +90,20 @@ dns:
         search1: '!!network.system_domain'
         search2: ''
         search3: ''
+
+
+yum:
+    repos:
+        centos,redhat:
+            epel:
+                baseurl:     file:///e/bundled/bootstrap-pkgs/epel
+                enabled:     True
+                description: EPEL bootstrap repos
+                gpgcheck:    False
+            centos-os-dvd:
+                baseurl:     file:///e/yum-repos/installmedia
+                enabled:     True
+                description: OS packages from the DVD
+                gpgcheck:    True
+                gpgkey:      file:///etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-7
+

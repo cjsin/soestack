@@ -22,16 +22,16 @@ deployments:
                                 registry4: 7085
         container:
             description: Sonatype Nexus OSS 3 Pull-through cache
-            image:       sonatype/nexus3:3.16.2
+            image:       sonatype/nexus3:3.18.0
             local_image: True
             volumes:
-                - -v /d/local/data/nexus:/nexus-data
+                - -v /d/local/data/ss-nexus-mirror:/nexus-data
             ports: 
                 - -p 192.168.121.103:7081-7085:8081-8085
             entrypoint: /bin/bash
             options:    
                 -  -c "/opt/sonatype/start-nexus-repository-manager.sh > /nexus-data/service.log 2>&1"
             storage:
-                - /d/local/data/nexus
+                - /d/local/data/ss-nexus-mirror
             user: 200
             group: 200

@@ -65,13 +65,74 @@
             deployment:      {{deployment|json()}}
             config:          {{config|json()}}
 
-{{sls}}.gitlab-baremetal-configured:
+{{sls}}.gitlab-baremetal-initial-configure-script:
+    file.managed:
+        - name: /root/gitlab-initial-configure 
+        - user: root
+        - group: root
+        - mode: '0755'
+        - template: jinja 
+        - contents: |
+            #!/bin/bash
+            recordfile=/var/log/gitlab-configured.success
+            [[ -f "${recordfile}" ]] && exit 0
+
+            for xxx in pw-gitlab-admin gitlab-runner-registration-token
+            do
+                salt-secret "${xxx}" > /dev/null 2> /dev/null || generate-passwords "${xxx}" --min-length=20
+            done
+            
+            export GITLAB_ROOT_PASSWORD=$(salt-secret "pw-gitlab-admin")
+            export GITLAB_ROOT_EMAIL="root@localhost.localdomain"
+            export GITLAB_SHARED_RUNNERS_REGISTRATION_TOKEN=$(salt-secret "gitlab-runner-registration-token")
+            export GITLAB_PROMETHEUS_METRICS_ENABLED="false"
+            
+            # Systemctl hangs while starting gitlab-runsvdir. 
+            # Performing a daemon-reexec here is an attempt to fix that systemd bug
+            systemctl daemon-reexec
+            sleep 5
+
+            start_time=$(date +%s)
+            too_long=$((start_time+300)) #5 minutes means it's likely hung
+            (
+                if gitlab-ctl reconfigure >> /var/log/gitlab-reconfigure.log 2>&1
+                then 
+                    touch /var/log/gitlab-configured.success
+                fi
+                gitlab-retrieve-runner-token gitlab-runner-registration-token
+            ) &
+            bg_pid=$!
+            echo "Waiting for gitlab reconfigure (because systemd hangs)"
+            while sleep 5
+            do 
+                now=$(date +%s)
+                if [[ -f /var/log/gitlab-configured.success ]]
+                then 
+                    break
+                elif [[ "${now}" -gt "${too_long}" ]]
+                then
+                    if ps -wef | egrep 'systemctl.*start.*runsvdir'
+                    then
+                        systemctl daemon-reexec
+                        kill $bg_pid; 
+                    fi
+                fi
+            done 
+
+{{sls}}.gitlab-baremetal-reconfigured:
     cmd.run:
-        - name: gitlab-ctl reconfigure >> /var/log/gitlab-reconfigure.log 2>&1 ; gitlab-retrieve-runner-token gitlab-runner-registration-token
-        - onlyif:   test -f /usr/bin/gitlab-ctl
+        - name:     gitlab-ctl reconfigure
+        - onlyif:   test -f /var/log/gitlab-configured.success
         - onchanges:
             - file: {{sls}}.gitlab-baremetal-config-file
 
+{{sls}}.gitlab-baremetal-initial-configure:
+    cmd.run:
+        - name:     /root/gitlab-initial-configure 
+        - onlyif:   test -f /usr/bin/gitlab-ctl
+        - unless:   test -f /var/log/gitlab-configured.success
+        - onchanges:
+            - file: {{sls}}.gitlab-baremetal-config-file
 
 {{sls}}.test-data-import-script:
     file.managed:
@@ -84,6 +145,7 @@
 {{sls}}.test-data-import:
     cmd.run:
         - name:     /usr/local/bin/gitlab-import-test-repos
+        - unless:   test -d /d/local/data/gitlab-import/test/
 
 {%- endif %}
 
@@ -103,16 +165,24 @@
         - onlyif: gitlab-ctl status | egrep 'up:'
 
 {{sls}}.gitlab-runsvdir-stopped:
-    service.dead:
-        - name: gitlab-runsvdir 
-        - enable: {{activated}} 
+    #service.dead:
+    #    - name: gitlab-runsvdir 
+    #    - enable: {{activated}} 
+    cmd.run:
+        - name: systemctl disable gitlab-runsvdir ; systemctl stop --no-ask-password gitlab-runsvdir
+
 
 {%-     else %}
 
+# There is a systemd bug (as usual) (going back 8 years) whereby it sits there 
+# like a piece of shit unless run with the --no-ask-password option 
+# (even when the service could not be simpler and does not need any kind of password entry)
 {{sls}}.gitlab-runsvdir:
-    service.running:
-        - name: gitlab-runsvdir 
-        - enable: {{activated}} 
+    cmd.run:
+        - name: systemctl enable gitlab-runsvdir ; systemctl start --no-ask-password gitlab-runsvdir
+    #service.running:
+    #    - name: gitlab-runsvdir 
+    #    - enable: {{activated}} 
 
 {{sls}}.gitlab-services:
     cmd.run:

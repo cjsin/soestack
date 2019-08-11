@@ -5,7 +5,7 @@
 demo:
     vars:
         lan_name:         usb-sv
-        layers:           soe:demo,role:G@roles,site:testing,lan:usb-sv,host:G@host,lan-host:lan:G@layers:lan+host:G@host,private:example.private
+        layers:           soe:demo,site:testing,lan:usb-sv,private:example.private
     ips:
         gateway:          192.168.0.1
         infra-gateway-ip: 192.168.0.101

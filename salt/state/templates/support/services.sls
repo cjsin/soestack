@@ -2,6 +2,7 @@
 # This template requires already defined:
 #    - args, containing 'parent'
 #}
+{%- set prefix, suffix  = salt.uuids.ids({}) %}
 {%- set parent = args.parent %}
 {%- if parent %}
 {%-     if 'service-sets' in parent and parent['service-sets'] %}

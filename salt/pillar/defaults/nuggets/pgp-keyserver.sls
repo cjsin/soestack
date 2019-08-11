@@ -203,6 +203,7 @@ nuggets:
                     group: root
                     contents: |
                         [Service]
+                        PermissionsStartOnly=true
                         ExecStartPre=/usr/local/bin/preconfigure-sks
 
                 /usr/local/bin/preconfigure-sks:
@@ -212,16 +213,21 @@ nuggets:
                     contents: |
                         #!/bin/bash
                         [[ -d /srv/sks/KDB ]] && exit 0
-                        [[ -d /srv ]] || mkdir -p /srv 
-                        [[ -d /srv/sks ]] || mkdir -p /srv/sks
-                        chown sks.sks /srv/sks
-                        cd /srv/sks
-                        sks build
-                        ln -s ../DB_CONFIG KDB/DB_CONFIG
-                        ss_key=/etc/salt/gpgkeys/soestack-pub.gpg
-                        master_key=/etc/salt/gpgkeys/pubring.gpg
-                        sks merge ${ss_key}
-                        sks merge ${master_key}
+                        [[ -d /srv         ]] || mkdir -p /srv 
+                        [[ -d /srv/sks     ]] || mkdir -p /srv/sks
+                        chown sks.sks /srv/sks 
+                        cd /srv/sks || exit 1
+                        if [[ ! -d KDB ]]
+                        then 
+                            sks build
+                            [[ -e KDB/DB_CONFIG ]] || ln -s ../DB_CONFIG KDB/DB_CONFIG
+                            ss_key=/etc/salt/gpgkeys/soestack-pub.gpg
+                            master_key=/etc/salt/gpgkeys/pubring.gpg
+                            sks merge ${ss_key}
+                            sks merge ${master_key}
+                        fi 
+                        chown -R sks.sks /srv/sks/
+                        chown -R  nginx.nginx /srv/sks/nginx
 
                 /etc/systemd/system-preset/99-sks-start-disabled.preset:
                     user: root

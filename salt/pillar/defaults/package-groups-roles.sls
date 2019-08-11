@@ -126,3 +126,7 @@ package-groups:
     workstation-node:
         package-groups:
             - desktop-node
+
+    infra-server-node:
+        package-sets:
+            - admin-minimal-desktop

@@ -26,10 +26,10 @@ deployments:
 
         config:
             port:    9100
-            storage: /d/local/node_exporter
-            textfile_directory: /d/local/node_exporter/textfile_collector 
+            storage: /d/local/data/ss-node-exporter
+            textfile_directory: /d/local/data/ss-node-exporter/text-collector 
             options:
-                - --collector.textfile.directory /d/local/node_exporter/textfile_collector 
+                - --collector.textfile.directory /d/local/data/ss-node-exporter/text-collector 
                 - --collector.filesystem.ignored-mount-points=^(/sys$|/proc$|/dev$|/var/lib/docker/.*|/run.*|/sys/fs/.*) 
                 - --collector.filesystem.ignored-fs-types=^(sysfs|procfs|autofs|overlay|nsfs|securityfs|pstore)$ 
 
@@ -42,8 +42,8 @@ deployments:
                 makedirs:  True
 
             dirs:
-                /d/local/node_exporter:
-                /d/local/node_exporter/text-collector:
+                /d/local/data/ss-node-exporter:
+                /d/local/data/ss-node-exporter/text-collector:
 
             files:
                 /etc/sysconfig/ss-node-exporter:

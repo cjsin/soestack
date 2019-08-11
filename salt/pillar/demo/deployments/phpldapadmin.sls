@@ -1,5 +1,8 @@
 {{ salt.loadtracker.load_pillar(sls) }}
 
+include:
+    - defaults.nuggets.phpldapadmin
+
 deployments:
     phpldapadmin:
         deploy_type:     phpldapadmin_baremetal

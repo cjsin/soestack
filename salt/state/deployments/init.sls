@@ -2,6 +2,7 @@
 {#-   this node, as long as they were selected by a matcher such as hostname or role #}
 {#- To run deployments of only a partiular type, run one of the other states within #}
 {#- this directory, which will select only a particular type of deployment #}
+{%- import 'lib/noop.sls' as noop %}
 
 {%- set deployments = pillar.deployments if 'deployments' in pillar else {} %}
 
@@ -38,7 +39,10 @@
 {%-    for pair in deployments_for_type %}
 {%-        set deployment_name, deployment = pair %}
 {%-        with args = { 'deployment_type': deploy_type, 'deployment': deployment, 'deployment_name': deployment_name, 'pillar_location': 'deployments:'~deployment_name, 'actions': ['auto'] } %}
+{{noop.notice('run-deployment.'~deployment_name)}}
+{%- if True %}
 {%             include('templates/deployment.sls') with context %}
+{%- endif %}
 {%-        endwith %}
 {%-    endfor %}
 {%- endfor %}

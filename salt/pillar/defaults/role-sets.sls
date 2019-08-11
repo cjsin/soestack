@@ -64,6 +64,7 @@ role-sets:
             - prometheus-node
             - ipa-member-node
             - desktop-node
+            - software-development-node
 
     secondary-server-node:
         purpose: |

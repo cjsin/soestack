@@ -4,7 +4,7 @@
  ** IE: There should NOT be any blank lines or spaces BEFORE <?php
  **/
 
-{%- if 'debug' in config and config.debug %}
+{%- if True or ('debug' in config and config.debug) %}
 /* If you are asked to put PLA in debug mode, this is how you do it: */
 $config->custom->debug['level'] = {{config.debug}};
 $config->custom->debug['syslog'] = true;

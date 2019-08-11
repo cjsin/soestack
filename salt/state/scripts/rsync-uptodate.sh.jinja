@@ -6,7 +6,7 @@ function usage()
     local exitcode="${1:-1}"
     local errmsg="${2:-}"
     {
-        echo "Usage: ${0##*/} [--dry|--real] --from <source-path> --to <dest-path> --check <check-path>"
+        echo "Usage: ${0##*/} [--dry|--real] --from <source-path> --to <dest-path> --check <check-path> --exclude <exclude-path>"
         echo ""
         echo "Performs an rsync from source-path to dest-path, as long as the source and dest both"
         echo "match the sanity check regular expression."
@@ -97,6 +97,10 @@ function process_args()
                 sanity="${1}"
                 shift
                 ;;
+            -exclude|--exclude)
+                exclude+=("--exclude=${1}")
+                shift
+                ;;
             *)
                 usage 0 "Invalid script usage. Please see the help text above."
                 ;;
@@ -127,10 +131,14 @@ function process_args()
 function main()
 {
     local dry a b sanity
+    local -a exclude=()
     process_args "${@}"
 
     local -a cmd=(
-        rsync -av  --info=stats0,flist0
+        rsync 
+        -av  
+        --info=stats0,flist0
+        "${exclude[@}}"
     )
 
     if [[ "${dry}" != "real" ]]

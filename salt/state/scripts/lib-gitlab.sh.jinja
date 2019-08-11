@@ -70,6 +70,7 @@ function gitlab::configure-user-script()
             [[ "${pw}" == "random" ]] && pw=$(mktemp -u XXXXXXXXXX)
             echo "user.password = '${pw}'"
             echo "user.password_confirmation = '${pw}'"
+            echo "user.password_automatically_set=false"
             echo "user.save!"
         fi
 
@@ -213,10 +214,16 @@ function gitlab::initial-setup()
     then 
         set_password+=("--password" "${admin_secret}")
     else
-        generate-passwords -random "${secret_name}"
+        generate-passwords -random "${admin_secret_name}"
+        admin_secret=$(salt-secret "${admin_secret_name}")
     fi
 
-    gitlab::configure-user root --existing --email "localhost@localdomain" #"admin@${IPA_EMAIL_DOMAIN}"
+    if [[ -n "${admin_secret}" ]]
+    then
+        gitlab::configure-user root --existing --email "root@localhost.localdomain" --password "${admin_secret}" #"admin@${IPA_EMAIL_DOMAIN}"
+    else
+        err "Refusing to configure empty password!"
+    fi
 }
 
 function gitlab-user-util::usage()
@@ -342,11 +349,11 @@ function gitlab::copy-source-as-projects()
     local data_dir="${3}"
     local proj_dir="${data_dir}/${grp_name}"
     mkdir -p "${proj_dir}"
-    local src_dir
-    for src_dir in "${src_dir}/${grp_name}"/*/
+    local sub_dir
+    for sub_dir in "${src_dir}/${grp_name}"/*/
     do
         # Strip the trailing slash
-        local src_path="${src_dir%/}"
+        local src_path="${sub_dir%/}"
         gitlab::create-bare-repo "${src_path}" "${proj_dir}/${src_path##*/}.git"
     done
     chown -R git.git "${proj_dir}"
@@ -364,6 +371,14 @@ function gitlab::import-repos::main()
     # if they are already there because we put them there ourselves.
     # So instead, they are imported from a different dir, here:
     local data_dir=/d/local/data/gitlab-import
+
+    if [[ -d "${data_dir}" ]]
+    then 
+        echo "It looks like the import has alrady been performed." 1>&2
+        echo "Otherwise, delete '${data_dir}' first." 1>&2
+        exit 0
+    fi 
+
     mkdir -p "${data_dir}"
 
     msg "Generating new git repos from source folders"

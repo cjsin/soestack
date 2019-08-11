@@ -3,10 +3,14 @@
 nugget_data:
 
     package-sets:
-
         dovecot:
             centos,rhel,fedora:
-                - dovecot    
+                - dovecot
+
+    service-sets:
+        dovecot:
+            centos,rhel,fedora:
+                - dovecot
 
 nuggets:
 

@@ -2,7 +2,7 @@
 
 .test-script:
     file.managed:
-        - name:     /usr/local/sbin/logstash-test
+        - name:     /usr/local/bin/logstash-test
         - user:     root
         - group:    root
         - mode:     '0755'
@@ -65,4 +65,4 @@
 
 .test:
     cmd.run:
-        - name:     /usr/local/sbin/logstash-test 0.0.0.0 12345 t
+        - name:     /usr/local/bin/logstash-test 0.0.0.0 12345 t

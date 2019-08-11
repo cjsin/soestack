@@ -70,6 +70,7 @@
 {{sls}}.{{prefix}}{{state_tag}}.chgrp.{{what}}{{suffix}}:
     cmd.run:
         - name: chgrp '{{primary_group[0]}}' '{{what}}'
+        - unless: stat -c %G '{{what}}' | egrep '^{{primary_group[0]}}$'
 {%-             endfor %}
 {%-         endif %}
 
@@ -78,6 +79,7 @@
 {{sls}}.{{prefix}}{{state_tag}}.chmod.{{what}}{{suffix}}:
     cmd.run:
         - name: chmod g+rX '{{what}}'
+        - unless: stat -c '%a' '{{what}}' | egrep '^.[45]'
 {%-             endfor %}
 {%-         endif %}
 {%-     endif %}

@@ -1,6 +1,5 @@
 #!stateconf yaml . jinja
 
-
 .setup-selinux:
     selinux.boolean:
         - name:    antivirus_can_scan_system
@@ -45,19 +44,33 @@
             ## user 'clamupdate' as soon as possible
             0  */3 * * * root /usr/share/clamav/freshclam-sleep
 
+.freshclam-run-once-script:
+    file.managed:
+        - name: /usr/local/bin/freshclam-run-once
+        - user: root
+        - group: root
+        - mode:  '0755'
+        - contents: |
+            #!/bin/bash 
+            
+            record="/var/log/freshclam-run-once"
+            [[ -f "${record}" ]] && exit 0
+
+            freshclam && touch "${record}"
+
 .freshclam-run-once:
     cmd.run:
-        - name: freshclam && touch /var/log/freshclam-run-once
+        - name:   /usr/local/bin/freshclam-run-once
         - unless: test -f /var/log/freshclam-run-once
 
 .clamd-service-enabled:
     service.running:
-        - name: clamd@scan
+        - name:   clamd@scan
         - enable: True
 
 .scan-scripts:
     file.managed:
-        - name: /usr/local/sbin/clam-scan-home
+        - name: /usr/local/bin/clam-scan-home
         - user: root
         - group: root
         - mode: '0755'

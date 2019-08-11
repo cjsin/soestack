@@ -92,7 +92,7 @@ check_for_updates = false
 admin_user = admin
 
 # default admin password, can be changed before first start of grafana,  or in profile settings
-admin_password = {{salt['cmd.shell']('salt-secret pw-grafana-admin 2> /dev/null')}}
+admin_password = {{salt['cmd.shell']('salt-secret pw-grafana-admin 2> /dev/null || echo adminadmin')}}
 
 # disable gravatar profile images
 disable_gravatar = true

@@ -37,7 +37,7 @@ include:
 
 .upload-script:
     file.managed:
-        - name: /usr/local/sbin/upload-rpm
+        - name: /usr/local/bin/upload-rpm
         - user: root
         - group: root
         - mode: '0755'

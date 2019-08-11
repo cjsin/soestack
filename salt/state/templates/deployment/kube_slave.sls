@@ -19,7 +19,7 @@
 
 {{sls}}.cluster-join-script:
     file.managed:
-        - name: /usr/local/sbin/kube-cluster-join-{{deployment_name}}
+        - name: /usr/local/bin/kube-cluster-join-{{deployment_name}}
         - user: root
         - group: root
         - mode:  '0755'
@@ -39,7 +39,7 @@
 {{sls}}.kube-cluster-init:
     cmd.run:
         - unless: test -d /etc/kubernetes/pki
-        - name:   /usr/local/sbin/kube-cluster-join-{{deployment_name}}
+        - name:   /usr/local/bin/kube-cluster-join-{{deployment_name}}
 
 {%-     endif %}
 

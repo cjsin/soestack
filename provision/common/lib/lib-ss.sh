@@ -55,20 +55,22 @@ function interesting_frame()
     local frame="${1:-2}"
     local nframes=$(array_length "${FUNCNAME[@]}")
     local funcname=""
-    local skip_func='^(|colored|spam|notice|info|err|warn|die|echo_stage)$'
+    local skip_func='^(|colored|spam|notice|info|err|warn|die|echo_stage|functrace)$'
+    local indent=""
     while [[ "${frame}" -lt "${nframes}" ]]
     do
         funcname="${FUNCNAME[${frame}]}"
         ((frame++))
         if [[ ! "${funcname}" =~ ${skip_func} ]]
         then
-            echo "${funcname}"
+            echo "${indent}${funcname}"
             return 0
         fi
+        indent+="    "
     done
     if [[ -n "${BASH_SOURCE[1]}" ]]
     then 
-        echo "${BASH_SOURCE[1]}"
+        echo "${indent}${BASH_SOURCE[1]}"
     fi
 }
 
@@ -770,12 +772,14 @@ function yum_vars()
 # error.
 function prepare_gpg_keystore()
 (
+    #set -vx
     local name="${1}"
     local keystore="${2}"
     local email="${3}"
     local priv_savedir="${4:-$2}"
     local pub_savedir="${5:-$2}"
     local scripts="${6:-$2}"
+    echo "name=$name,  keystore=$keystore, email=$email, priv_savedir=$priv_savedir, pub_savedir=$5, scripts=$scripts"
     local keyconfig_file="${keystore}/keyconfig"
     local pubkey="${keystore}/soestack-pub.asc"
     local pub_binfile="${keystore}/soestack-pub.gpg"
@@ -859,7 +863,7 @@ function prepare_gpg_keystore()
 
     if [[ "${pub_savedir}" != "${keystore}" ]]
     then 
-        msg "Copy public key to ${pub_savedir}"
+        msg "Copy public key ${pubkey} to ${pub_savedir}"
         mkdir -p "${pub_savedir}"
         chmod 0700 "${pub_savedir}"
         cp "${pubkey}" "${pub_binfile}" "${pub_savedir}"

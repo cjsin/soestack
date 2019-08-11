@@ -3,4 +3,6 @@
 
 {{sls}}.{{deployment_name}}.postinstall:
     cmd.run:
-        - name: /usr/local/bin/ipa-postinstall --background
+        - name: /usr/local/bin/ipa-postinstall --auto
+        - unless: test -f /var/log/ipa-postinstall.log.success
+

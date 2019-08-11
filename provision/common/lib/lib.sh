@@ -21,6 +21,18 @@ function msg()
     echo "${funcname}:" "${@}" 1>&2
 }
 
+function functrace()
+{
+    local caller="${FUNCNAME[1]}"
+    local depth=${#FUNCNAME[@]}
+    if [[ "${depth}" -le 2 ]]
+    then 
+        echo "${caller}:${*}" 1>&2
+    else 
+        printf "%$(( (depth-2) *4))s%s:%s\n" " " "${caller}" "${*}" 1>&2
+    fi 
+}
+
 function update_mlocate()
 {
     ensure_installed mlocate && command_is_available updatedb && updatedb
@@ -36,10 +48,10 @@ function install_utils()
 function pip_install()
 {
     # When we have a working 
-    #pip install --find-links /e/bundled/bootstrap-pkgs/pypi/ install "${@}"
+    #pip install --find-links /e/bundled/bootstrap-pkgs/pypi/  "${@}"
     if [[ -n "${BUNDLED_SRC}" ]] && [[ -d "${BUNDLED_SRC}" ]]
     then 
-        pip --find-links "${BUNDLED_SRC}/bootstrap-pkgs/pypi" install "${@}"
+        pip install --no-index --find-links "${BUNDLED_SRC}/bootstrap-pkgs/pypi" "${@}"
     elif [[ -f /etc/pip.conf ]] && grep -q index /etc/pip.conf 
     then
         pip install "${@}"

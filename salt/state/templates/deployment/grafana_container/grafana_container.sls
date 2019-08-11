@@ -17,7 +17,6 @@
 {#- so that it will happen before the superclass (containerized_servic) configure phase #}
 
 {%- if action in [ 'all', 'install' ] %}
-
 {#-     # Salt fails to create the group and user with obscure incorrect errors #}
 {%-     if False %}
 {%-         with args = { 'user': 'grafana', 'uid': 472, 'group': 'grafana', 'gid': 472, 'home':'/usr/lib/grafana' } %}
@@ -32,5 +31,16 @@
             getent passwd grafana || useradd -u 472 -d /var/lib/grafana -r -s /sbin/nologin -g 472 grafana 
         - unless: getent group grafana && getent passwd grafana
 {%-     endif %}
+{%- endif %}
 
+{%- if action in [ 'all', 'configure' ] %}
+{#- Generate a secret password before doing the install #}
+{{sls}}.grafana.{{action}}.secret-setup:
+    cmd.run:
+        - name:    generate-passwords pw-grafana-admin -length=10 -passphrase
+        - unless:  salt-secret -list 2> /dev/null | grep -q pw-grafana-admin
+
+{{sls}}.grafana.{{action}}.secret-notice:
+    noop.notice:
+        - text: Grafana admin password can be accessed by the root account, using the command salt-secret pw-grafana-admin
 {%- endif %}

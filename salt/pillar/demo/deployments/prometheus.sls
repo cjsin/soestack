@@ -25,6 +25,10 @@ deployments:
                         accept:
                             tcp:
                                 http: 9090
+        #require-exists:
+        #    file:
+        #        /etc/prometheus/prometheus.yml:
+ 
         container:
             description:  Prometheus metrics and monitoring
             image:        prom/prometheus:v2.3.2

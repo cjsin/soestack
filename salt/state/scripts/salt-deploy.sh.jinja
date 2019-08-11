@@ -33,6 +33,9 @@ function salt-deploy::process-argv()
             --test|--test=True|-test|test=True)
                 test_flag="test=True"
                 ;;
+            --state-output=*)
+                state_output="${arg}"
+                ;;
             [a-zA-Z]*)
                 names+=("${arg}")
                 ;;
@@ -75,6 +78,7 @@ function salt-deploy::main()
     local status
     local test_flag=""
     local debug_flag=""
+    local state_output=""
 
     salt-deploy::process-argv "${@}"
     status=$?
@@ -91,7 +95,7 @@ function salt-deploy::main()
     local name
     for name in "${names[@]}"
     do
-        "salt-deploy::run-${mode}-deployment" "${name}" "${actions[*]}" ${test_flag} ${debug_flag}
+        "salt-deploy::run-${mode}-deployment" "${name}" "${actions[*]}" ${test_flag} ${debug_flag} ${state_output}
     done
 }
 

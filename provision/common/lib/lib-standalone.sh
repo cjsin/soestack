@@ -121,7 +121,7 @@ function copy_bundled_soe()
         then 
             msg "Copy bundled SOE to /e/soestack"
             local part
-            for part in salt htdocs
+            for part in salt htdocs test
             do 
                 if rsync -av "/e/bundled/soe/${part}/" "${SS_DIR}/${part}/"
                 then 
@@ -174,7 +174,7 @@ function setup_bundled_pkgs()
         if (( updated ))
         then 
             msg "Updating yum cache"
-            yum makecache
+            yum  makecache 
         else 
             msg "No repos were updated"
         fi
@@ -727,9 +727,7 @@ function switchover_to_nexus()
             done
         fi 
 
-        local bootstrap_repo_name="${BOOTSTRAP_REPOS%%,*}"
-        bootstrap_repo_name="${bootstrap_repo_name:-bootstrap-centos.repo}"
-
+        local bootstrap_repo_name=bootstrap-centos-nexus.repo
         local nexus_bootstrap="provision/common/inc/${bootstrap_repo_name}"
         msg "Enable nexus bootstrap repos (${nexus_bootstrap})"
         /bin/cp -f "${SS_DIR}/${nexus_bootstrap}" /etc/yum.repos.d/
@@ -738,12 +736,9 @@ function switchover_to_nexus()
         # at the start of it (ie the hostname / port part).
         local NEXUS=$(cat /etc/yum/vars/NEXUS)
         sed -r -i 's%\$NEXUS%'"${NEXUS}"'%' "/etc/yum.repos.d/${bootstrap_repo_name}"
-
         msg "Running yum makecache"
-        # The epel repo is currently broken due to an EPEL bug and a sonatype nexus bug
-        # So we explicitly ignore errors on the yum makecache here
-        yum --disablerepo=epel makecache || echo "makecache failed"
-        yum makecache || echo "makecache failed"
+        yum --disablerepo=epel makecache || echo "Failed yum makecache"
+ 
     else 
         notice "Skipping yum repo switchover because nexus is not available"
     fi

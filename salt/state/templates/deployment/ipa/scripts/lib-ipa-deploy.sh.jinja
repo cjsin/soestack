@@ -80,12 +80,12 @@ function ipa::deploy::client::main()
     ipa::deploy::install::client
 }
 
-function ipa::deploy::master()
+function ipa::deploy::install::master()
 {
     # Load pre-generated passwords
     
     local admin_password master_password ds_password
-    load_admin_passwords
+    ipa::load-admin-passwords
 
     #local ip="{{grains.fqdn_ip4[0]}}"
     local ip="{{config.ip}}"
@@ -148,7 +148,7 @@ function ipa::deploy::master::main()
         notice "Installation was successful. Preparing salt/IPA integration ticket (${KRB5CCNAME})."
         ipa::deploy::prep-salt-ticket 
         msg "Running IPA post-install"
-        /usr/local/sbin/ipa-postinstall
+        /usr/local/bin/ipa-postinstall
         # Note, the exit code from ipa-postinstall is passed out here just to make it explicit
         return $?
     else

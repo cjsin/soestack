@@ -2,7 +2,7 @@
 
 nuggets:
 
-    nginx:
+    nginx-baremetal:
         description: |
             provides support for deploying nginx but does not deploy any
             particular instance

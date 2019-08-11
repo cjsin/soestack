@@ -302,6 +302,9 @@ function ipa::post-install::process-args()
                 VERBOSE=0
                 CHATTY=0
                 ;;
+            -auto|--auto)
+                auto_mode=1
+                ;;
             -background|--background|background)
                 run_in_background=1
                 ;;
@@ -323,6 +326,7 @@ function ipa::post-install::process-args()
 function ipa::post-install::main()
 {
     local run_in_background=0
+    local auto_mode=0
     local run_all=1
     local VERBOSE=0
     local CHATTY=1
@@ -331,7 +335,24 @@ function ipa::post-install::main()
 
     ipa::post-install::perform-kinit || exit 1
 
-    if (( run_in_background ))
+    if (( auto_mode ))
+    then
+        # The setup will be run once or until it is successful once
+        local logfile="/var/log/ipa-postinstall.log"
+        local successfile="/var/log/ipa-postinstall.log.success"
+        if [[ -f "${successfile}" ]]
+        then 
+            echo "IPA post-install appears to have already run successfully." 1>&2
+        else
+            (
+                 if ipa::post-install::do-work >> "${logfile}" 2>&1
+                 then
+                     touch "${successfile}"
+                     exit 0
+                 fi
+            ) &  # NOTE we are running it in the background
+        fi
+    elif (( run_in_background ))
     then 
         local logfile="/var/log/ipa-postinstall.log"
         msg "IPA post-install started in background (see ${logfile} for results)"

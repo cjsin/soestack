@@ -69,6 +69,7 @@
 {%-         if action == 'activate' %}
 {%-             if 'services' in data or 'service-sets' in data %}
 {%-                 with args = { 'parent': data } %}
+{{noop.notice('activating-services-or-service-sets-for-nugget') }}
 {%                      include('templates/support/services.sls') with context %}
 {%-                 endwith %}
 {%-             endif %}

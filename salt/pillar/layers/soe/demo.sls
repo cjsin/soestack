@@ -26,7 +26,7 @@ soe:
 
 demo:
     vars:
-        soe_layers: soe:demo,role:G@roles,site:testing,lan:default,host:G@host,lan-host:lan:G@layers:lan+host:G@host,private:example.private
+        soe_layers: soe:demo,site:testing,private:example.private
 
 email:
     aliases:
@@ -977,3 +977,4 @@ yum:
                 gpgcheck:    True 
                 gpgkey:      file:///etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-7
         fedora: {}
+

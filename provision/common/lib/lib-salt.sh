@@ -4,8 +4,9 @@
 
 function provision::salt::fixes::regressions()
 {
+    functrace
     ensure_installed patch
-    local patcher="/usr/local/sbin/patch-saltstack.sh"
+    local patcher="/usr/local/bin/patch-saltstack.sh"
     create_script "${patcher}" <<-EOF
 		# bug 53516
 		badfile_1='/usr/lib/python2.7/site-packages/salt/pillar/__init__.py'
@@ -19,11 +20,16 @@ function provision::salt::fixes::regressions()
 
     install_systemd_service_patcher salt-master "${patcher}"
     install_systemd_service_patcher salt-minion "${patcher}"
+
+    # Run it once. It is run by the service unit also to re-patch after reinstallation or upgrade.
+    /usr/local/bin/patch-saltstack.sh
+
     systemctl daemon-reload
 }
 
 function provision::salt::fixes()
 {
+    functrace
     # This is really not important - it just reduces some 
     # salt log file error messages
     ensure_installed python2-pip # gpgme-devel
@@ -35,16 +41,29 @@ function provision::salt::fixes()
 
 function provision::salt::minion::install()
 {
+    functrace
     ensure_installed salt-minion
+    if ! is_installed salt-minion
+    then 
+        err "Salt minion installation failed. Will not continue"
+        return 1
+    fi
 }
 
 function provision::salt::master::install()
 {
+    functrace
     ensure_installed salt-master salt-minion salt salt-api salt-ssh
+    if ! is_installed salt-master 
+    then 
+        err "Salt master installation failed. Will not continue"
+        return 1
+    fi 
 }
 
 function provision::salt::master::restart-services()
 {
+    functrace
     systemctl stop salt-minion
     netstat | grep 4505
     systemctl stop salt-master
@@ -56,6 +75,7 @@ function provision::salt::master::restart-services()
 
 function provision::salt::minion::restart-services()
 {
+    functrace
     systemctl stop salt-minion
     netstat | grep 4505
     systemctl start salt-minion 
@@ -63,6 +83,7 @@ function provision::salt::minion::restart-services()
 
 function provision::salt::test-ping()
 {
+    functrace
     local h="${1}"
     msg "Test ping minion '${h}'"
     salt "${h}" test.ping 2>&1 | indent
@@ -80,6 +101,7 @@ function provision::salt::grains::roles::generate()
 
 function provision::salt::grains::roles::write()
 {
+    functrace
     [[ -f /etc/salt/grains ]] || touch /etc/salt/grains
 
     if ! grep -q "^roles:" /etc/salt/grains 
@@ -95,45 +117,62 @@ function provision::salt::grains::roles::write()
 
 function provision::salt::grains::layers::generate()
 {
-    local layers=()
-    local item=""
+    local DEFAULT_LAYERS=(
+        soe:demo
+        site:demo
+        lan:demo
+    )
+    local DEFAULT_SEQUENCE=(
+        'soe=soe/G@layers:soe'
+        'role=role/G@roles'
+        'site=site/G@layers:site'
+        'lan=lan/G@layers:lan'
+        'host=host/G@host'
+        'lan-host=lan/G@layers:lan/host/G@host'
+        'private=private/G@layers:private'
+    )
     local layers_sequence=()
-    for item in ${LAYERS//,/ }
+    if [[ -n "${LAYERS_SEQ}" && "${LAYERS_SEQ}" != "default" ]]
+    then 
+        layers_sequence=( ${LAYERS_SEQ//,/ } )
+    else
+        layers_sequence=( "${DEFAULT_SEQUENCE[@]}" )
+    fi
+
+    local layers=()
+    if [[ -n "${LAYERS}" && "${LAYERS}" != "default" ]]
+    then 
+        layers=( ${LAYERS//,/ } )
+    else
+        layers=( ${DEFAULT_LAYERS[@]} )
+    fi 
+
+    local layer_vals=()
+    local item=""
+    for item in "${layers[@]}"
     do
         local layer_name="${item%%:*}"
-        local layer_spec="${item#*:}"
-        local spec_parts=( ${layer_spec//+/ } )
-        layers_sequence+=("${layer_name}")
-        if [[ "${#spec_parts[@]}" == 1 ]]
-        then
-            layers+=("${layer_name}: ${layer_spec}")
-        else
-            layers+=("${layer_name}:")
-            for sp in "${spec_parts[@]}"
-            do
-                sp_name="${sp%%:*}"
-                sp_value="${sp#*:}"
-                layers+=("    ${sp_name}: ${sp_value}")
-            done
-        fi
+        local layer_val="${item#*:}"
+        layer_vals+=("${layer_name}: '${layer_val}'")
     done 
+
     {
         echo_data "layers:"
-        for item in "${layers[@]}"
+        for item in "${layer_vals[@]}"
         do 
             echo_data "    ${item}"
         done 
         echo_data "layers-sequence:"
         for item in "${layers_sequence[@]}"
         do 
-            echo_data "    - ${item}"
+            echo_data "    - '${item}'"
         done 
-        
     }
 }
 
 function provision::salt::grains::layers::write()
 {
+    functrace
     [[ -f /etc/salt/grains ]] || touch /etc/salt/grains
     
     if ! grep -q "^layers:" /etc/salt/grains 
@@ -154,6 +193,7 @@ function provision::salt::grains::layers::write()
 # error.
 function provision::salt::prepare-gpg-keys()
 (
+    functrace
     if [[ -z "${ADMIN_EMAIL}" ]]
     then
         err "Cannot generate GPG keys for saltstack private pillar data"
@@ -162,13 +202,14 @@ function provision::salt::prepare-gpg-keys()
         return 0
     fi
 
-    ensure_installed gnupg rngd
+    ensure_installed gnupg2 rng-tools
     mkdir -p "/var/log/build/salt-gpgkeys"
-    prepare_gpg_keystore "salt" "/etc/salt/gpgkeys" "${ADMIN_EMAIL}" "/var/log/build/salt-gpgkeys" "/usr/local/sbin"
+    prepare_gpg_keystore "salt" "/etc/salt/gpgkeys" "${ADMIN_EMAIL}" "/etc/salt/gpgkeys" "/var/log/build/salt-gpgkeys" "/usr/local/sbin"
 )
 
 function provision::salt::master::configure-etc()
 {
+    functrace
     mkdir -p /etc/salt/master.d
     
     # Copy some static configuration
@@ -184,6 +225,7 @@ function provision::salt::master::configure-etc()
 
 function provision::salt::minion::configure-etc()
 {
+    functrace
     mkdir -p /etc/salt/minion.d
 
     # Copy some static configuration
@@ -202,6 +244,7 @@ function provision::salt::minion::configure-etc()
 
 function provision::salt::configure-ipa-integration()
 {
+    functrace
     cat > /etc/salt/minion.d/saltipa.conf <<-EOF
 		saltipa:
 		    ticket_file:  '/var/cache/salt/master/salt.krb'
@@ -211,18 +254,21 @@ function provision::salt::configure-ipa-integration()
 
 function provision::salt::minion::start()
 {
+    functrace
     systemctl enable salt-minion
     systemctl start salt-minion
 }
 
 function provision::salt::master::start()
 {
+    functrace
     systemctl enable salt-master salt-api
     systemctl restart salt-master
 }
 
 function provision::salt::minion::wait-for-enrolment()
 {
+    functrace
     while ! salt-call test.ping
     do 
         date
@@ -235,6 +281,7 @@ function provision::salt::minion::wait-for-enrolment()
 
 function provision::salt::step()
 {
+    functrace
     local what="${1}"
     shift
     local -a args=("${@}")
@@ -270,6 +317,7 @@ function provision::salt::step()
 
 function provision::salt::states()
 {
+    functrace
     local preconfigured_roles="${1}"
     local fail_fast="${2:-0}"
 
@@ -343,6 +391,7 @@ function provision::salt::states()
 
 function run_salt_state_provision()
 {
+    functrace
     echo_start "Starting salt state provisioning."
     local logfile=/var/log/provision/salt-state-provision.log
     msg "Log file is ${logfile}"
@@ -352,6 +401,7 @@ function run_salt_state_provision()
 
 function provision::salt::minion::client()
 {
+    functrace
     if ! provision::salt::minion::auto-enrol
     then 
         err "Automatic enrolment failed!"
@@ -369,6 +419,7 @@ function provision::salt::minion::client()
 
 function provision::salt::minion::master()
 {
+    functrace
     #with_low_tcp_time_wait provision::salt::minion::restart-services
 
     provision::salt::minion::start
@@ -380,14 +431,12 @@ function provision::salt::minion::master()
 
 function provision::salt::minion()
 {
+    functrace
     . "${SS_DIR}"/provision/common/lib/lib-client.sh
 
     msg "Installing salt minion"
-    provision::salt::minion::install
-
-    if ! is_installed salt-minion
-    then 
-        err "Salt minion installation failed. Will not continue"
+    if ! provision::salt::minion::install
+    then
         return 1
     fi
 
@@ -402,17 +451,19 @@ function provision::salt::master()
 
     # The master uses the master and client 
     msg "Installing salt master"
-    provision::salt::master::install
+    if ! provision::salt::master::install
+    then
+        return 1
+    fi
 
     msg "Installing salt minion"
-    provision::salt::minion::install
-
-    if ! is_installed salt-master 
-    then 
-        err "Salt master installation failed. Will not continue"
+    if ! provision::salt::minion::install
+    then
         return 1
-    fi 
+    fi
 
+    provision::salt::fixes
+    provision::salt::minion::configure-etc
     provision::salt::master::configure-etc
     provision::salt::configure-salt-api
 
@@ -431,6 +482,7 @@ function provision::salt::master()
 
 function provision::salt()
 {
+    functrace
     if [[ -z "${SALT_TYPE}" ]]
     then
         if is_standalone 
