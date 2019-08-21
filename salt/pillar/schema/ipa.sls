@@ -6,7 +6,7 @@ example-data:
     ipa:
         # NOTE: IPA uses the REALM to generate the base dn, dc=xxx, not the dns domain
         server:    infra.demo.com
-        server_ip: '!!demo.ips.infra'
+        server_ip: 1.2.3.4
         base_dn:   dc=demo,dc=com
         bind_user: bind-user
         realm:     DEMO.COM

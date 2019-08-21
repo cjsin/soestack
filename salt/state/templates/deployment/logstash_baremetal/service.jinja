@@ -8,9 +8,9 @@ Group={{group}}
 # Load env vars from /etc/default/ and /etc/sysconfig/ if they exist.
 # Prefixing the path with '-' makes it try to load, but if the file doesn't
 # exist, it continues onward.
-EnvironmentFile=-/etc/default/logstash-{{service_suffix}}
-EnvironmentFile=-/etc/sysconfig/logstash-{{service_suffix}}
-ExecStart=/usr/share/logstash/bin/logstash --path.settings /etc/logstash/{{service_suffix}}
+EnvironmentFile=-/etc/default/{{deployment_name}}
+EnvironmentFile=-/etc/sysconfig/{{deployment_name}}
+ExecStart=/usr/share/logstash/bin/logstash --path.settings /etc/logstash/{{config_subdir}}
 Restart=always
 WorkingDirectory=/
 Nice=19

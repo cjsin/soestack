@@ -16,7 +16,7 @@ LABEL Network Install SoeStack (Centos 7.6 1810)
   # http has to be used for the kickstart download because the anaconda installer (still) has the bug where if it tries to access
   # the kickstart over an nfs share (and the kickstart is not at the exact top level), then it tries to download the file to 
   # the same path within the install repo.
-  # So for example with install repo path /e/pxe/os/minimal, and kickstart path /e/pxe/os/minimal/kickstart/kickstart.cfg
-  # then it would try to copy the kickstart file to (or from?) /e/pxe/os/minimal/e/pxe/os/minimal/kickstart/kickstart.cfg 
+  # So for example with install repo path /e/pxe/os/minimal, and kickstart path /pxe/os/minimal/kickstart/kickstart.cfg
+  # then it would try to copy the kickstart file to (or from?) /e/pxe/os/minimal/pxe/os/minimal/kickstart/kickstart.cfg 
 
-  APPEND initrd=os/minimal/isolinux/initrd.img inst.ks=http://192.168.121.101:9001/os/minimal/kickstart/kickstart.cfg inst.stage2=nfs:192.168.121.101:/e/pxe/os/minimal/
+  APPEND initrd=os/minimal/isolinux/initrd.img inst.ks=http://192.168.121.101:9001/os/minimal/kickstart/kickstart.cfg inst.stage2=nfs:192.168.121.101:/pxe/os/minimal/

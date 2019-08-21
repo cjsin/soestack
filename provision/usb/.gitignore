@@ -6,3 +6,4 @@ bundler-personal-*.properties
 bundler-usb-lan.properties
 /venv
 guestfs-1.40.2.tar.gz
+bundler-usb-cs.properties

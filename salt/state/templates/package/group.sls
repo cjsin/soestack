@@ -1,6 +1,6 @@
 {%- set package_group      = args.package_group %}
 
-{%- set suffix = salt['uuid.short']() %}
+{%- set suffix = salt['uuids.short']() %}
 
 {# # support recursion #}
 {%- if 'package-groups' in package_group %}

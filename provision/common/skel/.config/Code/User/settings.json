@@ -1,0 +1,10 @@
+{
+    "editor.renderWhitespace": "boundary",
+    "editor.wordWrapColumn": 120,
+    "search.location": "panel",
+    "search.exclude": {
+        "**/*.rpm": true,
+        "**/repodata": true,
+        "**/venv": true
+    }
+}

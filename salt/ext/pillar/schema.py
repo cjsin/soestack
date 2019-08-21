@@ -132,13 +132,12 @@ class SchemaComplexifier():
             elif isinstance(v, str) or isinstance(v, unicode) :
                 changed, newvalue = self.alter(v)
                 if changed:
-                    print("Modify key {} in place with new value {}".format(k, pformat(newvalue)))
+                    log.debug("Modify key {} in place with new value {}".format(k, pformat(newvalue)))
                     obj[k] = newvalue
             elif isinstance(v, dict):
                 self.process_dict(v)
             elif isinstance(v, list):
                 self.process_list(v)
-        print("After processing, dict obj is {}".format(pformat(obj)))
 
     def process_list(self, obj):
         for idx, v in enumerate(obj):
@@ -147,13 +146,12 @@ class SchemaComplexifier():
             elif isinstance(v, str) or isinstance(v, unicode) :
                 changed, newvalue = self.alter(v)
                 if changed:
-                    print("Modify index {} in place with new value {}".format(idx, pformat(newvalue)))
+                    log.debug("Modify index {} in place with new value {}".format(idx, pformat(newvalue)))
                     obj[idx] = newvalue
             elif isinstance(v, dict):
                 self.process_dict(v)
             elif isinstance(v, list):
                 self.process_list(v)
-        print("After processing, list obj is {}".format(pformat(obj)))
 
     def complexify(self,schema):
         s = copy.deepcopy(schema)
@@ -213,6 +211,7 @@ def __virtual__():
     if SUPPORTED:
         return __virtualname__
     else:
+        log.error("Salt extension module {} cannot load due to missing dependencies".format(__virtualname__))
         return False
 
 def process_checklist(pillar, check, definitions):
@@ -363,5 +362,6 @@ if __name__ == "__main__":
 
     sc=SchemaComplexifier()
     
+    print("test results:")
     print(tojson(sc.complexify(s)))
 

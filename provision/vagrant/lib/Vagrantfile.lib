@@ -12,7 +12,7 @@ DEFAULT_NET={ :dev => "#{SHARED_SUBNET_BRIDGE_DEV}", :mode => "bridge", :type=> 
 DEFAULT_NET_DEV=SHARED_SUBNET_BRIDGE_DEV
 
 #:dev => "#{SHARED_SUBNET_BRIDGE_DEV}",
-TZ="Australia/Adelaide"
+TZ="UTC"
 CLUSTER_NAME_FORMAT="%{cluster_name}%{node_subtype}0%{num}"
 SYNC="/vagrant"
 DEBUG=ENV["DEBUG"] || false

@@ -31,7 +31,7 @@
 
 {{sls}}.{{deployment_name}}.cluster-init-script:
     file.managed:
-        - name: /usr/local/sbin/kube-cluster-init-{{deployment_name}}
+        - name: /usr/local/bin/kube-cluster-init-{{deployment_name}}
         - user: root
         - group: root
         - mode:  '0755'
@@ -51,7 +51,7 @@
 {{sls}}.{{deployment_name}}.kube-cluster-init:
     cmd.run:
         - unless: test -f /etc/kubernetes/admin.conf
-        - name:   /usr/local/sbin/kube-cluster-init-{{deployment_name}}
+        - name:   /usr/local/bin/kube-cluster-init-{{deployment_name}}
 
 {%-     endif %}
 

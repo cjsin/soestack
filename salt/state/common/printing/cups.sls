@@ -1,5 +1,8 @@
 #!stateconf yaml . jinja
 
+{%- if 'cups' in pillar %}
+{%-     set cups = pillar.cups %}
+
 .cups-installed:
     pkg.latest:
         - pkgs:
@@ -8,13 +11,18 @@
             - cups-filesystem
             - cups-filters
             - cups-libs
-            # - cups-pdf
             - cups-pk-helper
             - gutenprint-cups
             - foomatic
             - foomatic-db
             - foomatic-db-filesystem
             - foomatic-db-ppds
+
+.cups-pdf-installed:
+    pkg.latest:
+        - fromrepo: epel
+        - pkgs:
+            - cups-pdf
 
 .tools-installed:
     pkg.latest:
@@ -37,20 +45,41 @@
         - template: jinja
         - source:   salt://{{slspath}}/cupsd.conf.jinja
         - context:
-            cups:   {{pillar.cups|json()}}
+            cups:   {{cups|json()}}
 
-.printers-file:
+.printers-file-template:
     file.managed:
-        - name:     /etc/cups/printers.conf
+        - name:     /etc/cups/printers.conf.ss
         - user:     root
         - group:    lp
         - mode:     '0600'
         - template: jinja
         - source:   salt://{{slspath}}/cupsd-printers.conf.jinja
         - context:
-            cups:   {{pillar.cups|json()}}
+            cups:   {{cups|json()}}
+
+.printers-file-updater:
+    file.managed:
+        - name:     /usr/local/bin/cups-update-printer-conf
+        - user:     root
+        - group:    root
+        - mode:     '0755'
+        - source:   salt://{{slspath}}/cups-update-printers-conf.sh.jinja
+        - template: jinja 
+
+.printers-file-update:
+    cmd.run:
+        - name:     /usr/local/bin/cups-update-printer-conf update
+        - unless:   /usr/local/bin/cups-update-printer-conf check
 
 .service:
     service.running:
         - name:     cups
         - enable:   True
+
+{%- else %}
+
+.cups-not-configured:
+    noop.notice
+
+{%- endif %}

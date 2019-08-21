@@ -1,0 +1,112 @@
+# Gitlab configuration file
+# This file is generated from a Salt state.
+# Please be aware it may be overwritten
+{%- set domain = '.' ~ pillar.network.system_domain if 'network' in pillar and 'system_domain' in pillar.network else '' %}
+{%- set protocol = 'https' if config.gitlab.port == 443 else 'http' %}'
+{%- set port_append = ':' ~ config.gitlab.port if config.gitlab.port not in [443,80] else  '' %}
+external_url '{{protocol}}://{{config.gitlab.hostname}}{{domain}}{{port_append}}'
+{%- if 'bind_ip' in config.gitlab and config.gitlab.bind_ip %}
+nginx['listen_addresses']            = ["{{config.gitlab.bind_ip}}"]
+{%- endif %}
+
+# Primary data dirs
+git_data_dirs({
+    "default" => {
+        "path" => "{{config.storage.path}}"
+    }
+})
+
+# Local timezone and similar configuration
+gitlab_rails['time_zone']          = "{{pillar.timezone}}"
+
+# Backups
+gitlab_rails['manage_backup_path'] = true
+gitlab_rails['backup_path']        = "{{config.backups.path}}"
+
+
+# integrated docker registry
+registry['enable']                 = {{ 'true' if config.registry.enabled else 'false'}}
+{%- if config.registry.enabled %}
+{%-     set protocol = 'http' if config.registry.port not in [443] else 'https' %}
+{%-     set port_append = ':' ~ config.registry.port if config.registry.port not in [443,80] else '' %}
+registry_external_url              "{{protocol}}://{{config.registry.hostname}}{{domain}}{{port_append}}"
+registry['registry_http_addr']     = "localhost:5000"
+registry_nginx['enable']           = true 
+registry_nginx['listen_port']      = {{config.registry.port}}
+{%-     if 'bind_ip' in config.registry and config.registry.bind_ip %}
+registry_nginx['listen_addresses'] = ["{{config.registry.bind_ip}}"]
+{%-     endif %}
+gitlab_rails['registry_enabled']   = true
+gitlab_rails['registry_host']      = "{{grains.host}}"
+gitlab_rails['registry_port']      = "{{config.registry_nginx.port}}"
+gitlab_rails['registry_api_url']   = "http://localhost:5000"
+{%- endif %}
+
+# gitlab pages
+gitlab_pages['enable']             = {{ 'true' if config.pages.enabled else 'false'}}
+{%- if config.pages.enabled %}
+{%-     set protocol = 'http' if config.pages.port not in [443] else 'https' %}
+{%-     set port_append = ':' ~ config.pages.port if config.pages.port not in [443,80] else '' %}
+pages_external_url                 "{{protocol}}://{{config.pages.hostname}}{{domain}}{{port_append}}/"
+{%-     if 'bind_ip' in config.pages and config.pages.bind_ip %}
+pages_nginx['listen_addresses'] = ["{{config.pages.bind_ip}}"]
+{%-     endif %}
+{%- endif %}
+
+
+{# gitlab prometheus is disabled because it conflicts with prometheus running on the host #}
+{#- NOTE the default gitlab config is with this enabled #}
+prometheus['enable']               = {{ 'true' if config.prometheus.enabled else 'false' }}
+
+{%- if config.prometheus.enabled %}
+{%- endif %}
+
+node_exporter['enable']            = {{ 'true' if config.node_exporter.enabled else 'false' }}
+{%- if config.node_exporter.enabled %}
+node_exporter['listen_address']    = 'localhost:{{config.ports.node_exporter_listen_port}}'
+{%- endif %}
+
+grafana['enable']                  = {{ 'true' if config.grafana.enabled else 'false' }}
+{%- if config.grafana.enabled %}
+{%- endif %}
+
+mattermost['enable']               = {{ 'true' if config.mattermost.enabled else 'false' }}
+{%- if config.mattermost.enabled %}
+{%-     set protocol = 'http' if config.mattermost.port not in [443] else 'https' %}
+{%-     set port_append = ':' ~ config.mattermost.port if config.mattermost.port not in [443,80] else '' %}
+{#-     # NOTE, at this stage I believe the mattermost external URL MUST NOT have a slash at the end, in order for the gitlab auth integration to work properly #}
+mattermost_external_url            "{{protocol}}://{{config.mattermost.hostname}}{{domain}}{{port_append}}"
+{%-     if 'bind_ip' in config.mattermost and config.mattermost.bind_ip %}
+mattermost_nginx['listen_addresses'] = ["{{config.mattermost.bind_ip}}"]
+{%-     endif %}
+{%- endif %}
+
+{%- if 'unicorn' in config and 'port' in config.unicorn %}
+{#- # Gitlab default unicorn port 8080 conflicts with the IPA service #}
+
+gitlab_workhorse['auth_backend'] = "http://localhost:{{config.unicorn.port}}"
+unicorn['port'] = {{config.unicorn.port}}
+
+{%- endif %}
+
+gitlab_rails['ldap_enabled'] = true
+gitlab_rails['ldap_servers'] = {
+    'main' => {
+        'label'               => 'IPA auth',
+        'host'                => 'infra.{{pillar.network.system_domain}}',
+        'port'                => 389,
+        'uid'                 => 'uid',
+        'encryption'          => 'plain',
+        'verify_certificates' => true,
+        'bind_dn'             => 'uid={{pillar.ipa.bind_user}},cn=users,cn=accounts,{{pillar.ipa.base_dn}}',
+        'password'            => 'gitlab', # This is a placeholder, not actually used, it can enumerate users without login
+        'active_directory'    => false,
+        'base'                => 'cn=users,cn=accounts,{{pillar.ipa.base_dn}}',
+        'group_base'          => 'cn=groups,cn=accounts,{{pillar.ipa.base_dn}}',
+        'admin_group'         => 'admins'
+    }
+}
+
+{%- if 'postgres_ram' in config.gitlab and config.gitlab.postgres_ram and config.gitlab.postgres_ram != 'default' %}
+postgresql['shared_buffers'] = "{{config.gitlab.postgres_ram}}"
+{%- endif %}

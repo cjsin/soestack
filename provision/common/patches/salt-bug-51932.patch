@@ -1,0 +1,11 @@
+--- highstate.py.orig	2019-02-16 16:44:58.000000000 +1030
++++ highstate.py	2019-08-03 22:17:29.097000000 +0930
+@@ -244,6 +244,8 @@
+                 nchanges += 1
+             else:
+                 schanged, ctext = _format_changes(ret['changes'])
++                if not ctext and 'pchanges' in ret:
++                    schanged, ctext = _format_changes(ret['pchanges'])
+                 nchanges += 1 if schanged else 0
+ 
+             # Skip this state if it was successful & diff output was requested

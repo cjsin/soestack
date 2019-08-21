@@ -29,7 +29,7 @@ accounts:
             fullname: Node exporter
             shell:    /bin/nologin
             #uid:      998
-            home:     /d/local/node_exporter
+            home:     /d/local/data/ss-node-exporter
             groups:
                 - node_exporter
 
@@ -37,7 +37,7 @@ accounts:
             fullname: Prometheus
             shell:    /bin/nologin
             #uid:      999
-            home:     /d/local/prometheus
+            home:     /d/local/data/prometheus
             groups:
                 - prometheus
 

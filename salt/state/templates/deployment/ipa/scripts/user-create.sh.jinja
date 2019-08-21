@@ -1,0 +1,17 @@
+#!/bin/bash
+
+. /usr/local/bin/lib-ss.sh || exit 1
+. /usr/local/bin/lib-ipa.sh || die "Failed loading ipa lib"
+
+function verbose()
+{
+    echo "Run: ${*}" 1>&2
+    "${@}"
+}
+
+function quiet()
+{
+    "${@}" > /dev/null 2> /dev/null
+}
+
+ipa::user-create::main "${@}"

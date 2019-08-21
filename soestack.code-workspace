@@ -7,4 +7,21 @@
 	"settings": {
 		"python.pythonPath": "venv/bin/python3"
 	}
+	"files.associations": {
+        "*.sh.jinja" : "jinja-shell",
+        "*.sysconfig.jinja" : "jinja-shell",
+        "*.service.jinja": "systemd",
+        "*.yml.jinja": "jinja-yaml",
+        "*.yaml.jinja": "jinja-yaml",
+        "*.xml.jinja": "jinja-xml",
+        ".ini.jinja": "jinja-properties",
+        ".toml.jinja": "jinja-toml",
+        ".json.jinja": "jinja-json",
+        ".js.jinja": "jinja-json",
+        ".html.jinja": "jinja-json",
+        ".css.jinja": "jinja-css",
+        ".py.jinja": "jinja-py",
+        ".dockerfile.jinja": "jinja-dockerfile",
+        ".md.jinja": "jinja-md"
+	}
 }

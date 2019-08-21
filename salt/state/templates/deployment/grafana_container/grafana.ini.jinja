@@ -1,0 +1,66 @@
+[log]
+filters = ldap:debug
+
+[paths]
+data = {{config.data_path}}
+
+[server]
+protocol = {{'https' if 'cert' in config and config.cert else 'http'}}
+# The grafana instance in the container fails to bind to the specific IP but can bind to 0.0.0.0
+# and then docker only maps the port for the specific IP
+http_addr = 0.0.0.0
+#http_addr = {{config.ip}}
+http_port = {{config.port}}
+domain = {{config.domain}}
+enforce_domain = false
+root_url = http://{{config.hostname}}{{'.' ~ config.domain if 'domain' in config and config.domain else ''}}:{{config.port}}
+cert = {{config.cert if config.cert else ''}}
+
+[provisioning]
+provisioning = /etc/grafana/provisioning
+
+[database]
+log_queries = false
+
+[analytics]
+reporting_enabled = false
+check_for_updates = false
+
+[security]
+admin_user = admin
+admin_password = {{salt['cmd.shell']('salt-secret pw-grafana-admin 2> /dev/null || echo adminadmin')}}
+disable_gravatar = true
+
+[users]
+allow_sign_up = true
+
+[auth.anonymous]
+enabled = false
+org_role = Viewer
+
+[auth.basic]
+enabled = false
+
+[auth.ldap]
+enabled = true
+config_file = /etc/grafana/ldap.toml
+allow_sign_up = true
+
+[smtp]
+enabled = false
+
+[emails]
+welcome_email_on_sign_up = false
+
+[alerting]
+enabled = true
+
+[explore]
+enabled = true
+
+[metrics]
+enabled           = true
+
+[grafana_com]
+url = {{config.grafana_url}}
+

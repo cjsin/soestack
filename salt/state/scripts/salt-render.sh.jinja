@@ -1,0 +1,22 @@
+#!/bin/bash
+prefix="/soestack/salt/state/"
+
+if [[ ! -d "${prefix}" ]]
+then
+    echo "ERROR: Please run on the salt master" 1>&2
+    exit 1
+fi 
+
+name="${1//.//}"
+path="${prefix}/${name}"
+main_sls="${path}.sls"
+init_sls="${path}/init.sls"
+selected=""
+for selected in "${main_sls}" "${init_sls}"
+do
+    if [[ -f "${selected}" ]]
+    then
+        salt-call slsutil.renderer "${selected}" jinja
+        break
+    fi
+done

@@ -1,37 +1,40 @@
 {{ salt.loadtracker.load_pillar(sls) }}
 
 deployments:
-    dovecot_server:
-        dovecot:
-            host:      infra
-            activated: False
-            activated_where: {{sls}}
-            activate:
-                service:
-                    enabled:
-                        - dovecot
-                firewall:
-                    basic:
-                        dovecot-pop3:
-                            ip:  192.168.121.101
-                            accept:
-                                tcp:
-                                    pop3: 110
-                        dovecot-imap:
-                            ip:  192.168.121.101
-                            accept:
-                                tcp:
-                                    imap: 143
-                        dovecot-imaps:
-                            ip:  192.168.121.101
-                            accept:
-                                tcp:
-                                    imaps: 993
-                        dovecot-pop3s:
-                            ip:  192.168.121.101
-                            accept:
-                                tcp:
-                                    pop3s: 995
+    dovecot:
+        activated:       False
+        activated_where: {{sls}}
+        deploy_type:     dovecot_server
+        roles:
+            - email-server-node
 
-            config:
-                mail_location: 'maildir:~/Maildir'
+        activate:
+            service-sets:
+                running:
+                    - dovecot
+
+            firewall:
+                basic:
+                    dovecot-pop3:
+                        ip:  '!!demo.ips.infra'
+                        accept:
+                            tcp:
+                                pop3: 110
+                    dovecot-imap:
+                        ip:  '!!demo.ips.infra'
+                        accept:
+                            tcp:
+                                imap: 143
+                    dovecot-imaps:
+                        ip:  '!!demo.ips.infra'
+                        accept:
+                            tcp:
+                                imaps: 993
+                    dovecot-pop3s:
+                        ip:  '!!demo.ips.infra'
+                        accept:
+                            tcp:
+                                pop3s: 995
+
+        config:
+            mail_location: 'maildir:~/Maildir'

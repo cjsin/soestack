@@ -13,7 +13,7 @@ These instructions are from the following Sonatype support pages. Please read th
 
 In short:
 
-    - systemctl stop nexus-mirror
+    - systemctl stop ss-nexus-mirror
 
     - (check that it has stopped)
 
@@ -23,7 +23,7 @@ In short:
     
         .. code-block:: console
         
-            $> docker run -it -p 8081:8081 -v /d/local/data/nexus:/nexus-data $IMAGE /bin/bash
+            $> docker run -it -p 8081:8081 -v /d/local/data/ss-nexus-mirror:/nexus-data $IMAGE /bin/bash
 
     - within the shell, you are going to start the nexus console 
 

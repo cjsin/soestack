@@ -27,12 +27,13 @@ check_server = ''
 last_check = 0
 last_check_result = [False, "Not checked yet"]
 check_period = 30
+SUPPORTED = True
 
 log = logging.getLogger(__name__)
 
 record_to_cmdline_flags = {
     'arecord': 'a-rec',
-    'ptrrecord': 'ptr-hostname',
+    'ptrrecord': 'ptr-rec',
     'cnamerecord': 'cname-hostname'
 }
 
@@ -41,29 +42,48 @@ class HeadRequest(urllib2.Request):
         return "HEAD"
 
 def __virtual__():
-    return __virtualname__
+    global SUPPORTED
+    if SUPPORTED:
+        return __virtualname__
+    else:
+        logging.info("saltipa module is not supported on minions other than the master")
+        return False
 
 def __init__(opts):
+    global SUPPORTED
     global salt_ticket, check_server
 
-    salt_ticket = None
+    # quick check for whether we are the master...
+    # TODO - figure out a better way to do this.
 
-    if __virtualname__ in opts:
-        my_opts = opts[__virtualname__]
-        logging.info("SaltIPA integration configuration: \n{}".format(pformat(my_opts)))
+    my_minion_id = __grains__['id']
 
-        if 'ticket_file' in my_opts:
-            salt_ticket = my_opts['ticket_file']
+    # TODO - need to allow this for a replica node also
+    if os.path.exists('/etc/salt/pki/master/master.pem') and os.path.exists('/etc/salt/pki/master/minions/{}'.format(my_minion_id)):
+        logging.info("OK - we appear to be running on the master")
+        SUPPORTED = True
+    else:
+        SUPPORTED = False
 
-        if not salt_ticket:
-            salt_ticket = TICKET_FILE
-    
-        if 'check_server' in my_opts:
-            check_server = my_opts['check_server']
+    if SUPPORTED:
+        salt_ticket = None
 
-    os.environ[KRB5CCNAME] = salt_ticket 
+        if __virtualname__ in opts:
+            my_opts = opts[__virtualname__]
+            logging.info("SaltIPA integration configuration: \n{}".format(pformat(my_opts)))
 
-    check_ticket()
+            if 'ticket_file' in my_opts:
+                salt_ticket = my_opts['ticket_file']
+
+            if not salt_ticket:
+                salt_ticket = TICKET_FILE
+        
+            if 'check_server' in my_opts:
+                check_server = my_opts['check_server']
+
+        os.environ[KRB5CCNAME] = salt_ticket 
+
+        check_ticket()
 
 def server_unavailable():
     """ Return True if the server to check is configured, and is not available """
@@ -116,12 +136,17 @@ def check_ticket():
 def loggedin():
     os.environ[KRB5CCNAME] = salt_ticket 
     
-    cmd = [ 'klist', '-s' ]
+    #print("Run klist -s, using KRB5CCNAME={}".format(salt_ticket))
+    #cmd = [ 'klist', '-s' ]
+    #print("Check env:")
+    #env_out = __salt__['cmd.run_all'](["bash","-c",'/bin/env | grep KRB5 | sort'])
+    #print(pformat(env_out))
 
-    out = __salt__['cmd.run_all'](cmd,
-                                  output_loglevel='trace',
-                                  ignore_retcode=False,
-                                  python_shell=False)
+    #test_out = __salt__['cmd.run_all'](["bash","-c",'/bin/env | grep KRB5 ; klist'])
+    #print(pformat(test_out))
+
+    out = __salt__['cmd.run_all'](["bash","-c",'/bin/env | grep KRB5 ; klist -s'], output_loglevel='trace', ignore_retcode=False, python_shell=False)
+
     if out['retcode'] == 0:
         return True, "Logged in"
     else:

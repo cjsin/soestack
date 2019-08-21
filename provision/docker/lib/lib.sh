@@ -203,7 +203,7 @@ function docker_provision()
     # that was just created above
     load_docker_vars
 
-    display_build_configuration
+    provisioning_display_build_configuration
 
     docker_provision_common
 

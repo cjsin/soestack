@@ -1,0 +1,74 @@
+#!/bin/bash
+
+. /usr/local/bin/lib-ss.sh || exit 1
+
+function salt-build::usage()
+{
+    msg "Usage: salt-build"
+}
+
+function salt-build::process-argv()
+{
+    local arg
+    while (( $# )) 
+    do
+        arg="${1}"
+        shift
+        case "${arg}" in
+            -h|-help|--help|help)
+                salt-build::usage
+                return 1
+                ;;
+            -clean|--clean)
+                clean="True"
+                ;;
+            -no-clean|--no-clean)
+                clean="False"
+                ;;
+            [a-zA-Z]*)
+                pkg_names+=("${arg}")
+                ;;
+            *)
+                salt-build::usage
+                return 2
+                ;;
+        esac
+    done
+
+    return 0
+}
+
+function salt-build::build-package()
+{
+    local pkgname="${1}"
+    local clean="${2:-True}"
+    msg "Building ${pkgname}"
+    salt-call state.sls build.build-single-package pillar="{\"cmdline-args\": { \"build-single-package\": { \"pkgname\": \"${pkgname}\", \"clean\": ${clean} } } }"
+}
+
+function salt-build::main()
+{
+    local pkg_names=()
+    local clean="True"
+    local status
+
+    salt-build::process-argv "${@}"
+    status=$?
+
+    if [[ "${status}" == 1 ]]
+    then 
+        # help flag was specified
+        return 0
+    elif [[ "${status}" != 0 ]]
+    then 
+        return ${status}
+    fi 
+
+    local pkgname
+    for pkgname in "${pkg_names[@]}"
+    do
+        salt-build::build-package "${pkgname}" "${clean}"
+    done
+}
+
+salt-build::main "${@}"

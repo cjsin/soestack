@@ -1,2 +1,0 @@
-#!/bin/bash
-exec python3 -c  'import uuid; print(uuid.uuid4());'

@@ -5,11 +5,13 @@
 #        - pkgs:
 #            - sylpheed
 
-.thunderbird:
-    pkg.installed:
-        - pkgs:
-            - thunderbird
-            # - thunderbird-enigmail
+include:
+    - .thunderbird
+    # alpine needs epel repo which is currently broken
+    - .alpine
+    # no nmh available without working epel repos (disabled till nexus bugfix)
+    - .mh
+    - .mutt
 
 .utils:
     pkg.installed:
@@ -18,3 +20,4 @@
             - procmail
             - mailx
             # - mail-notification
+

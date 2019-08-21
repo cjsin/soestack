@@ -1,0 +1,392 @@
+#!/bin/bash
+
+. /usr/local/bin/lib-ss.sh || exit 1
+
+. /etc/sysconfig/ipa-tools || warn "Failed loading IPA integration settings"
+
+function gitlab::configure-user-script()
+{
+    local username="${1}"
+
+    local create=0
+    local email=""
+    local promote=0
+    local base_dn=""
+    local confirm=0
+    local pw=""
+    local displayName=""
+
+    local criteria="username: \"${username}\""
+    if [[ "${username}" == "admin" ]]
+    then 
+        criteria="username: \"admin1\""
+    elif [[ "${username}" == "root" ]]
+    then
+        criteria="id: 1"
+    fi
+
+    local arg
+    while (( $# ))
+    do
+        arg="${1}"
+        shift
+        case "${arg}" in 
+            # The 'admin' IPA user is a special case because they get the
+            # name 'admin1' because 'admin' is assigned to the 'root' user.
+            --create|-create|create)  create=1;;
+            *@*)     email="${arg}";;
+            -email|--email|email) email="${1}";shift;;
+            --confirm|-confirm|confirm) confirm=1;;
+            --admin|-admin|admin)   promote=1;;
+            *,dc=*)  base_dn="${arg}";;
+            --ldap|-ldap)   base_dn="${1}";shift;;
+            --displayName|--name|-displayName|-name) displayName="${1}";shift;;
+            --random|-random|random)  pw="random";;
+            --password|-password|password)  pw="${1}";shift;;
+        esac
+    done
+
+    {
+        if (( create ))
+        then 
+            [[ -z "${pw}" ]] && pw=$(mktemp -u XXXXXXXXX)
+            [[ -z "${displayName}" ]] && displayName="${username}"
+            [[ -z "${email}" ]] && email="${username}@${IPA_EMAIL_DOMAIN}"
+            echo "user = User.create!(name: \"${displayName}\", username: \"${username}\", email: \"${email}\", password: \"${pw}\")"
+            echo "user.save!"
+            
+            # clear the password so it isn't set again
+            pw=""
+        elif [[ -n "${criteria}" ]]
+        then
+            echo "user = User.where(${criteria}).first"
+        else
+            err 'No criteria for selecting the user, and create mode not specified!'
+            return 1
+        fi
+
+        if [[ -n "${pw}" ]]
+        then 
+            [[ "${pw}" == "random" ]] && pw=$(mktemp -u XXXXXXXXXX)
+            echo "user.password = '${pw}'"
+            echo "user.password_confirmation = '${pw}'"
+            echo "user.password_automatically_set=false"
+            echo "user.save!"
+        fi
+
+        if [[ -n "${email}" ]]
+        then 
+            echo "user.email = '${email}'"
+            echo "user.commit_email = '${email}'"
+            echo "user.save!"
+            echo "user.confirm()"
+            echo "user.save!"
+        elif (( confirm ))
+        then 
+            echo "user.confirm()"
+            echo "user.save!"
+        fi
+
+        if (( promote ))
+        then 
+            echo "user.admin = true"
+            echo "user.save!"
+        fi
+
+        if [[ -n "${base_dn}" ]]
+        then
+            echo "ident = Identity.create(extern_uid: \"${dn}\", provider: \"ldapmain\", user_id: user.id)"
+            echo "ident.save!"
+            echo "user.save!"
+        fi
+    }
+}
+
+function gitlab::grant-group-access-script()
+{
+    local grp="${1}"
+    local username="${2:-adminuser}"
+    local visibility_level_private="0"
+    local visibility_level_internal="10"
+    local visibility_level_public="20"
+    local access_level_guest="10"
+    local access_level_reporter="20"
+    local access_level_developer="30"
+    local access_level_maintainer="40"
+    local access_level_owner="50"
+    cat <<-EOF 
+		p = Group.where(name:'${grp}').first
+		p.visibility_level = ${visibility_level_public}
+		p.save!
+		u = User.where(username:'${username}').first
+		n = Namespace.where(name:'${grp}').first
+		m = Member.new(user_id: u.id, access_level: ${access_level_owner}, source_type: "Namespace", source_id: n.id, type: "GroupMember")
+		m.save!
+	EOF
+}
+
+function gitlab::grant-group-access()
+{
+    local group="${1}"
+    shift 
+    local rails_script=""
+    local user
+    for user in "${@}"
+    do 
+        rails_script+=$(gitlab::grant-group-access-script "${group}" "${user}")
+        rails_script+=$'\n'
+    done
+    gitlab::run-rails-script "${rails_script}"
+}
+
+function gitlab::configure-user()
+{
+    local username="${1}"
+    shift
+
+    local -a flags=()
+
+    if [[ -n "${IPA_SERVER}" && "${username}" != "root" ]]
+    then
+
+        local info=$(ipa user-show "${username}" --all --raw | egrep -i 'displayName:|dn:|gecos:|memberof:|mail:' | tr : ' ')
+        if [[ -z "${info}" ]]
+        then 
+            err "Could not find IPA user information for user '${username}'"
+            return 2
+        fi
+
+        # Note the order of reading these vars has to match the alphabetically sorted output from above (by key name)
+        {
+            local line key value 
+            while read line 
+            do
+                read key value <<< "${line}"
+                case "${key}" in
+                    mail)     email="${value}"; flags+=("--email" "${email}");;
+                    dn)       dn="${value}"; flags+=("--ldap" "${dn}");;
+                    gecos)    displayName="${value}"; flags+=("--displayName" "${displayName}");;
+                    memberof) [[ "${value}" =~ ^cn=gitlab-admins, ]] && flags+=("--admin");;
+                esac
+            done 
+        } <<< "${info}"
+
+        msg "Display name is ${displayName}"
+        msg "Email is ${email}"
+    fi
+
+    local rails_script
+    rails_script=$(gitlab::configure-user-script "${username}" "${flags[@]}" "${@}")
+    msg "Rails script is ${rails_script}"
+
+    if [[ $? == 0 ]]
+    then
+        gitlab::run-rails-script "${rails_script}"
+    else 
+        err "Cannot generate a script for configuring the user. Please correct the above problems."
+        return 2
+    fi
+}
+
+function gitlab::run-rails-script()
+{
+    local rails_script="${1}"
+    
+    msg "Rails script is ${rails_script}"
+
+    if gitlab-rails console production <<< "${rails_script}"
+    then 
+        msg "Success."
+        return 0
+    else
+        err "Something went wrong"
+        return 2
+    fi
+}
+
+function gitlab::initial-setup()
+{
+    msg "Performing gitlab initial setup"
+    local admin_secret_name="pw-gitlab-admin"
+    local admin_secret=$(salt-secret "${admin_secret_name}")
+    local -a set_password=()
+    if [[ -n "${admin_secret}" ]]
+    then 
+        set_password+=("--password" "${admin_secret}")
+    else
+        generate-passwords -random "${admin_secret_name}"
+        admin_secret=$(salt-secret "${admin_secret_name}")
+    fi
+
+    if [[ -n "${admin_secret}" ]]
+    then
+        gitlab::configure-user root --existing --email "root@localhost.localdomain" --password "${admin_secret}" #"admin@${IPA_EMAIL_DOMAIN}"
+    else
+        err "Refusing to configure empty password!"
+    fi
+}
+
+function gitlab-user-util::usage()
+{
+    msg "Usage: gitlab-user-util [--initial-setup] | <username> [--create] [--admin] [--confirm] "
+    msg ""
+    msg "  Modes:"
+    msg ""
+    msg "  Either: "
+    msg "      --initial-setup   Configures the root user after gitlab installation" 
+    msg "  Or: "
+    msg "      <username>           Configure a specific user account"
+    msg "         --admin           Make the user able to administer gitlab"
+    msg "         --confirm         Confirm the email settings for the user"
+    msg "         --ldap <dn>       Set an ldap identity, eg uid=blah,cn=users,cn=accounts,dc=demo,dc=com"
+    msg "         --email x@y.com   Set an email address (and conform it)"
+    msg "         --random          Set a random password"
+    msg "         --password        Set a specific password (not useful for ldap users)"
+    msg "         --create          Register a new user with gitlab"
+    msg "            --displayName  Set the user's display name (only useful with --create)"
+}
+
+function gitlab-user-util::main()
+{
+    local initial_setup=0
+    local username=""
+    local mode=""
+    local arg 
+    local extra=()
+    while (( $# ))
+    do
+        arg="${1}"
+        shift
+        case "${arg}" in
+            -help|--help|-h|help)
+                gitlab-user-util::usage
+                return 1
+                ;;
+            -initial-setup|--initial-setup|--setup|setup|initial-setup)
+                mode="initial-setup"
+                ;;
+            [a-z]*)
+                if [[ -n "${username}" ]]
+                then 
+                    err 'Username already specified once!'
+                    gitlab-user-util::usage
+                    return 1
+                fi
+                username="${arg}"
+                mode="configure-user"
+                ;;
+            *)
+                if [[ -z "${mode}" ]]
+                then 
+                    err 'One of a username or --initial-setup must be specified first!'
+                    gitlab-user-util::usage
+                    return 1
+                fi 
+                extra+=("${arg}")
+                ;;
+        esac
+    done
+
+    if [[ -z "${mode}" && -z "${username}" ]]
+    then
+        err "One of --initial-setup or a username must be specified"
+        gitlab-user-util::usage
+        return 1
+    elif [[ "${mode}" == "initial-setup" && -n "${username}" ]]
+    then
+        err "Conflicting options - only one of --initial-setup or a username should be specified."
+        gitlab-user-util::usage
+        return 1
+    elif [[ "${mode}" == "configure-user" && -z "${username}" ]]
+    then
+        err "A username is required"
+        gitlab-user-util::usage
+        return 1
+    fi
+
+    if [[ "${mode}" == "initial-setup" ]]
+    then
+        gitlab::initial-setup
+    elif [[ "${mode}" == "configure-user" ]]
+    then
+        gitlab::configure-user "${username}" "${extra[@]}"
+    else
+        err "Unknown mode: '${mode}'"
+        gitlab-user-util::usage
+        return 1
+    fi
+}
+
+
+function gitlab::create-bare-repo()
+(
+    local sources="${1}"
+    local dest="${2}"
+    set -e
+    local tmpd=$(mktemp -d -t tmp_repo.XXXXX)
+
+    mkdir -p "${tmpd}" 
+    (
+        cd "${tmpd}" || return 1
+        git init .
+        rsync -av "${sources}/" ./
+        date > import-date.txt
+        git add .
+        git commit -m "initial checkin"
+        sed -i '/bare =/ s/false/true/' .git/config
+        mv .git "${dest}"
+    )
+
+    [[ -n "${tmpd}" ]] && [[ -d "${tmpd}" ]] && [[ "${tmpd}" =~ tmp_repo ]] && rm -rf "${tmpd}"
+
+    return 0
+)
+
+function gitlab::copy-source-as-projects()
+{
+    local src_dir="${1}"
+    local grp_name="${2}"
+    local data_dir="${3}"
+    local proj_dir="${data_dir}/${grp_name}"
+    mkdir -p "${proj_dir}"
+    local sub_dir
+    for sub_dir in "${src_dir}/${grp_name}"/*/
+    do
+        # Strip the trailing slash
+        local src_path="${sub_dir%/}"
+        gitlab::create-bare-repo "${src_path}" "${proj_dir}/${src_path##*/}.git"
+    done
+    chown -R git.git "${proj_dir}"
+}
+
+function gitlab::import-repos::main()
+{
+    local src_dir="${1}"
+    local group_name="${2}"
+
+    # NOTE that unlike what the Gitlab documentation says, 
+    # the files to be imported should NOT be placed within the
+    # existing repositories data area.
+    # Because gitlab will try to copy them there and will fail
+    # if they are already there because we put them there ourselves.
+    # So instead, they are imported from a different dir, here:
+    local data_dir=/d/local/data/gitlab-import
+
+    if [[ -d "${data_dir}" ]]
+    then 
+        echo "It looks like the import has alrady been performed." 1>&2
+        echo "Otherwise, delete '${data_dir}' first." 1>&2
+        exit 0
+    fi 
+
+    mkdir -p "${data_dir}"
+
+    msg "Generating new git repos from source folders"
+    gitlab::copy-source-as-projects "${src_dir}" "${group_name}" "${data_dir}"
+
+    msg "Asking gitlab to import the projects"
+    gitlab-rake "gitlab:import:repos[${data_dir}]"
+
+    msg "Setting up group access for adminuser, devuser"
+    gitlab::grant-group-access "test" adminuser devuser
+}

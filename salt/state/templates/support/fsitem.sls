@@ -5,7 +5,8 @@
 {%- set path           = args.path %}
 {%- set fallbacks      = {  
                             'file_mode': '0644', 
-                            'dir_mode': '0755', 
+                            'dir_mode': '0755',
+                            'symlink_mode': '777',
                             'selinux': '', 
                             'makedirs': False, 
                             'target': '', 
@@ -15,7 +16,7 @@
                             'config_pillar': None,
                          } %}
 {%- set defaults       = args.defaults if 'defaults' in args and args.defaults else {} %}
-{%- set prefix, suffix = salt.uuid.ids(args) %}
+{%- set prefix, suffix = salt.uuids.ids(args) %}
 {%- set item_type      = args.item_type %}
 {%- set args_spec      = args.spec %}
 {%- set spec           = {} %}
@@ -37,9 +38,13 @@
 {%- set uid            = spec.user  if 'user'  in spec and spec.user  is number else '' %}
 {%- set gid            = spec.group if 'group' in spec and spec.group is number else '' %}
 {%- set makedirs       = spec.makedirs if 'makedirs' in spec and spec.makedirs != None else True %}
-{%- set mode_key       = item_type ~ '_mode' %}
-{%- set specific_mode  = spec[mode_key] if mode_key in spec and spec[mode_key] != '' and spec[mode_key] != None else '' %}
 {%- set generic_mode   = spec.mode if 'mode' in spec and spec.mode != '' and spec.mode != None else '' %}
+{%- set mode_key       = item_type ~ '_mode' %}
+{%- if generic_mode != '' and mode_key not in args_spec %}
+{#- make sure that this generic mode overrides the fallbacks for the more specific file/dir mode #}
+{%-     do spec.update({mode_key : generic_mode }) %}
+{%- endif %}
+{%- set specific_mode  = spec[mode_key] if mode_key in spec and spec[mode_key] != '' and spec[mode_key] != None else '' %}
 {%- set default_mode   = fallbacks[mode_key] %}
 {%- set mode           = specific_mode if specific_mode != '' else (generic_mode if generic_mode != '' else default_mode) %}
 {%- set selinux        = spec.selinux if 'selinux' in spec and spec.selinux else '' %}
@@ -63,7 +68,7 @@
 {%-     set state_func = 'managed' if item_type == 'file' else ('directory' if item_type == 'dir' else 'symlink' if item_type == 'symlink'  else 'unknown') %}
 
 {%- if diagnostics %}
-{{sls}}.NOTICE-debug-{{prefix}}fs-{{item_type}}-{{path}}{{suffix}}-info:
+{{sls}}.NOTICE-debug-{{prefix}}fs-{{item_type}}.{{path}}{{suffix}}-info:
     noop.notice:
         - name: |
             spec:
@@ -93,7 +98,7 @@
 {%-     if state_func %}
 
 {%- if diagnostics %}
-{{sls}}.NOTICE-debug-{{prefix}}fs-{{item_type}}-{{path}}{{suffix}}:
+{{sls}}.NOTICE-debug-{{prefix}}fs-{{item_type}}.{{path}}{{suffix}}:
     noop.notice:
         - text: |
             file.{{state_func}}:
@@ -137,7 +142,7 @@
 {%- endif %} 
 
 
-{{sls}}.{{prefix}}fs-{{item_type}}-{{path}}{{suffix}}:
+{{sls}}.{{prefix}}fs-{{item_type}}.{{path}}{{suffix}}:
     file.{{state_func}}:
         - name:     {{path}}
         {%- if item_type == 'symlink' and target %}
@@ -181,7 +186,7 @@
 
 {%-     if gid %}
 
-{{sls}}.{{prefix}}fs-file-{{path}}-gid{{suffix}}:
+{{sls}}.{{prefix}}fs-{{item_type}}.{{path}}.gid{{suffix}}:
     cmd.run:
         - name:   chgrp {{gid}} '{{path}}'
         - unless: stat -c %g '{{path}}' | egrep '^{{gid}}$'
@@ -190,7 +195,7 @@
 
 {%-     if uid %}
 
-{{sls}}.{{prefix}}fs-{{item_type}}-{{path}}-uid{{suffix}}:
+{{sls}}.{{prefix}}fs-{{item_type}}.{{path}}.uid{{suffix}}:
     cmd.run:
         - name:   chown {{uid}} '{{path}}'
         - unless: stat -c %u '{{path}}' | egrep '^{{uid}}$'
@@ -199,7 +204,7 @@
 
 {%-     if selinux %}
 
-{{sls}}.{{prefix}}fs-{{item_type}}-{{path}}-selinux{{suffix}}:
+{{sls}}.{{prefix}}fs-{{item_type}}.{{path}}.selinux{{suffix}}:
     cmd.run:
         - name:   chcon -t '{{selinux}}' '{{path}}'
         - unless: stat -c %C '{{path}}' | grep ':{{selinux}}:'

@@ -10,7 +10,7 @@
 #    - files_location
 #}
 
-{%- set prefix, suffix = salt.uuid.ids(args) %}
+{%- set prefix, suffix = salt.uuids.ids(args) %}
 {%- set pillar_location = args.pillar_location if 'pillar_location' and args.pillar_location else '' %}
 {%- set pillar_data     = salt['pillar.get'](pillar_location,{}) if pillar_location else {} %}
 {%- set files           = args.files if ('files' in args and args.files) else (pillar_data.files if 'files' in pillar_data and pillar_data.files else {}) %}

@@ -17,32 +17,32 @@ test-rand-hash-uuid-again:
 
 test-execution-module-uuid-short:
     cmd.run:
-        - name: echo {{ salt.uuid.short() }}
+        - name: echo {{ salt.uuids.short() }}
 
 test-execution-module-uuid-short-again:
     cmd.run:
-        - name: echo {{ salt.uuid.short() }}
+        - name: echo {{ salt.uuids.short() }}
 
-{%- set prefix, suffix = salt.uuid.ids({'suffix': '', 'prefix': '' }) %}
-
-{{prefix}}test-execution-module-uuid-short-again{{suffix}}:
-    cmd.run:
-        - name: echo {{ ','.join(salt.uuid.ids({})) }}
-
-{%- set prefix, suffix = salt.uuid.ids({'suffix': '', 'prefix': 'abc' }) %}
+{%- set prefix, suffix = salt.uuids.ids({'suffix': '', 'prefix': '' }) %}
 
 {{prefix}}test-execution-module-uuid-short-again{{suffix}}:
     cmd.run:
-        - name: echo {{ ','.join(salt.uuid.ids({})) }}
+        - name: echo {{ ','.join(salt.uuids.ids({})) }}
 
-{%- set prefix, suffix = salt.uuid.ids({'suffix': 'xyz', 'prefix': '' }) %}
-
-{{prefix}}test-execution-module-uuid-short-again{{suffix}}:
-    cmd.run:
-        - name: echo {{ ','.join(salt.uuid.ids({})) }}
-
-{%- set prefix, suffix = salt.uuid.ids({'suffix': 'xyz', 'prefix': 'abc' }) %}
+{%- set prefix, suffix = salt.uuids.ids({'suffix': '', 'prefix': 'abc' }) %}
 
 {{prefix}}test-execution-module-uuid-short-again{{suffix}}:
     cmd.run:
-        - name: echo {{ ','.join(salt.uuid.ids({})) }}
+        - name: echo {{ ','.join(salt.uuids.ids({})) }}
+
+{%- set prefix, suffix = salt.uuids.ids({'suffix': 'xyz', 'prefix': '' }) %}
+
+{{prefix}}test-execution-module-uuid-short-again{{suffix}}:
+    cmd.run:
+        - name: echo {{ ','.join(salt.uuids.ids({})) }}
+
+{%- set prefix, suffix = salt.uuids.ids({'suffix': 'xyz', 'prefix': 'abc' }) %}
+
+{{prefix}}test-execution-module-uuid-short-again{{suffix}}:
+    cmd.run:
+        - name: echo {{ ','.join(salt.uuids.ids({})) }}

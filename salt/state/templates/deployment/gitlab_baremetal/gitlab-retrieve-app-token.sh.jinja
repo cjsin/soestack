@@ -1,0 +1,49 @@
+#!/bin/bash
+
+function retrieve_token_from_gitlab()
+{
+    if [[ -d /var/opt/gitlab ]]
+    then 
+        local json_file="/var/opt/gitlab/mattermost/config.json"
+        local id_and_secret=$(egrep '(GitLabSettings|Secret|Id).:' "${json_file}" | grep -A2 GitLabSettings | head -n3 | tail -n2 | sort | cut -d'"' -f4)
+        echo ${id_and_secret}
+    else
+        echo "The token can only be retrieved on the gitlab server." 1>&2
+    fi
+}
+
+function main()
+{
+    if [[ -z "${1}" ]]
+    then
+        echo "Usage: ${0} secret-name" 1>&2
+        exit 1
+    fi
+    
+    local secret_name="${1}"
+
+    local id=$(salt-secret "${secret_name}-id" 2> /dev/null)
+    local token=$(salt-secret "${secret_name}-token" 2> /dev/null)
+    if [[ -z "${id}" ]]
+    then
+        local remainder id_and_token
+        id_and_token=$(retrieve_token_from_gitlab)
+        read id token remainder <<< "${id_and_token}"
+        if [[ -n "${id}" ]]
+        then
+            salt-secret "${secret_name}-id" -save -stdin <<< "${id}"
+        else
+            echo "Failed setting the app id" 1>&2
+        fi
+        if [[ -n "${token}" ]]
+        then
+            salt-secret "${secret_name}-token" -save -stdin <<< "${token}"
+        else
+            echo "Failed setting the app token" 1>&2
+        fi
+    else
+        echo "The app id/token is stored" 1>&2
+    fi
+}
+
+main "${@}"

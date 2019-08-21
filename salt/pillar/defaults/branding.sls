@@ -1,7 +1,7 @@
 {{ salt.loadtracker.load_pillar(sls) }}
 
 branding:
-    logo: !!binary
+    logo: |
         iVBORw0KGgoAAAANSUhEUgAAADwAAAA8CAYAAAA6/NlyAAABhGlDQ1BJQ0MgcHJvZmlsZQAAKJF9
         kT1Iw0AcxV9TpSoVBTuIiASpThZERRy1CkWoEGqFVh1MLv2CJg1Jiouj4Fpw8GOx6uDirKuDqyAI
         foC4uDopukiJ/0sLLWI8OO7Hu3uPu3eAUC0yzWobBzTdNhOxqJhKr4qBVwTQiV4MYVhmljEnSXF4

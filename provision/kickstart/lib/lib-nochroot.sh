@@ -16,6 +16,7 @@ function copy_logs()
 {
     msg "Copy logs"
     copy_files "/tmp/*" "/var/log/provision/tmpdir/"
+    copy_files "/tmp/provision-*log" "/var/log/provision/"
     msg "Done copying logs"
 
     msg "Copying provisioning ss dir for troubleshooting"

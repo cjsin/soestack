@@ -9,7 +9,7 @@
 #
 #}
 
-{%- set prefix, suffix = salt.uuid.ids(args) %}
+{%- set prefix, suffix = salt.uuids.ids(args) %}
 {%- set pillar_location = args.pillar_location if 'pillar_templates' in args and args.pillar_location else '' %}
 {%- set templates = args.templates if ('templates' in args and args.templates) else (salt['pillar.get'](pillar_location,{}) if pillar_location else {}) %}
 
@@ -22,6 +22,21 @@
 {%- endif %}
 
 {%- if templates %}
+
+{{sls}}.statesupport-template-templates-parent-dir-created-{{suffix}}:
+    file.directory:
+        - name:     /var/lib/soestack
+        - user:     root
+        - group:    root 
+        - mode:     '0755'
+
+{{sls}}.statesupport-template-templates-dir-created-{{suffix}}:
+    file.directory:
+        - name:     /var/lib/soestack/templates/
+        - user:     root
+        - group:    root 
+        - mode:     '0700'
+        
 {%-     for name, contents in templates.iteritems() %}
 
 {{sls}}.statesupport-template-{{name}}-{{suffix}}:

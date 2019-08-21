@@ -315,7 +315,7 @@ Example output is shown below:
         * APPEND cmdline ss.ROLES=all-in-one-sde-server-node
         * APPEND cmdline ss.SALT_MASTER=infra.demo.com
         * APPEND cmdline ss.SALT_TYPE=master
-        * APPEND cmdline ss.SKIP_CONFIRMATION=0
+        * APPEND cmdline ss.SKIP_CONFIRM=0
         * APPEND cmdline ss.HOSTNAME=infra.demo.com
         * APPEND cmdline rd.shell noquiet
         127 actions of 127

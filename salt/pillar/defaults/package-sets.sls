@@ -2,7 +2,7 @@
 
 package-sets:
 
-    alternative-desktops:
+    alternative-desktop:
         purpose: |
             provide other desktop
         centos,redhat,fedora:
@@ -11,6 +11,38 @@ package-sets:
             #- '@General Purpose Desktop'
             - openbox
             - fluxbox
+
+    admin-minimal-desktop:
+        purpose: |
+            provide minimal desktop tools for an admin
+        centos,redhat,fedora:
+            any:
+                - openbox
+                - firefox
+                - gedit
+                - code
+                - # Fix screensaver for mate
+                - mate-applets
+                - mate-desktop
+                - mate-notification-daemon
+                - mate-panel
+                - mate-session-manager
+                - mate-settings-daemon
+                - openldap-clients
+
+
+
+    basic-tools:
+        purpose: |
+            tools desired on all boxes
+        centos,redhat,fedora:
+            - rsync
+            - wget
+            - curl
+            - iputils
+            - net-tools
+            - strace
+            - ltrace
 
     alternative-toolchains:
         purpose: | 
@@ -37,11 +69,14 @@ package-sets:
         purpose: |
             provide antivirus support for scanning files obtained from untrusted sources
         centos,redhat-fedora:
+            order: os,epel
+            os:
+                - pcre2
+                - libtool-ltdl
             epel:
                 - clamav
                 - clamav-data
-                - clamav-milter
-                - clamav-scanner-systemd
+                #- clamav-milter
                 - clamav-scanner-systemd
                 - clamav-unofficial-sigs
 
@@ -58,13 +93,24 @@ package-sets:
         centos,redhat,fedora:
             - gpm
             # htop is broken/unailable due to broken epel zchunk issue
-            #- htop
+            - htop
 
     development-base:
         purpose: |
             provide the centos/redhat development group
         centos,redhat,fedora:
             - '@Development and Creative Workstation'
+
+
+    development-minimal:
+        purpose: |
+            smaller set of packages for development, to serve
+            as an example but without taking ages to install
+            while testing
+        centos,redhat,fedora:
+            - gcc
+            - make
+            - libtool
 
     dhcp-server:
         purpose: |
@@ -139,6 +185,7 @@ package-sets:
             os:
                 - perl-Error
                 - perl-TermReadKey
+                - libsecret
             ius:
                 - git2u
         fedora:
@@ -207,6 +254,52 @@ package-sets:
                 - cri-tools
                 - kubernetes-cni
 
+    minimal-desktop:
+        purpose: |
+            provide minimal desktop install to keep install time down during testing
+        centos,redhat,fedora:
+            - openbox
+            #- fluxbox
+            #- terminator
+            - lightdm
+            - xorg-x11-server-Xorg
+            - xorg-x11-utils
+            - xorg-x11-xinit
+            - xorg-x11-xkb-extras
+            - xorg-x11-xkb-utils
+            - xorg-x11-util-macros
+            - xorg-x11-server-utils
+            - xorg-x11-fonts-100dpi
+            - xorg-x11-apps
+            - xorg-x11-docs
+            - xorg-x11-drivers
+            - xorg-x11-drv-evdev
+            - xorg-x11-drv-keyboard
+            - xorg-x11-drv-intel
+            - xorg-x11-drv-fbdev
+            - xorg-x11-drv-ati
+            - xorg-x11-drv-libinput
+            - xorg-x11-drv-mouse
+            - xorg-x11-drv-nouveau
+            - xorg-x11-drv-qxl
+            - xorg-x11-drv-synaptics
+            - xorg-x11-drv-vesa
+            - xorg-x11-drv-vmmouse
+            - xorg-x11-font-utils
+            - xorg-x11-xauth
+            - xorg-x11-xbitmaps
+            - xorg-x11-xkb-extras
+            - xorg-x11-xkb-utils
+            - xorg-x11-fonts-ISO8859-1-100dpi
+            - xorg-x11-xinit-session
+            - xfce4-session
+            - xfce4-panel
+            - xfce4-settings
+            - xfce4-terminal
+            - xfdesktop
+            - xfwm4
+            - xfconf
+
     net-tools:
         purpose: |
             provide basic network tools (for example 'route', 'ip')
@@ -215,12 +308,21 @@ package-sets:
             - net-tools
             # provides 'ip'
             - iproute
+            - wget
+            - curl
 
     nfs-server:
         purpose: |
             provide nfs exports or access nfs exports
         centos,redhat,fedora:
             - nfs-utils
+
+    node-exporter-custom-build:
+        purpose: |
+            provide node metrics for prometheus + grafana dashboard
+        centos,redhat,fedora:
+            built-rpms:
+                - node_exporter
 
     nodejs-development:
         purpose: |
@@ -245,12 +347,24 @@ package-sets:
             # xemacs isn't available because epel is broken by zchunk metadata changes
             #- xemacs
 
+    phpldapadmin:
+        purpose: |
+            provide php ldap admin tool
+        centos,redhat,fedora:
+            order: os,epel
+            os:
+                - httpd
+                - php
+                - php-ldap
+            epel:
+                - phpldapadmin
+
     process-tools:
         purpose: |
             provide tools for management of processes
         centos,redhat,fedora:
             # htop is broken/unailable due to broken epel zchunk issue
-            #- htop
+            - htop
             # provides pstree
             - psmisc
 
@@ -270,6 +384,21 @@ package-sets:
             - policycoreutils-python
         fedora:
             - policycoreutils-python-utils
+
+    terminator:
+        purpose: |
+            provide a better terminal than crappy gnome terminal
+        centos,redhat,fedora:
+            order: os,epel
+            os:
+                - gnome-python2-gconf
+                - gnome-python2-bonobo
+            epel:
+                - terminator
+                #- vte
+                - terminus-fonts
+                - terminus-fonts-console
+                - python-keybinder
 
     tftp-server-dnsmasq:
         purpose: |

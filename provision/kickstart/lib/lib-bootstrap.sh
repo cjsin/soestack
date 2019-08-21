@@ -233,7 +233,6 @@ function generate_kickstart_networkconfig()
 #     export ROLES="${role}"
 # }
 
-
 function generate_partitioning()
 {
     local installation_src="${1}"
@@ -284,7 +283,6 @@ function generate_partitioning()
         bmsg "Preconfigured partitioning for ${tags} was not found!" 1>&2
         return 1
     fi
-
 }
 
 function select_partitioning()
@@ -369,9 +367,9 @@ function user_rebuild_confirmation()
     # First things first, don't just blow away a server without
     # an admin confirmation.
 
-    if is_skip_confirmation
+    if is_skip_confirm
     then
-        bmsg "Skipping rebuild confirmation (SKIP_CONFIRMATION=1 was present on the commandline) !"
+        bmsg "Skipping rebuild confirmation (SKIP_CONFIRM=1 was present on the commandline) !"
         return 0
     else
 

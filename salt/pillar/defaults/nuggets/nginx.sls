@@ -2,7 +2,7 @@
 
 nuggets:
 
-    nginx:
+    nginx-baremetal:
         description: |
             provides support for deploying nginx but does not deploy any
             particular instance
@@ -15,3 +15,16 @@ nuggets:
                 package-sets:
                     - nginx
         activate: {}
+
+
+
+    nginx-container:
+
+        filesystem:
+            defaults:
+                user:      root
+                group:     root
+                dir_mode:  '0755'
+                file_mode: '0644'
+            dirs:
+                /etc/nginx:

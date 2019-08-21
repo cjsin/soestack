@@ -1,0 +1,369 @@
+#!/bin/bash
+
+. /usr/local/bin/lib-ss.sh || exit 1
+. /usr/local/bin/lib-ipa.sh || die "Failed loading lib-ipa"
+
+function quiet()
+{
+    "${@}" > /dev/null 2> /dev/null
+}
+
+function verbose()
+{
+    if [[ -n "${VERBOSE}" ]] && (( ${VERBOSE} ))
+    then 
+        echo "Run: ${*}" 1>&2
+    fi
+    "${@}"
+}
+
+function chatty()
+{
+    if [[ -n "${CHATTY}" ]] && (( ${CHATTY} ))
+    then 
+        echo "Run: ${*}" 1>&2
+    fi
+    "${@}"
+}
+
+{%- if 'initial-setup' in config %}
+
+{%- set init        = config['initial-setup'] %}
+{%- set accounts    = init.accounts         if 'accounts'      in init     and init.accounts         else {} %}
+{%- set groups      = accounts.groups       if 'groups'        in accounts and accounts.groups       else {} %}
+{%- set users       = accounts.users        if 'users'         in accounts and accounts.users        else {} %}
+{%- set pwpolicy    = init.pwpolicy         if 'pwpolicy'      in init     and init.pwpolicy         else {} %}
+{%- set automount   = init.automount        if 'automount'     in init     and init.automount        else {} %}
+{%- set globalconf  = init['global-config'] if 'global-config' in init     and init['global-config'] else {} %}
+{%- set emaildomain = globalconf.defaultemaildomain if 'defaultemaildomain' in globalconf else  pillar.network.system_domain %}
+{%- set hosts_key   = config['hosts'] if 'hosts' in config else '' %}
+{%- set hosts       = salt['pillar.get'](hosts_key, {}) if hosts_key else {} %}
+{%- set locations   = automount.locations if 'locations' in automount and automount.locations else {} %}
+{%- set maps        = automount.maps      if 'maps'      in automount and automount.maps      else {} %}
+{%- set diagnostics = False %}
+
+{%- if diagnostics %}
+cat <<EOF
+hosts={{hosts|json}}
+groups={{groups|json}}
+users={{users|json}}
+locations={{locations|json}}
+maps={{maps|json}}
+globalconf={{globalconf|json}}
+EOF
+{%- endif %}
+
+function ipa::post-install::usage()
+{
+    local exitcode="${1:-1}"
+    msg "Usage: ${0##*/} [--help] [--background] [--<section>]..."
+    msg ""
+    msg "Options:"
+    msg "    --background - fork into the background and exit immediately"
+    msg "    --<section>  - run configuration for a particular section (see below)"
+    msg ""
+    msg "If no configuration sections are specified, all will be run."
+    msg ""
+    msg "Available sections:"
+    msg "    --users"
+    msg "    --groups"
+    msg "    --hosts"
+    msg "    --policies"
+    msg "    --globals"
+    msg "    --automounts"
+    msg ""
+    msg "Perform post-installation configuration of IPA server."
+    exit ${exitcode}
+}
+
+function ipa::post-install::configure-policies()
+{
+    local -a policy_modifications=(
+        {%- if 'minlength' in pwpolicy %}
+        --minlength  '{{pwpolicy.minlength}}'
+        {%- endif %}
+        {%- if 'minclasses' in pwpolicy %}
+        --minclasses '{{pwpolicy.minclasses}}'
+        {%- endif %}
+        {%- if 'history' in pwpolicy %}
+        --history    '{{pwpolicy.history}}'
+        {%- endif %}
+    )
+
+    if (( {%raw%} ${#policy_modifications[@]} {%endraw%} ))
+    then
+        chatty ipa pwpolicy-mod "${policy_modifications[@]}" 2>&1 | egrep -vi 'no modifications to be performed'
+    else 
+        msg "No pw policy settings to apply"
+    fi
+}
+
+function ipa::post-install::configure-globals()
+{
+    {%- set valid_opts = [
+        'maxusernamelength',
+        'homesrootdir',
+        'defaultloginshell',
+        'defaultprimarygroup',
+        'defaultemaildomain',
+        'searchtimelimit',
+        'searchrecordslimit',
+        'usersearchfields',
+        'groupsearchfields',
+        'migrationenabled',
+        'certificatesubjectbase',
+        'pwdexpadvnotify',
+        'configstring',
+        'selinuxusermaporder',
+        'selinuxusermapdefault',
+        'krbauthzdata'
+    ] %}
+
+    {%- if globalconf %}
+    {%-     set invalid = [] %}
+    {%-     set flags = [] %}
+    {%-     for opt_name, opt_value in globalconf.iteritems() %}
+    {%-         if opt_name in valid_opts %}
+    {%-             do flags.extend(['--setattr', 'ipa' ~ opt_name ~ '=' ~ opt_value]) %} 
+    {%-         else %}
+    {%-             do invalid.append(opt_name) %}
+    {%-         endif %}
+    {%-     endfor %}
+
+    {%-     for opt_name in invalid %}
+    err "Invalid global option {{opt_name}} "
+    {%-     endfor %}
+
+    local result=""
+    local -a cfg_cmd=(
+        ipa config-mod
+        {% for flag in flags %}
+        {{flag}} 
+        {% endfor %} 
+    )
+    result=$(chatty "${cfg_cmd[@]}" 2>&1)
+    if (( $? ))
+    then 
+        if [[ "${result}" =~ no.modifications.to.be.performed ]]
+        then 
+            return 0
+        else 
+            err "${result}"
+            return 1
+        fi
+    else 
+        msg "OK"
+        return 0
+    fi 
+
+    {%- endif %}
+}
+
+function ipa::post-install::create-groups()
+{
+    {%- if groups %}
+    {%-     for group_name, group in groups.iteritems() %}
+    quiet ipa group-find --group-name="{{group_name}}" || chatty ipa group-add "{{group_name}}"
+    {%-     endfor %}
+    {%- else %}
+    msg "No initial groups defined"
+    {%- endif %}
+}
+
+function ipa::post-install::setup-user-accounts()
+{
+    {%- if users %}
+    {%-     for user_name, user in users.iteritems() %}
+    {%-         if user_name not in ['admin'] %}
+    {%-             set email   = user.email         if 'email'      in user and user.email         else user_name ~ '@' ~ emaildomain %}
+    {%-             set first   = user['first-name'] if 'first-name' in user and user['first-name'] else '' %}
+    {%-             set surname = user.surname       if 'surname'    in user and user.surname       else '' %}
+    {%-             set save_it = 'save' if 'groups' in user and user.groups and 'bind-users' in user.groups else 'nosave' %}
+    ipa::create-user "{{user_name}}" "{{email}}" "{{first}}" "{{surname}}" "{{save_it}}" "${VERBOSE}"
+    {%-         endif %}
+    {%-     endfor %}
+    {%- else %}
+    msg "No initial users defined"
+    {%- endif %}
+}
+
+function ipa::post-install::add-group-members()
+{
+    {%- if users and groups %}
+    {%-     for user_name, user in users.iteritems() %}
+    # User "{{user_name}}"
+    {%-         if 'groups' in user and user.groups %}
+    {%-             for group_name in user.groups %}
+    {%-                 if group_name in groups %}
+    ipa::check-group-member "{{group_name}}" "{{user_name}}" || chatty ipa group-add-member "{{group_name}}" --user "{{user_name}}"
+    {%-                 endif %}
+    {%-             endfor %}
+    {%-         endif %}
+    {%-     endfor %}
+    {%- else %}
+    msg "No initial user/group memberships defined"
+    {%- endif %}
+}
+
+function ipa::post-install::configure-automounts()
+{    
+    {%- if locations %}
+    {%-     for location_name, location_data in locations.iteritems() %}
+    quiet ipa automountlocation-find "{{location_name}}" || chatty ipa automountlocation-add "{{location_name}}"
+    {%-         for mapname, keys in maps.iteritems() %}
+    quiet ipa automountmap-find "{{location_name}}" "{{mapname}}" || chatty ipa automountmap-add "{{location_name}}" "{{mapname}}"
+    {%-             if keys %}
+    {%-                 for key, value in keys.iteritems() %}
+    quiet ipa automountkey-find "{{location_name}}" "{{mapname}}" "{{key}}" || chatty ipa automountkey-add "{{location_name}}" "{{mapname}}" --key="{{key}}" --info="{{value}}"
+    {%-                 endfor %}
+    {%-             endif %}
+    {%-         endfor %}
+    {%-    endfor %}
+    {%- else %}
+    msg "No locations defined"
+    {%- endif %}
+}
+
+function ipa::post-install::register-hosts()
+{
+{%- if hosts %}
+{%-     for hostid, hostitem in hosts.iteritems() %}
+{%-        if 'type' in hostitem and hostitem['type'] in ['client'] %}
+{%-            set shortname = hostid.split('.')[0] %}
+    quiet ipa host-find "{{shortname}}" || chatty host-add "{{shortname}}"
+{%-        endif %}
+{%-     endfor %}
+{%- else %}
+    msg "No hosts defined"
+{%- endif %}
+}
+
+function ipa::post-install::perform-kinit()
+{
+    ipa::load-admin-passwords
+    if [[ -n "${admin_password}" ]]
+    then
+        if salt-ipa-ticket --renew
+        then 
+            export KRB5CCNAME=/var/cache/salt/master/salt.krb
+        fi
+        #kinit admin <<< "${admin_password}"
+    fi
+}
+
+function ipa::post-install::do-work()
+{
+    msg "Beginning IPA postinstall configuration at $(date)"
+    {%- if globalconf %}
+    (( run_all + run_globalconf )) && chatty ipa::post-install::configure-globals 
+    {%- endif %}
+
+    {%- if pwpolicy %}
+    (( run_all + run_policies   )) && chatty ipa::post-install::configure-policies
+    {%- endif %}
+
+    {%- if groups %}
+    (( run_all + run_groups     )) && chatty ipa::post-install::create-groups 
+    {%- endif %}
+
+    {%- if users %}
+    (( run_all + run_users      )) && chatty ipa::post-install::setup-user-accounts
+    {%- endif %}
+
+    {%- if users and groups %}
+    (( run_all + run_users + run_groups )) && chatty ipa::post-install::add-group-members
+    {%- endif %}
+
+    (( run_all + run_automounts )) && chatty ipa::post-install::configure-automounts
+
+    (( run_all + run_hosts      )) && chatty ipa::post-install::register-hosts
+
+    msg "Finished."
+}
+
+function ipa::post-install::process-args()
+{
+    local valid_sections='^(-|--|)(globals|policies|groups|users|automounts|hosts)$'
+    local help_regex='(^|[[:space:]])(-h|-help|--help)([[:space:]]|$)'
+    local arg
+    for arg in "${@}"
+    do
+        case "${arg}" in 
+            -h|-help|--help|help)
+                ipa::post-install::usage 0
+                ;;
+            -v|-verbose|--verbose) 
+                VERBOSE=1
+                ;;
+            -chatty|--chatty) 
+                CHATTY=1
+                ;;
+            -quiet|--quiet)
+                VERBOSE=0
+                CHATTY=0
+                ;;
+            -auto|--auto)
+                auto_mode=1
+                ;;
+            -background|--background|background)
+                run_in_background=1
+                ;;
+            *)
+                if [[ "${arg}" =~ ${valid_sections} ]]
+                then 
+                    run_all=0
+                    # Enable a (global) flag which will cause the section to be run later
+                    eval "run_${BASH_REMATCH[2]}=1"
+                else
+                    err "Unrecognised argument: "
+                    ipa::post-install::usage 1
+                fi
+        esac
+    done
+}
+
+
+function ipa::post-install::main()
+{
+    local run_in_background=0
+    local auto_mode=0
+    local run_all=1
+    local VERBOSE=0
+    local CHATTY=1
+
+    ipa::post-install::process-args "${@}"
+
+    ipa::post-install::perform-kinit || exit 1
+
+    if (( auto_mode ))
+    then
+        # The setup will be run once or until it is successful once
+        local logfile="/var/log/ipa-postinstall.log"
+        local successfile="/var/log/ipa-postinstall.log.success"
+        if [[ -f "${successfile}" ]]
+        then 
+            echo "IPA post-install appears to have already run successfully." 1>&2
+        else
+            (
+                 if ipa::post-install::do-work >> "${logfile}" 2>&1
+                 then
+                     touch "${successfile}"
+                     exit 0
+                 fi
+            ) &  # NOTE we are running it in the background
+        fi
+    elif (( run_in_background ))
+    then 
+        local logfile="/var/log/ipa-postinstall.log"
+        msg "IPA post-install started in background (see ${logfile} for results)"
+        ipa::post-install::do-work >> "${logfile}" 2>&1 &
+    else
+        ipa::post-install::do-work
+    fi 
+}
+
+ipa::post-install::main "${@}"
+
+{%- else %}
+msg "This IPA deployment ({{deployment_name}}) has no configured initial setup."
+{%- endif %}

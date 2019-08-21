@@ -5,9 +5,10 @@
 {%-         do recursion.append(name) %}
 {%-     endif %}
 
-{%-     set prefix, suffix = salt.uuid.ids(args) %}
+{%-     set prefix, suffix = salt.uuids.ids(args) %}
 {%-     set firewall        = args.firewall if 'firewall' in args and args.firewall else {} %}
 
+{#-     process any 'firewall-rule-sets in the object passed in above, and process that first (ie process pulled in dependencies first #}
 {%-     if 'firewall-rule-sets' in firewall and 'nugget_data' in pillar and 'firewall-rule-sets' in pillar.nugget_data %}
 {%-         set fwrs = pillar.nugget_data['firewall-rule-sets'] %}
 {%-         for fw_ruleset_name in firewall['firewall-rule-sets'] %}
@@ -30,4 +31,3 @@
 {%-         endif %}
 {%-     endfor %}
 {%- endif %}
-

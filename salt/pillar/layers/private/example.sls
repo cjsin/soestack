@@ -15,11 +15,11 @@
 #
 #  then, when provisioning:
 #     add 'private:example' to ss.LAYERS provisioning variable
-#        (for example ss.LAYERS=soe:demo,site:testing,lan:home,private:example )
+#        (for example ss.LAYERS=soe:demo,site:testing,lan:home,private:example.private )
 #
 #   or if already provisioned and just updating the salt configuration:
 #     set the salt layers grain: to include 'private: example'
-#        (for example salt-call grains.set layers:private example 
+#        (for example salt-call grains.set layers:private example.private 
 
 # This file can be used to include others which are not
 # checked into a git repo
@@ -41,16 +41,14 @@
 #         root:
 #             root@infra.demo.com: a-big-long-root-ssh-key
 # deployments:
-#     gitlab_runner_baremetal:
-#         gitlab-runner:
-#             config:
-#                 registration_token: example-gitlab-runner-token
-#     gitlab_baremetal:
-#         gitlab:
-#             config:
-#                 mattermost:
-#                     app_id:       a-gitlab-application-app-id
-#                     token:        a-gitlab-application-secret-token
+#     ss-runners:
+#         config:
+#             registration_token: example-gitlab-runner-token
+#     ss-gitlab:
+#         config:
+#             mattermost:
+#                 app_id:       a-gitlab-application-app-id
+#                 token:        a-gitlab-application-secret-token
 
 # network:
 #     classes:

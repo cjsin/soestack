@@ -1,5 +1,21 @@
 {{ salt.loadtracker.load_pillar(sls,'demo') }}
 
+_layers_test:
+    description: test for saltstack bug, pillar regression 53516
+    soe:        {{sls}}
+    soe_value:  'soe-demo'
+    test_value: 'soe-demo'
+    additive:
+        - soe-demo
+
+layers_test:
+    description: test for saltstack bug, pillar regression 53516
+    soe:        {{sls}}
+    soe_value:  'soe-demo'
+    test_value: 'soe-demo'
+    additive:
+        - soe-demo
+
 # Overrides for the demo test soe
 
 soe:
@@ -8,38 +24,13 @@ soe:
 
 # The remaining items are in alphabetical order
 
-build:
-
-    rpm:
-
-        python37:
-            package_url:       https://www.python.org
-            subdir:            Python-VERSION
-            configure_flags:   --enable-optimizations --with-ensurepip=upgrade CFLAGS=-Wno-error=coverage-mismatch
-            install_flags:     altinstall DESTDIR=${DESTDIR}
-            source_url:        http://nexus:7081/repository/interwebs/www.python.org/ftp/python/VERSION/Python-VERSION.tar.xz
-
-            rpm_version:       1
-
-            required_packages:
-                - openssl-devel
-                - valgrind-devel 
-                - ncurses-devel
-                - gdbm-devel 
-                - sqlite-devel
-                - readline-devel
-                - xz-devel
-                - zlib-devel 
-                # need libuuid-devel and must not have uuid-devel installed (they both provide conflicting headers)
-                - libuuid-devel
-                - libffi-devel
-                - bzip2-devel
-                - tcl-devel
-                - tk-devel
+demo:
+    vars:
+        soe_layers: soe:demo,site:testing,private:example.private
 
 email:
     aliases:
-        root: devuser
+        root: adminuser
 
 filesystem:
     dirs:
@@ -128,10 +119,25 @@ installed_scripts:
         to:    /usr/local/bin
         mode:  '0755'
         common:
-            - salt-render
-            - systemd-bugfix-change-runlevel
-            - uuid4
-            - yum-refresh
+            - salt-scripts.sh.jinja
+            - salt-packages.sh.jinja
+            - b64decode.sh.jinja
+            - b64encode.sh.jinja
+            - salt-render.sh.jinja
+            - salt-build.sh.jinja
+            - salt-deploy.sh.jinja
+            - systemd-bugfix-change-runlevel.sh.jinja
+            - uuid4.py.jinja
+            - yum-refresh.sh.jinja
+            - lib-ss.sh.jinja
+            - lib-ipa.sh.jinja
+            - lib-ss-crypto.sh.jinja
+            - lib-gitlab.sh.jinja
+            - gitlab-util.sh.jinja
+            - salt-secret.sh.jinja
+            - generate-passwords.sh.jinja
+            - rsync-uptodate.sh.jinja
+            - built-rpm-upload.sh.jinja
 
 # This data is not used yet but I am just recording the
 # configuration which is performed, so it can be automated
@@ -146,6 +152,16 @@ ipa-configuration:
 
 issue: |
     Welcome to the SoeStack example soe
+
+managed-hosts:
+    demo-ipa-client:
+        infra:
+            ip:       '!!demo.ips.infra'
+            mac:      '!!demo.macs.infra'
+            aliases:  infra ipa.demo.com ipa salt.demo.com salt ldap.demo.com ldap
+            type:     client
+            hostfile:
+                - '.*'
 
 motd: |
     Welcome to the SoeStack example soe
@@ -258,6 +274,12 @@ network:
                 MODE:     'Managed'
             wpaconfig: {}
 
+        infra-dns:
+            sysconfig:
+                DNS1: 127.0.0.1
+                DNS2: '!!demo.ips.gateway'
+                DNS3: ''
+
 # NOTE - while this key houses nexus configuration,
 # the separate key nexus-repos (above) selects which 
 # repositories are selected for particular hosts.
@@ -284,8 +306,8 @@ nexus:
         kubernetes:      http://nexus:7081/repository/kubernetes 
         vscode:          http://nexus:7081/repository/vscode
         elasticsearch:   http://nexus:7081/repository/elasticsearch
-        elastic-docker:  http://nexus:7081/repository/elastic-docker
-        #elastic-docker: nexus:7082
+        #elastic-docker:  http://nexus:7081/repository/elastic-docker
+        elastic-docker:  nexus:7082
         rubygems:        http://nexus:7081/repository/rubygems
         interwebs:       http://nexus:7081/repository/interwebs
         built-rpms:      http://nexus:7081/repository/built-rpms
@@ -444,21 +466,21 @@ nexus:
         # currently does not support that, so nexus is incapable of proxying for EPEL now.
         # see Sonatype issue tracker bug url: https://issues.sonatype.org/browse/NEXUS-20078
         #
-        #epel:
-        #    type:           proxy
-        #    format:         yum
-        #    blobstore:      epel
-        #    remote_url:     https://dl.fedoraproject.org/
-        #    yum:
-        #        centos:
-        #            enabled:     1
-        #            gpgcheck:    1
-        #            gpgkey_url:  https://dl.fedoraproject.org/pub/epel/RPM-GPG-KEY-EPEL-$releasever
-        #            gpgkey:      RPM-GPG-KEY-EPEL-7
-        #            repos:
-        #                epel:
-        #                    description: EPEL for Centos $releasever
-        #                    path:        pub/epel/$releasever/$basearch
+        {# epel:
+            type:           proxy
+            format:         yum
+            blobstore:      epel
+            remote_url:     https://dl.fedoraproject.org/
+            yum:
+                centos:
+                    enabled:     1
+                    gpgcheck:    1
+                    gpgkey_url:  https://dl.fedoraproject.org/pub/epel/RPM-GPG-KEY-EPEL-$releasever
+                    gpgkey:      RPM-GPG-KEY-EPEL-7
+                    repos:
+                        epel:
+                            description: EPEL for Centos $releasever
+                            path:        pub/epel/$releasever/$basearch #}
 
         github:
             type:                proxy
@@ -489,7 +511,7 @@ nexus:
                             path:        gitlab/gitlab-ce/el/$releasever/$basearch
                         gitlab-runner:
                             description: "Gitlab Community Edition - runner"
-                            path:        runner/gitlab-runner/el/$releasever/$basearch
+                            path:        runner/gitlab-runner/el/$releaseshort/$basearch
                 # fedora:
                 #     repos:
                 #         gitlab-ce:
@@ -678,7 +700,9 @@ nexus-repos:
         kubernetes: True 
         built-rpms: True
         dockerce:   True
-        # gitlab:   True # add only on the infra server
+        #gitlab-ce:    False # this one is added only on the infra server
+        #gitlab-runner: True
+        gitlab:     True
         nodesource: True
         #prometheus: 
         saltstack: True
@@ -712,10 +736,11 @@ node_lists:
     prometheus:
         primary:
             - infra
-        #secondary:
-        #    #- pxe-client1
-        #    #- pxe-client2
-        workstations: []
+            - replica1
+        secondary:
+            - processor2
+        workstations:
+            - workstation3
 
 npm:
     host_config:
@@ -779,19 +804,20 @@ service-status:
             # - polkit
             # Can't disable NetworkManager in my test env as I need the wifi!
             # - NetworkManager
-            - libvirtd
-            - virtlockd
-            - virtlogd
-            - avahi-daemon
+            #- libvirtd
+            #- virtlockd
+            #- virtlogd
             - xinetd
-            - abrt-ccpp
-            - abrt-oops
-            - abrt-xorg
-            - abrtd
             - pulseaudio
             - tuned
             - lsmd
+        masked:
+            - avahi-daemon
             - kdump
+            - abrtd
+            - abrt-ccpp
+            - abrt-oops
+            - abrt-xorg
 
 service-reg:
     nexus_http:       nexus:7081
@@ -806,6 +832,16 @@ service-reg:
     nginx_https:      192.168.121.102:443
 
 ssh:
+
+    authorized_keys:
+        root:
+            # Change this after the server is built, 
+            # or alternatively set ssh:authorized_keys:root:root@infra.demo.com 
+            # in your salt/pillar/layers/private/<your-private-layer-name>/private.sls
+            # Note that because pillar is generated on the master, we can use this jinja expression
+            # to include the master's public key
+            root@infra.demo.com: '{{salt['cmd.shell']('cut -d " " -f1-2 < /root/.ssh/id_rsa.pub')}}'
+
     sshd:
 
         enabled: True
@@ -833,6 +869,7 @@ ssh:
             AcceptEnv LC_IDENTIFICATION LC_ALL LANGUAGE
             AcceptEnv XMODIFIERS
             Subsystem	sftp	/usr/libexec/openssh/sftp-server
+            MaxAuthTries 10
 
 sudoers:
     files:
@@ -899,3 +936,46 @@ firefox:
         // Disable crash reporter
         pref("toolkit.crashreporter.enabled", false);
         //Components.classes["@mozilla.org/toolkit/crash-reporter;1"].getService(Components.interfaces.nsICrashReporter).submitReports = false; 
+
+
+
+postfix:
+    mode: client
+    config:
+        defaults:
+            enabled:             True
+            append_dot_mydomain: no
+            inet_protocols:      ipv4
+            myorigin:            '!!network.system_domain'
+            home_mailbox:        ''
+            mydomain:            localhost.localdomain
+            mydestination:       localhost.$mydomain, localhost.localdomain, localhost
+        server:
+            inet_interfaces:     '!!demo.ips.infra'
+            mydomain:            '!!network.system_domain'
+            myorigin:            '!!network.system_domain'
+            mydestination:       $myhostname, $mydomain, localhost.$mydomain, localhost.localdomain, localhost
+            home_mailbox:        Maildir/
+            relayhost:           ''
+            relay_domains:       ''
+        client: 
+            relayhost:           '[infra.demo.com]:25'
+            relay_domains:       '!!network.system_domain'
+            default_transport:   smtp
+
+yum:
+    repos:
+        centos,redhat:
+            epel:
+                baseurl:     http://infra.demo.com:9002/bootstrap-pkgs/epel
+                enabled:     True
+                description: EPEL bootstrap repos
+                gpgcheck:    False
+            centos-os-dvd:
+                baseurl:     http://infra.demo.com:9001/os/dvd
+                enabled:     True
+                description: OS packages from the DVD
+                gpgcheck:    True 
+                gpgkey:      file:///etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-7
+        fedora: {}
+

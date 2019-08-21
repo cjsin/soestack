@@ -1,0 +1,114 @@
+DEFAULT menu.c32
+PROMPT 0
+TIMEOUT {{config.timeout}}
+MENU WIDTH 80
+MENU MARGIN 10
+MENU PASSWORDMARGIN 3
+MENU ROWS 12
+MENU TABMSGROW 18
+MENU ENDROW 24
+MENU PASSWORDROW 11
+MENU TIMEOUTROW 20
+MENU TITLE SoeStack
+
+{#- http has to be used for the kickstart download because the anaconda installer (still) has the bug where if it tries to access #}
+{#- the kickstart over an nfs share (and the kickstart is not at the exact top level), then it tries to download the file to #}
+{#- the same path within the install repo. #}
+{#- So for example with install repo path /e/pxe/os/minimal, and kickstart path /e/pxe/os/minimal/kickstart/kickstart.cfg #}
+{#- then it would try to copy the kickstart file to (or from?) /e/pxe/os/minimal/e/pxe/os/minimal/kickstart/kickstart.cfg #}
+{#- #initrd=%initrd% inst.ks=http://%server%/os/minimal/kickstart/kickstart.cfg inst.stage2=nfs:nfsvers=4:%server%:/e/pxe/os/minimal/ #}
+{%- for  entry in entries %}
+{%-     set entry_name = entry.name if 'name' in entry else 'Network Install' %}
+{%-     set title      = entry.title if 'title' in entry and entry.title else entry_name %}
+{%-     set kernel     = entry.kernel if 'kernel' in entry else '' %}
+{%-     set initrd     = entry.initrd if 'initrd' in entry else '' %}
+{%-     set type       = entry.type if 'type' in entry and entry.type else '' %}
+{%-     set kickstart  = entry.kickstart if 'kickstart' in entry else '' %}
+{%-     set stage2     = entry.stage2 if 'stage2' in entry else '' %}
+{%-     set append     = [] %}
+
+{%-     if False and initrd %}
+{#-         # this is now done below with an INITRD line #}
+{%-         do append.append('initrd='~initrd) %}
+{%-     endif %}
+{#- #}
+{%-     if kickstart %}
+{%-         do append.append('inst.ks='~kickstart) %}
+{%-     endif %}
+{#- #}
+{%-     if stage2 %}
+{%-         do append.append('inst.stage2='~stage2) %}
+{%-     endif %}
+{#- #}
+{%-     if type == 'soestack' %}
+{#-     # do a boot using soestack kickstarts and boot commandline host configuration #}
+{%-         set ss_array_types=[ 'host', 'repo' ] %}
+{%-         for arrtype in ss_array_types %}
+{%-             set key = ('ss_'~arrtype~'s') %}
+{%-             set addvar = 'ss.ADD_' ~ arrtype.upper() ~ '=' %}
+{%-             if key in entry and entry[key] %}
+{%-                 for n,v in entry[key].iteritems() %}
+{%-                     set rhs = ','.join([n]+v.split(' ')) if v else n %}
+{%-                     do append.append(addvar ~ rhs) %}
+{%-                 endfor %}
+{%-             endif %}
+{%-         endfor %}
+{%-         if 'ss_settings' in entry and entry.ss_settings %}
+{%-             for key,value in entry.ss_settings.iteritems() %}
+{%-                 if value is string %}
+{%-                     do append.append("ss."~key.upper()~'='~value|replace(' ',',')) %}
+{%-                 elif key[0:4] == "ADD_" and value is iterable %}
+{%-                     for item in value %}
+{%-                         do append.append("ss."~key.upper()~'='~item|replace(' ',',')) %}
+{%-                     endfor %}
+{%-                 endif %}
+{%-             endfor %}
+{%-         endif %}
+{%-     endif %}
+{#- #}
+
+{%-     if 'append' in entry %}
+{%-         if entry.append is string %}
+{%-             do append.append(entry.append) %}
+{%-         elif entry.append is mapping %}
+{%-             for append_item_name,append_item in entry.append.iteritems() %}
+{#-                 # allow appending items without an equals by specifying None as a value #}
+{%-                 set rhs = '=' ~ append_item if append_item != None else '' %}
+{%-                 do append.append(append_item_name)%}
+{%-             endfor %}
+{%-         elif entry.append is iterable %}
+{%-             do append.extend(entry.append) %}
+{%-         else %}
+{#-             # it might just be a number #}
+{%-             do append.append(entry.append) %}
+{%-         endif %}
+{%-     endif %}
+{#- #}
+{%-     set append_text_edits=[' '.join(append)] %}
+{%-     for var_name in ['server','http_server','nfs_server'] %}
+{%-         set var_magic = '%' ~ var_name ~ '%' %}
+{%-         if var_name in config and config[var_name] %}
+{#-             # have to do this because the variable above is unmodifiable #}
+{%-             do append_text_edits.insert(0,append_text_edits[0]|replace(var_magic, config[var_name])) %}
+{%-         endif %}
+{%-     endfor %}
+{%-     set append_text = append_text_edits[0] %}
+
+LABEL {{entry_name}}
+    {%- if title %}
+    MENU LABEL {{title}}
+    {%- endif %}
+    {%- if kernel %}
+    KERNEL {{kernel}}
+    {%- endif %}
+    {%- if initrd %}
+    INITRD {{initrd}}
+    {%- endif %}
+    {%- if append_text %}
+    APPEND {{append_text}}
+    {%- endif %}
+    {%- if type == 'custom' and 'custom' in entry %}
+    {{entry.custom|indent(4)}}
+    {%- endif %}
+
+{%- endfor %}

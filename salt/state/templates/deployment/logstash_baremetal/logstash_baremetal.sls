@@ -1,12 +1,12 @@
 {%- set diagnostics      = False %}
-{%- set prefix, suffix   = salt.uuid.ids(args) %}
+{%- set prefix, suffix   = salt.uuids.ids(args) %}
 {%- set deployment       = args.deployment %}
 {%- set deployment_name  = args.deployment_name %}
 {%- set deployment_type  = args.deployment_type %}
+{%- set config           = deployment.config if 'config' in deployment else {} %}
 {%- set service_name     = deployment_name %}
-{%- set service_suffix   = deployment_name|replace('logstash-','') %}
 {%- set filesystem       = deployment.filesystem if 'filesystem' in deployment else {} %}
-{%- set pillar_location  = ':'.join(['deployments',deployment_type,deployment_name]) %}
+{%- set pillar_location  = ':'.join(['deployments',deployment_name]) %}
 {%- set state_tag        = deployment_type ~ '-' ~ deployment_name %}
 {%- set action           = args.action if 'action' in args else 'all' %}
 {%- set account_defaults = { 'user': 'logstash', 'group': 'logstash', 'extra_groups': [] } %}
@@ -35,9 +35,10 @@
 
 
 {%-     if action in [ 'all', 'configure' ] %}
-
+{%-         set primary_group = [] %}
 {%-         if 'extra_groups' in account_info and account_info.extra_groups %}
 {%-             for extra_group in account_info.extra_groups %}
+{%-                 do primary_group.append(extra_group) %}
 
 {{sls}}.{{prefix}}{{state_tag}}-user-{{user}}-group-{{extra_group}}{{suffix}}:
     cmd.run:
@@ -59,11 +60,28 @@
         - source:   salt://templates/deployment/logstash_baremetal/service.jinja
         - template: jinja
         - context:
-            service_suffix:  {{service_suffix}}
             deployment_name: {{deployment_name}}
             user:            {{user}}
             group:           {{group}}
+            config_subdir:   {{config.config_subdir if 'config_subdir' in config else ''}}
 
+{%-         if primary_group and 'chgrp' in config %}
+{%-             for what in config.chgrp %}
+{{sls}}.{{prefix}}{{state_tag}}.chgrp.{{what}}{{suffix}}:
+    cmd.run:
+        - name: chgrp '{{primary_group[0]}}' '{{what}}'
+        - unless: stat -c %G '{{what}}' | egrep '^{{primary_group[0]}}$'
+{%-             endfor %}
+{%-         endif %}
+
+{%-         if primary_group and 'chmod' in config %}
+{%-             for what in config.chmod %}
+{{sls}}.{{prefix}}{{state_tag}}.chmod.{{what}}{{suffix}}:
+    cmd.run:
+        - name: chmod g+rX '{{what}}'
+        - unless: stat -c '%a' '{{what}}' | egrep '^.[45]'
+{%-             endfor %}
+{%-         endif %}
 {%-     endif %}
 
 {%-     if action in [ 'all', 'activate' ] %}
@@ -72,7 +90,7 @@
 
 {{sls}}.{{prefix}}{{state_tag}}-service{{suffix}}:
     service.{{'running' if activated else 'dead'}}:
-        - name:   logstash-{{service_suffix}}
+        - name:   {{deployment_name}}
         - enable: {{activated}} 
 
 {%-     endif %}

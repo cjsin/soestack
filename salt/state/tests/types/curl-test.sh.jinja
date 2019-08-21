@@ -1,0 +1,45 @@
+#!/bin/bash
+
+good="{{t.good}}"
+bad="{{t.bad}}"
+
+score=0
+result=
+output=$(curl -s -k -L {{t.proto}}://{{t.server}}:{{t.port}}{{t.path}})
+status=$?
+problems=()
+
+if [[ "${status}" != 0 ]]
+then
+    problems+=("The connection failed")
+    ((score++))
+else
+    if [[ -n "${good}" ]] && egrep "${good}" <<< "${otuput}" #[[ "${output}" =~ ${good} ]]
+    then
+        ((score++))
+        problems+=("The output did not contain the expected '${good}'")
+    fi 
+    if [[ -n "${bad}"  ]] && [[ "${output}" =~ ${bad}  ]]
+    then 
+        ((score++))
+        problems+=("The output contained the recognised bad data '${bad}'")
+    fi
+fi
+
+if (( score ))
+then 
+    echo "FAIL" 1>&2
+    for p in "${problems[@]}"
+    do
+        echo "PROBLEM: ${p}" 1>&2
+    done
+    if ! (( status ))
+    then 
+        echo "Unexpected output: " 1>&2
+        sed 's/^/    /' <<< "${output}" 1>&2
+    fi
+else
+    echo "PASS"
+fi
+
+exit  ${score}

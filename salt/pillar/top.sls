@@ -3,9 +3,12 @@
 base:
     '*':
         # Load soestack defaults
+        - diagnostics
         - defaults
+        - build
         - layers
-        
+        - secrets
+        - deployment-sequence
         # Testing schema validation
         #- test-schema
         #- test-schema-testdata
@@ -17,10 +20,12 @@ base:
         # Override with mid level security just during early development
         # - defaults.security.low
         - ignore_missing: True
+        - tests
 
-    'roles:primary-server':
+    'roles:primary-server-node':
         - match: grain
         - defaults.security.mid
+        - tests
         - ignore_missing: True
 
     'E@.*':

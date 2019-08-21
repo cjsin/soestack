@@ -1,0 +1,119 @@
+#!/bin/bash
+
+. /usr/local/bin/lib-ss.sh
+
+function built-rpm-upload::usage()
+{
+    msg "Usage: built-rpm-upload /path/to/rpm/file.rpm"
+    msg ""
+    msg "Uploads a custom built rpm to the nexus repo at:"
+    msg "    ${base_url}"
+}
+
+function built-rpm-upload::process-args()
+{
+    local rpmfile_regex='.*[.]rpm$'
+    local arg
+    while (( $# ))
+    do
+        arg="${1}"
+        shift 
+        case "${arg}" in
+            -h|-help|--help|help)
+                built-rpm-upload::usage
+                return 1
+                ;;
+            *?.rpm)
+                rpmfile="${arg}"
+                ;;
+            *)
+                built-rpm-upload::usage 
+                return 2
+                ;;
+        esac 
+    done
+
+    if [[ -z "${rpmfile}" ]]
+    then
+        built-rpm-upload::usage 
+        err "An rpm file must be specified"
+        return 2
+    elif ! [[ -f "${rpmfile}" ]]
+    then 
+        err "The rpm file '${rpmfile}' does not exist (or no permissions)."
+        return 2
+    fi
+
+    return 0
+}
+
+function built-rpm-upload::perform-upload()
+{
+    local rpmfile="${1}"
+    local url="${2}"
+
+    local secret_name="pw-nexus-admin"
+    local upload_pw
+    upload_pw=$(salt-secret "${secret_name}")
+
+    if (( $? )) || [[ -z "${upload_pw}" ]]
+    then 
+        err "Could not load secret ${secret_name}. Run state 'secrets' first."
+        return 1
+    fi
+
+    msg "File ${rpmfile##*/} will be uploaded to ${url%/*}"
+    #this will prompt for the password
+    local logfile=$(mktemp -t tmp_logfile_XXXXXXX)
+
+    if curl '-#' -K - --upload-file "${rpmfile}" "${url}" > "${logfile}" 2>&1 <<< "user = admin:${upload_pw}"
+    then
+        tr '\r' '\n' < "${logfile}" | egrep -v '[0-9]%$'
+        tr '\r' '\n' < "${logfile}" | egrep '[0-9]%$' | tail -n1
+        #egrep '#' 
+        #rm -f "${logfile}"
+        msg "Successfully uploaded."
+        return 0
+    else 
+        tr '\r' '\n' < "${logfile}" | egrep -v '[0-9]%$'
+        tr '\r' '\n' < "${logfile}" | egrep '[0-9]%$' | tail -n1
+        #rm -f "${logfile}"
+        err "Uploading failed."
+        return 1
+    fi
+}
+
+function built-rpm-upload::main()
+{
+    {%- if 'build' in pillar and pillar.build and 'upload' in pillar.build and pillar.build.upload and 'url' in pillar.build.upload %}
+    local base_url="{{pillar.build.upload.url}}"
+    {%- else %}
+    local base_url=""
+    {%- endif %}
+
+    if [[ -z "${base_url}" ]]
+    then 
+        err "There is no configured upload URL"
+        return 1
+    fi
+
+    local rpmfile=""
+
+    local status
+    built-rpm-upload::process-args "${@}"
+    status=$?
+
+    if [[ "${status}" == 1 ]]
+    then 
+        # help flag was specified
+        return 0
+    elif [[ "${status}" != 0 ]]
+    then 
+        return ${status}
+    fi
+
+    built-rpm-upload::perform-upload "${rpmfile}" "${base_url}/${rpmfile##*/}"
+}
+
+built-rpm-upload::main "${@}"
+

@@ -33,7 +33,7 @@
 {%-                 else %}
 {%-                     set subkey_parts = subkey.split(',') %}
 {%-                     for part in subkey_parts %}
-{%-                         if part in grains.roles %}
+{%-                         if 'roles' in grains and part in grains['roles'] %}
 {%-                             do matched.append(part) %}
 {%-                         endif %}
 {%-                     endfor %}
@@ -41,14 +41,19 @@
 {%-                 if matched %}
 {%-                     for item in items %}
 
+{%-                         set name = item[:-6] if item.endswith('.jinja') else item %}
+{%-                         set name = name[:-3] if name.endswith('.sh') and not name.startswith('lib-') else name %}
+{%-                         set name = name[:-3] if name.endswith('.py') else name %}
 {{sls}}.{{groupname}}-{{item}}:
     file.managed:
-        - name:    '{{to}}/{{item}}'
+        - name:    '{{to}}/{{name}}'
         - source:  '{{from}}/{{item}}'
         - user:    root
         - group:   root
         - mode:    '{{mode}}'
+        {%- if item.endswith('.jinja') %}
         - template: jinja
+        {%- endif %}
 
 {%-                     endfor %}
 {%-                 endif %}

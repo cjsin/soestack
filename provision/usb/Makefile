@@ -49,7 +49,7 @@ INSPECT         = $(ACTIVATE) && ./build-boot-image.py --img $(IMAGE) inspect
 CAT_SYSLINUX    = --cat /usb/syslinux/syslinux.cfg
 KS_FILES        = $(shell find ../kickstart -type f)
 
-BUNDLER_GEN     = bundler-$(LAN_NAME).properties
+BUNDLER_GEN     = bundler-usb-lan.properties
 
 BUNDLER_FILES   = bundler-usb.properties \
 					bundler-usb-defaults.properties \
@@ -155,7 +155,7 @@ nexus: $(GENERATED)
 	$(BUNDLER) nexus
 
 #help:menus       : update syslinux menus
-menus: $(GENERATED)
+menus: $(GENERATED) 
 	$(BUNDLER) menus
 
 #help:soe         : update bundled soe code copy
@@ -186,12 +186,14 @@ quick: $(KS_FILES) $(GENERATED)
 private: $(GENERATED)
 	$(BUNDLER) private
 
+.PHONY: $(BUNDLER_GEN)
+
 ## Choose bundler-usb-vm or bundler-usb-sv depending on USB_LAN
-$(BUNDLER_GEN): bundler-$(LAN_NAME).properties
-	cp -f $< $@
+$(BUNDLER_GEN): 
+	cp -f bundler-$(LAN_NAME).properties $@
 
 $(GUESTFS_ARCHIVE):
-	wget $(GUESTFS_SRC)
+	@wget $(GUESTFS_SRC)
 
 system-requirements:
 	@command -v python3 > /dev/null 2> /dev/null || ( echo "MISSING: python3 is not available" 1>&2 ; /bin/false )
@@ -199,16 +201,18 @@ system-requirements:
 	@test -f $(GUESTFS_HEADER) || ( echo "ERROR: Guestfs devel headers are not installed!" 1>&2; /bin/false )
 	@echo "PASS: $@ - guestfs devel headers"
 
-venv-install:
-	@test -d venv || python3 -m venv venv
+venv-install: venv-exists
 	@$(VENV_PIP) install --upgrade pip
-	@$(VENV_PIP) list | grep attrdict || $(VENV_PIP) install attrdict
-	@$(VENV_PIP) list | grep guestfs  || $(VENV_PIP) install $(GUESTFS_ARCHIVE)
+	@$(VENV_PIP) list | grep attrdict || ( $(VENV_PIP) install attrdict )
+	@$(VENV_PIP) list | grep guestfs  || ( $(VENV_PIP) install $(GUESTFS_ARCHIVE) )
 	@echo "Pip packages installed:"
 	@$(VENV_PIP) list 
 
-venv-requirements:
+venv-requirements: venv-install
 	@$(VENV_PIP) list | egrep -c 'attrdict|guestfs' | egrep -q '^2$$' || make venv-install || /bin/false
 	@echo "PASS: $@"
+
+venv-exists:
+	@test -d venv || python3 -m venv venv
 
 venv: $(GUESTFS_ARCHIVE) system-requirements venv-requirements

@@ -1,5 +1,11 @@
 #!stateconf yaml . jinja
 
+{%- if 'screensaver' in pillar and pillar.screensaver is mapping and 'x11' in pillar.screensaver and pillar.xscreensaver.x11 is mapping %}
+{%-     set screensaver_config = pillar.screensaver.x11 %}
+{%-     set idle_timeout_seconds = screensaver_config['idle-timeout'] %}
+{%-     set lock_timeout_seconds = screensaver_config['lock-timeout'] %}
+{%-     set lock_enabled = screensaver_config['lock-enabled'] %}
+
 .user-profile:
     file.managed:
         - name: /etc/dconf/profile/user
@@ -19,14 +25,20 @@
         - group: root
         - mode:  '0644'
         - contents: |
+            {%- if idle_timeout_seconds != 'unset' %}
             [org/gnome/desktop/session]
             # Set the lock time out to 180 seconds before the session is considered idle.
-            idle-delay=180
+            idle-delay={{idle_timeout_seconds}}
+            {%- endif %}
             [org/gnome/desktop/screensaver]
             # Set this to true to lock the screen when the screensaver activates
-            lock-enabled=true
+            {%- if lock_enabled != 'unset' %}
+            lock-enabled={{'false' if not idle_lock else 'true'}}
+            {%- endif %}
+            {%- if idle_lock_seconds != 'unset' %}
             # Set the lock timeout to 180 seconds after the screensaver has been activated
-            lock-delay=180
+            lock-delay={{screensaver_config['lock-timeout']}}
+            {%- endif %}
 
 .lockdown:
     file.managed:
@@ -49,3 +61,4 @@
             - file: {{sls}}::system-db-local
             - file: {{sls}}::lockdown
 
+{%- endif %}

@@ -319,6 +319,8 @@ function generate_kickstart_vars()
         process_commandline_vars kernel
     fi
 
+    [[ -n "${WLAN}" ]] && echo_return "WLAN=\"${WLAN}\""
+
     # Check if passwords were set via pxe
     # These will be generated one time
     if [[ ! -f "${PW_VARS}" ]]

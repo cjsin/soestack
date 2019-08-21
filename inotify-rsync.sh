@@ -1,6 +1,7 @@
 #!/bin/bash
 
 DEBUG=""
+VERBOSE=""
 SCRIPT_DIR=""
 SCRIPT_NAME=""
 PARENT_PID="$$"
@@ -8,7 +9,21 @@ PROG="${0##*/}"
 HELP_REGEX='(^|[[:space:]])(-h|-help|--help|help)([[:space:]]|$)'
 PERIOD=5
 DELAY=1.5
-WATCH=("salt" "${BASH_SOURCE[0]}")
+WATCH=(
+    "salt" 
+    "provision" 
+    "test" 
+    "${BASH_SOURCE[0]}"
+)
+EXCLUDE=(
+    "@venv" 
+    --exclude "*.pyc"
+    --exclude "__pycache__"
+    --exclude "*.raw"
+    --exclude "*.qcow2"
+    --exclude "*.iso"
+    --exclude "*.img"
+)
 EVENTS=(
     -e modify
     -e attrib
@@ -24,19 +39,45 @@ RSYNC=(
     -a 
     --delete 
     --info=all0,skip1,remove1,name1,copy1,stats1,misc0,progress0,symsafe1,mount1,flist0
+    --exclude=.git
+    --exclude=venv
+    --exclude="**/venv"
+    --exclude=bundled
+    --exclude="*.pyc"
+    --exclude="__pycache__"
 )
-RSYNC_SRC="./salt/"
-RSYNC_DST="/soestack/salt/"
-SERVER=""
 
-function usage()
+RSYNC_SRC="./"
+RSYNC_DST="/soestack/"
+SERVER=""
+REMOTE=""
+
+function unbuffered()
 {
-    local exit_status="${1:-0}"
-    msg "Usage: ${PROG} server-ip"
-    msg ""
-    msg "Will sync the salt directory to the server either periodically"
-    msg "or when the salt files change (if you have inotifywait installed)"
-    exit "${exit_status}"
+    stdbuf -i0 -o0 -e0 "${@}"
+}
+
+function indent()
+{
+    stdbuf -i0 -o0 -e0 sed 's/^/  /'
+}
+
+function run()
+{
+    msg "DATE: $(date)"
+    if (( VERBOSE ))
+    then
+        msg "RUN : ${*}"
+        ${DEBUG} "${@}" < /dev/null
+    else
+        msg "RUN : ${1}"
+        "${@}" < /dev/null
+    fi
+}
+
+function timestamp()
+{
+    date "${@}" "+%H:%M:%S"
 }
 
 function msg()
@@ -61,7 +102,17 @@ function die()
     exit 1
 }
 
-function enter_script_dir()
+function inotify-rsync::usage()
+{
+    local exit_status="${1:-0}"
+    msg "Usage: ${PROG} server-ip"
+    msg ""
+    msg "Will sync the salt directory to the server either periodically"
+    msg "or when the salt files change (if you have inotifywait installed)"
+    return "${exit_status}"
+}
+
+function inotify-rsync::enter-script-dir()
 {
     local bs0="${BASH_SOURCE[0]}"
     if [[ "${bs0:0:1}" == "/" ]]
@@ -92,48 +143,29 @@ function enter_script_dir()
     fi
 }
 
-function generate_events()
+function inotify-rsync::generate-events()
 {
     msg "From ${PWD}, watching ${WATCH[*]} for changes..."
-    run "${@}" inotifywait -m -r --format '%T %e %w' --timefmt "%s" "${EVENTS[@]}" "${WATCH[@]}" | stdbuf -i0 -o0 -e0 uniq 
+    local command=(
+        inotifywait
+        --monitor
+        --recursive
+        --format '%T %e %w' 
+        --timefmt "%s" 
+        "${EVENTS[@]}" 
+        "${WATCH[@]}"
+        "${EXCLUDE[@]}"
+    )
+    run "${@}" "${command[@]}" | stdbuf -i0 -o0 -e0 uniq 
     msg "${FUNCNAME[0]} status ${?}"
 }
 
-function unbuffered()
+function inotify-rsync::perform-sync()
 {
-    stdbuf -i0 -o0 -e0 "${@}"
+    ${DEBUG} run rsync "${RSYNC[@]}" "${RSYNC_SRC}" "${REMOTE}:${RSYNC_DST}" 2>&1 | indent 
 }
 
-function indent()
-{
-    stdbuf -i0 -o0 -e0 sed 's/^/  /'
-}
-
-
-function perform_sync()
-{
-    ${DEBUG} run rsync "${RSYNC[@]}" "${RSYNC_SRC}" "root@${SERVER}:${RSYNC_DST}" 2>&1 | indent 
-}
-
-function run()
-{
-    msg "DATE: $(date)"
-    if [[ -n "${DEBUG}" ]]
-    then
-        msg "RUN : ${*}"
-        ${DEBUG} "${@}" < /dev/null
-    else
-        msg "RUN : ${1}"
-        "${@}" < /dev/null
-    fi
-}
-
-function timestamp()
-{
-    date "${@}" "+%H:%M:%S"
-}
-
-function handle_events()
+function inotify-rsync::handle-events()
 {
     local now=$(date +%s)
     local execute_routine="${1}"
@@ -197,12 +229,12 @@ function handle_events()
     done
 }
 
-function watch_for_changes()
+function inotify-rsync::watch-for-changes()
 {
-    generate_events | handle_events perform_sync
+    inotify-rsync::generate-events | inotify-rsync::handle-events inotify-rsync::perform-sync
 }
 
-function cleanup()
+function inotify-rsync::cleanup()
 {
     local status="${1:-0}"
     local why="${2:-1}"
@@ -213,17 +245,17 @@ function cleanup()
     exit ${status}
 }
 
-function interrupted()
+function inotify-rsync::interrupted()
 {
-    cleanup 0 "Interrupted."
+    inotify-rsync::cleanup 0 "Interrupted."
 }
 
-function terminated()
+function inotify-rsync::terminated()
 {
-    cleanup 1 "ERROR: Terminated"
+    inotify-rsync::cleanup 1 "ERROR: Terminated"
 }
 
-function sleep_loop()
+function inotify-rsync::sleep-loop()
 {
     local execute_routine="${1}"
     while (( 1 ))
@@ -233,22 +265,113 @@ function sleep_loop()
     done
 }
 
-function main()
+function inotify-rsync::ssh-check()
+{
+    local test=$(date +%s)
+    local result
+    result=$(ssh -o BatchMode=yes "${REMOTE}" "echo ${test}")
+    if ! (( result ))
+    then 
+        if [[ "${result}" == "${test}" ]]
+        then 
+            return 0
+        else
+            return 1
+        fi
+    else 
+        return 0
+    fi
+}
+
+
+function inotify-rsync::user-input-loop()
+{
+    trap "kill -INT ${PARENT_PID}" INT
+    local line
+    while (( 1 ))
+    do
+        msg "Hit Ctrl-C to exit, or Enter to initiate an immediate sync."
+
+        read line
+
+        msg "NOTICE: User initiated sync by hitting return."
+        inotify-rsync::perform-sync
+        msg "Going back to normal operation. "
+    done 
+}
+
+function inotify-rsync::process-args()
 {
     if [[ "${*}" =~ ${HELP_REGEX} ]]
     then
-        usage 0
-    elif [[ "${#}" != 1 ]]
-    then
-        usage 1
-		else
-        SERVER="${1}"
-        shift
+        inotify-rsync::usage 0
     fi
 
-    if ! enter_script_dir
+    local octet="[0-9]{1,2}|[01][0-9]{1,2}|2[0-4][0-9]|25[0-5]"
+    local ip_regex="^((${octet})[.]){3}(${octet})\$"
+    local hostname_regex='^([a-zA-Z][-_a-zA-Z0-9]*[.])([a-zA-Z][-_a-zA-Z0-9]*$'
+    local arg
+
+    while (( $# ))
+    do
+        arg="${1}"
+        shift 
+        case "${arg}" in 
+            -verbose)
+                VERBOSE=1
+                ;;
+            -debug)
+                DEBUG="echo"
+                ;;
+            *)
+                if [[ "${arg}" =~ ${ip_regex} ]]
+                then 
+                    SERVER="${arg}"
+                elif [[ "${arg}" =~ ${hostname_regex} ]]
+                then 
+                    SERVER="${arg}"
+                else
+                    err "Unrecognised arg: '${arg}'"
+                    return 2
+                fi
+                ;;
+        esac
+    done
+
+    if [[ -z "${SERVER}" ]]
+    then
+        inotify-rsync::usage 1
+    fi
+
+    REMOTE="root@${SERVER}"
+}
+
+function inotify-rsync::main()
+{
+    local SERVER=""
+    local REMOTE=""
+
+    local status
+    inotify-rsync::process-args "${@}"
+    status=$?
+
+    if [[ "${status}" == 1 ]]
+    then 
+        # Usage was printed
+        return 0
+    elif [[ "${status}" != 0 ]]
+    then 
+        return 2
+    fi
+
+    if ! inotify-rsync::enter-script-dir
     then
         die "Could not determine script dir!"
+    fi
+
+    if ! inotify-rsync::ssh-check
+    then
+        die "SSH key is not set up."
     fi
 
     method="watch"
@@ -260,17 +383,17 @@ function main()
         method="sleep"
     fi
 
-    trap "interrupted" "INT"
-    trap "terminated" "TERM"
+    trap "inotify-rsync::interrupted" "INT"
+    trap "inotify-rsync::terminated" "TERM"
 
     case "${method}" in
         watch)
-            watch_for_changes perform_sync < /dev/null &
+            inotify-rsync::watch-for-changes inotify-rsync::perform-sync < /dev/null &
             sleep 2
             msg "Watching for changes..."
             ;;
         sleep)
-            sleep_loop perform_sync < /dev/null &
+            inotify-rsync::sleep-loop inotify-rsync::perform-sync < /dev/null &
             sleep 2
             msg "Syncing every ${PERIOD} seconds"
             ;;
@@ -283,29 +406,13 @@ function main()
 
     msg "Completed startup..."
     
-    user_input_loop < /dev/stdin &
+    inotify-rsync::user-input-loop < /dev/stdin &
 
     wait
     
-    cleanup
+    inotify-rsync::cleanup
 
-    echo "${PROG}: Exiting" 1>&2
+    msg "${PROG}: Exiting"
 }
 
-function user_input_loop()
-{
-    trap "kill -INT ${PARENT_PID}" INT
-    local line
-    while (( 1 ))
-    do
-        msg "Hit Ctrl-C to exit, or Enter to initiate an immediate sync."
-
-        read line
-
-        msg "NOTICE: User initiated sync by hitting return."
-        perform_sync
-        msg "Going back to normal operation. "
-    done 
-}
-
-main "${@}"
+inotify-rsync::main "${@}"

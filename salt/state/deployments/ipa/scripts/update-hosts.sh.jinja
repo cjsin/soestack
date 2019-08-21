@@ -1,4 +1,0 @@
-#!/bin/bash
-
-salt-call pillar.get managed-hosts --out yaml|grep '^  [a-z0-9]' | cut -d: -f1
-

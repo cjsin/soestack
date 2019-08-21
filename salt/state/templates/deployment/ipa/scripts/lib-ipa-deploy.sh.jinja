@@ -1,0 +1,269 @@
+#!/bin/bash
+
+. /usr/local/bin/lib-ss.sh || exit 1
+. /usr/local/bin/lib-ipa.sh || die "Failed loading ipa lib"
+
+# NOTE this function requires a 'logprefix' and TIMESTAMP' variable already to 
+# have been declared
+function ipa::deploy::uninstall-failed-first()
+{
+    local what="${1}"
+    local logfile="${logprefix}.log"
+    if [[ -f "${logfile}" ]]
+    then
+        if [[ -f "${logprefix}.FAILED" ]]
+        then
+            notice "Uninstalling failed ipa ${what} installation"
+            ipa-${what}-install --uninstall -U 
+            local timestamp=$(stat -c %Z "${logfile}")
+            mv "${logfile}" "${logprefix}.FAILED.${TIMESTAMP}.log"
+        else
+            echo "The IPA service seems to have already been installed successfully" 1>&2
+        fi
+    fi
+    rm -f "${logprefix}.FAILED"
+}
+
+function ipa::deploy::install::client()
+{
+
+    # NOTE the local declaration and the assignment to the variable secret 
+    # must be kept separated here in order to check the return status of 
+    # the command
+    local secret=""
+    secret=$(salt-secret ipa_client_enrol)
+    if [[ "${?}" != 0 || -z "${secret}" ]]
+    then 
+        err "Could not determine enrolment secret"
+        return 1
+    fi
+
+    local -a options=(
+        # Unattended
+        -U
+
+        # Basic options
+        --domain="${IPA_DOMAIN}"
+        --server="${IPA_SERVER}"
+        --realm="${IPA_REALM}"
+        --hostname="${CLIENT_HOSTNAME}"
+
+        # Client options
+        --configure-firefox
+        --mkhomedir
+        --force-join
+        --ntp-server "${IPA_SERVER}"
+        --force-ntpd
+        --no-nisdomain
+        --ssh-trust-dns
+        --request-cert
+        --fixed-primary
+        --enable-dns-updates
+        --automount-location="${IPA_SITE}"
+
+        --verbose 
+    )
+
+    # The installation is performed with selinux disabled 
+    # and the firewall rules flushed, because it has troubles otherwise.
+    # The rules it requires can be configured after
+
+    ipa::deploy::ipa-install-wrapper ipa-client-install -U "${options[@]}"  -w "${secret}"
+    # Just making it explicit here that the return status of the prior function
+    # is returned to the caller
+    return $?
+}
+
+function ipa::deploy::client::main()
+{
+    ipa::deploy::uninstall-failed-first client
+    ipa::deploy::install::client
+}
+
+function ipa::deploy::install::master()
+{
+    # Load pre-generated passwords
+    
+    local admin_password master_password ds_password
+    ipa::load-admin-passwords
+
+    #local ip="{{grains.fqdn_ip4[0]}}"
+    local ip="{{config.ip}}"
+
+    [[ -n "${master_password}" ]] || die "No IPA secrets have been created! Run salt-call state.sls secrets first (and make sure the pw-ipa-* passwords are set to be generated and distributed in pillar.secrets "
+
+    local -a options=(
+        # Skip dns check
+        "--no-host-dns"
+        # Skip another dns check
+        "--allow-zone-overlap"
+
+        "--mkhomedir"
+        "--ssh-trust-dns"
+
+        "--realm=${IPA_REALM}"
+        "--domain=${IPA_DOMAIN}"
+        "--hostname=$(hostname -f)"
+        "--ip-address={{config.ip}}"
+        "--no-host-dns"
+
+        {%- if config.install.dns.enabled %}
+        "--setup-dns"
+        {#  forwarders during installation are disabled because it always fails #}
+        {#  Instead - forwarders are configured later #}
+        {%- if True %}
+        "--no-forwarders"
+        {%- else %}
+        {%- for f in config.install.dns.forwarders %}
+        "--forwarder={{f}}"
+        {%- endfor %}
+        {%- endif %}
+        # "--reverse-zone={{''}}"
+        # "--auto-reverse"
+        # TODO - change to use IPA_REVERSE_ZONE from sysconfig
+        #"--reverse-zone=$(echo "${ip}" | tr '.' '\n' | head -n3 | tac|tr '\n' '.' )in-addr.arpa."
+        "--reverse-zone=${IPA_REVERSE_ZONE}"
+        {%- endif %} 
+
+        # "--master-password=${master_password}"
+        "--admin-password=${admin_password}"
+        "--ds-password=${ds_password}"
+    )
+
+    ipa::deploy::ipa-install-wrapper ipa-server-install -U "${options[@]}"
+    # Just making it explicit here that the return status of the prior function
+    # is returned to the caller
+    return $?
+}
+
+function ipa::deploy::master::main()
+{
+    local TIMESTAMP=$(date +%s)
+    local logprefix="/var/log/ipaserver-install"
+
+    ipa::deploy::uninstall-failed-first server
+    
+    if ipa::deploy::install::master
+    then
+        notice "Installation was successful. Preparing salt/IPA integration ticket (${KRB5CCNAME})."
+        ipa::deploy::prep-salt-ticket 
+        msg "Running IPA post-install"
+        /usr/local/bin/ipa-postinstall
+        # Note, the exit code from ipa-postinstall is passed out here just to make it explicit
+        return $?
+    else
+        ipa::deploy::save-failed-log replica
+        return 1
+    fi
+}
+
+function ipa::deploy::ipa-install-wrapper()
+{
+    local command=("${@}")
+
+    # The installation is performed with selinux disabled 
+    # and the firewall rules flushed, because it has troubles otherwise.
+    # The rules it requires can be configured after
+
+    msg "Preparing server for ipa server install (temporarily disable firewall, selinux)"
+
+    local selinux_state=$(getenforce)
+    if [[ "${selinux_state}" =~ Enforcing ]]
+    then
+        msg "SELinux is enforcing - going Permissive..."
+        setenforce 0
+    fi
+
+    msg "Flush firewall"
+    iptables -F
+    iptables -nvL
+
+    msg "OK - continuing with unattended install"
+    local result
+    ${DEBUG} "${command[@]}"
+    result=$?
+    
+    msg "Installation result is ${result}"
+    if (( result ))
+    then
+        msg "The installation failed."
+    fi
+
+    msg "Re-enabling selinux, firewall as required"
+
+    if [[ "${selinux_state}" =~ Enforcing ]]
+    then
+        msg "Set selinux Enforcing again"
+        setenforce 1
+    fi
+
+    msg "Restart firewall"
+    systemctl restart iptables
+    
+    # Return the ipa-server-install exit code 
+    return ${result}
+}
+
+function ipa::deploy::promote-to-server()
+{
+    local -a options=(
+        # TODO - add options such as dns, etc that are useful for replica also
+    )
+
+    # The installation is performed with selinux disabled 
+    # and the firewall rules flushed, because it has troubles otherwise.
+    # The rules it requires can be configured after
+    ipa::deploy::ipa-install-wrapper ipa-replica-install -U "${options[@]}"
+
+    # Just making it explicit here that the return status of the prior function
+    # is returned to the caller
+    return $?
+}
+
+function ipa::deploy::save-failed-log()
+{
+    local what="${1}"
+    local saved="${logprefix}.FAILED.${TIMESTAMP}.log"
+    cp -f "${logprefix}.log" "${saved}"
+    touch -f "${logprefix}.FAILED"
+    err "IPA ${what} installation failed - log file is ${saved}"
+}
+
+function ipa::deploy::prep-salt-ticket()
+{
+    mkdir -p /var/cache/salt/master
+    export KRB5CCNAME=/var/cache/salt/master/salt.krb
+
+    local admin_password ds_password master_password
+    ipa::load-admin-passwords
+    notice "Installation was successful. Preparing salt/IPA integration ticket (${KRB5CCNAME})."
+    kinit admin <<< "${admin_password}"
+    local result=$?
+    # Set up root profile to use the same ticket
+    echo "export KRB5CCNAME=/var/cache/salt/master/salt.krb" >> /root/.profile
+
+    notice "Salt ipa ticket can be renewed during installation phase, using 'salt-ipa-ticket --renew'."
+    return ${result}
+}
+
+function ipa::deploy::replica::main()
+{
+    local TIMESTAMP=$(date +%s)
+    local logprefix="/var/log/ipaserver-install"
+
+    ipa::deploy::uninstall-failed-first server
+    ipa::deploy::uninstall-failed-first client
+
+    if ipa::deploy::promote-to-server
+    then
+        notice "Installation was successful. Preparing salt/IPA integration ticket (${KRB5CCNAME})."
+        ipa::deploy::prep-salt-ticket
+    else
+        ipa::deploy::save-failed-log replica
+        return 1
+    fi
+}
+
+
+
+

@@ -92,6 +92,8 @@ function provision_client()
 function provision_common_early()
 {
     configure_timezone
+
+    configure_wireless
     
     setup_root_ssh
     
@@ -128,7 +130,7 @@ function soestack_provision()
     . "${SS_DIR}"/provision/common/lib/lib-salt.sh
 
     local salt_failed
-    provision_salt
+    provision::salt
     salt_failed=$?
 
     local nexus_failed=0
@@ -329,19 +331,6 @@ function configure_yum()
     sed -i '/enabled=/ s/=1/=0/' /etc/yum/pluginconf.d/fastestmirror.conf
 }
 
-function create_ssh_key_file()
-{
-    local keyfile="${1}"
-
-    if command_is_available ssh-keygen 
-    then 
-        [[ ! -f "${keyfile}" ]] && ssh-keygen -t rsa -N '' -q -f "${keyfile}"
-    else
-        msg "No ssh client tools available in this environment (cannot create ${keyfile})"
-        : TODO - perhaps install ssh client here ;
-    fi 
-}
-
 function setup_root_ssh()
 {
     # Set up ssh for root
@@ -371,15 +360,19 @@ function configure_timezone()
 
 function preconfigure_pip()
 {
+    echo_data "[global]" > /etc/pip.conf
+
     if [[ -n "${NEXUS}" ]]
     then
         {
-            echo_data "[global]"
-            echo_data "index http://${NEXUS}/repository/pypi/pypi"
-            echo_data "index-url http://${NEXUS}/repository/pypi/simple"
-            echo_data "trusted-host = nexus"
+            echo_data "index        = http://${NEXUS}/repository/pypi/pypi"
+            echo_data "index-url    = http://${NEXUS}/repository/pypi/simple"
+            echo_data "trusted-host = ${NEXUS%:*}"
         } >> /etc/pip.conf 
+    else
+        notice "NEXUS host is not set - skipping pip config"
     fi
+    echo_data "disable-pip-version-check = True" >> /etc/pip.conf
 }
 
 function with_low_tcp_time_wait()

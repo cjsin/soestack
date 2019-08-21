@@ -121,7 +121,7 @@ function copy_bundled_soe()
         then 
             msg "Copy bundled SOE to /e/soestack"
             local part
-            for part in salt htdocs
+            for part in salt htdocs test
             do 
                 if rsync -av "/e/bundled/soe/${part}/" "${SS_DIR}/${part}/"
                 then 
@@ -174,7 +174,7 @@ function setup_bundled_pkgs()
         if (( updated ))
         then 
             msg "Updating yum cache"
-            yum makecache
+            yum  makecache 
         else 
             msg "No repos were updated"
         fi
@@ -377,7 +377,7 @@ function unpack_tar()
 
 function restore_nexus_data()
 {
-    local datadir=/d/local/data/nexus/
+    local datadir=/d/local/data/ss-nexus-mirror/
     local db_dest="${datadir}/restore-from-backup"
     local problems=0
 
@@ -491,15 +491,6 @@ function obtain_bundled_file()
     fi
 }
 
-function require_docker()
-{
-    if ! command_is_available docker
-    then
-        err "Docker is not available - perhaps it is not installed"
-        return 1
-    fi
-}
-
 function load_container_file()
 {
     local name="${1}"
@@ -524,12 +515,16 @@ function load_container_file()
 
 function load_nexus_container()
 {
-    sonatype_version="3.16.2"
-    if [[ -n "${BUNDLED_SRC}" ]]
+    local fallback_sonatype_version="3.18.0"
+    if [[ -n "${BUNDLED_SRC}" && "${BUNDLED_SRC}" =~ ^/ ]]
     then 
-        load_container_file "sonatype_nexus3__${sonatype_version}.tar"
+        local sonatype_tarball=$(ls -d /e/bundled/docker/sonatype_nexus3__*.tar | tail -n1)
+        load_container_file "${sonatype_tarball##*/}"
+    elif [[ -n "${BUNDLED_SRC}" ]]
+    then
+        load_container_file "sonatype_nexus3__${fallback_sonatype_version}.tar"
     else
-        docker pull "sonatype/nexus3:${sonatype_version}"
+        docker pull "sonatype/nexus3:${fallback_sonatype_version}"
     fi
 }
 
@@ -552,11 +547,16 @@ function prepare_network_for_docker()
 function prepare_nexus_service()
 {
     echo_stage 3 "Preparing nexus user and service"
-    local unit_name="nexus-mirror"
+    local unit_name="ss-nexus-mirror"
     local idnum="200"
     local idname="nexus"
-    local homedir="/d/local/data/${idname}"
-    /bin/cp "${PROVISION_DIR}/common/inc/${unit_name}.service" /etc/systemd/system/
+    local homedir="/d/local/data/${unit_name}"
+    local sonatype_image=$(docker images --format '{{.Repository}}:{{.Tag}}'| egrep sonatype/nexus | sort | tail -n1)
+    sed \
+        -e "s%sonatype/nexus3:VERSION%${sonatype_image}%" \
+        < "${PROVISION_DIR}/common/inc/nexus-mirror.service" \
+        > "/etc/systemd/system/${unit_name}.service"
+    
     groupadd -g "${idnum}" "${idname}"
     useradd -r -d "${homedir}" -u "${idnum}" -g "${idnum}" "${idname}"
     chown -R "${idname}.${idname}" "${homedir}"
@@ -592,21 +592,21 @@ function patch_hostfile_for_nexus()
 
 function start_nexus()
 {
-    if docker ps | egrep nexus-mirror && docker logs nexus-mirror | egrep -i 'Started Sonatype Nexus' 
+    if docker ps | egrep ss-nexus-mirror && docker logs ss-nexus-mirror | egrep -i 'Started Sonatype Nexus' 
     then
         notice "Nexus appears to already be running"
         return 0
     fi
 
     msg "Starting nexus service"
-    if systemctl start nexus-mirror.service
+    if systemctl start ss-nexus-mirror.service
     then
         msg "Wait for nexus mirror startup"
         sleep 30 
-        if docker ps | egrep nexus-mirror
+        if docker ps | egrep ss-nexus-mirror
         then 
             max_wait=600
-            while ! docker logs --since=10s nexus-mirror | egrep -i 'Started Sonatype Nexus' 
+            while ! docker logs --since=10s ss-nexus-mirror | egrep -i 'Started Sonatype Nexus' 
             do
                 msg "Still waiting for Nexus to recreate its database and finish starting up."
                 sleep 5
@@ -638,7 +638,7 @@ function prepare_docker_for_nexus()
     # TODO - get this from boot config
     local x
     local build
-    local registries=( ${DOCKER_REGISTRIES//,/ } )
+    local registries=( ${REGISTRIES//,/ } )
     mkdir -p /etc/docker
     pairs_to_json \
         "dns" "$(array_to_json "${nameservers[@]}")" \
@@ -691,7 +691,7 @@ function configure_standalone_server()
             return 1
         fi
 
-        if ! docker ps | grep -q nexus-mirror 
+        if ! docker ps | grep -q ss-nexus-mirror 
         then 
             if start_docker
             then
@@ -727,9 +727,7 @@ function switchover_to_nexus()
             done
         fi 
 
-        local bootstrap_repo_name="${BOOTSTRAP_REPOS%%,*}"
-        bootstrap_repo_name="${bootstrap_repo_name:-bootstrap-centos.repo}"
-
+        local bootstrap_repo_name=bootstrap-centos-nexus.repo
         local nexus_bootstrap="provision/common/inc/${bootstrap_repo_name}"
         msg "Enable nexus bootstrap repos (${nexus_bootstrap})"
         /bin/cp -f "${SS_DIR}/${nexus_bootstrap}" /etc/yum.repos.d/
@@ -739,7 +737,8 @@ function switchover_to_nexus()
         local NEXUS=$(cat /etc/yum/vars/NEXUS)
         sed -r -i 's%\$NEXUS%'"${NEXUS}"'%' "/etc/yum.repos.d/${bootstrap_repo_name}"
         msg "Running yum makecache"
-        yum makecache
+        yum --disablerepo=epel makecache || echo "Failed yum makecache"
+ 
     else 
         notice "Skipping yum repo switchover because nexus is not available"
     fi

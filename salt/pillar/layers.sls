@@ -1,92 +1,137 @@
 {{ salt.loadtracker.load_pillar(sls) }}
 
-{#- # Allow layers to be specified as a list or a comma separated string #}
-
-#
 # Example grain values:
+# layers:
+#     soe: demo
+#     lan: usb-vm
+#     site: testing
+#     private: example.private
 #
-# grains:
-#     layers: layer1,layer2,host
+# layers-sequence:
+#     - soe=soe/G@layers:soe
+#     - role=role/G@roles
+#     - site=site/G@layers:site
+#     - lan=lan/G@layers:lan
+#     - host=host/G@host
+#     - lan-host=lan/G@layers:lan/host/G@host
+#     - private=private/G@layers:private
 #
-# grains:
-#     layers;
-#         - layer1
-#         - layer2
-#         - host
-#
-# Or, use standard soe,site,lan layers, which will be followed by the host layer
-# 
-# grains:
-#     layers:
-#         soe:  example_soe
-#         site: example_site
-#         lan:  example_lan
 #
 
-{%- if 'layers' in grains %}
+{%- set default_sequence = [
+     'soe=soe/G@layers:soe',
+     'role=role/G@roles',
+     'site=site/G@layers:site',
+     'lan=lan/G@layers:lan',
+     'host=host/G@host',
+     'lan-host=lan/G@layers:lan/host/G@host',
+     'private=private/G@layers:private',
+]%}
 
-{#- Show in pillar which layers were specified, for troubleshooting #}
-grain_layers: {{grains.layers|json}}
+{%- set default_layers = {
+        'soe': 'demo', 
+        'site': 'demo',
+        'lan': 'demo',
+        'private': 'example.private'
+} %}
 
-{%- endif %}
-
-{%- if 'layers' in grains and grains.layers %}
-
-{%-     set selected_layers = [] %}
-
-{%-     if  grains.layers is iterable %}
-{%-         if grains.layers is not mapping %}
-{%-             set layers = grains.layers.split(',') if grains.layers is string else grains.layers %}
-{%-             if layers %}
-{%-                 do selected_layers.extend(layers) %}
+{%- set sequence = grains['layers-sequence'] if 'layers-sequence' in grains else default_sequence %}
+{%- set layers   = grains['layers']          if 'layers' in grains else default_layers %}
+{%- set badly_configured = [] %}
+{%- set notfound = [] %}
+{%- set candidates = [] %}
+{%- for layerspec in sequence %}
+{%-     set layer_name, layerpath = layerspec.split('=',1) %}
+{%-     set builder = [] %}
+{%-     set pathcomponents = layerpath.split('/') %}
+{%-     for p in pathcomponents %}
+{%-         set sub_items = [] %}
+{%-         if not p.startswith('G@') %}
+{%-             do sub_items.append(p) %}
+{%-         else %}
+{%-             set grain_key = p[2:] %}
+{%-             set grain_value = salt['grains.get'](grain_key,[]) %}
+{%-             if grain_value is string or grain_value == 0 or grain_value is not iterable %}
+{%-                 if grain_value != '' %}
+{%-                     do sub_items.extend(grain_value.split(',') if grain_value is string else [grain_value] if grain_value is not iterable else [] if grain_value is mapping else grain_value) %}
+{%-                 endif %}
+{%-             elif grain_value is iterable %}
+{%-                 for y in grain_value %}
+{%-                     if (y is string and y != '') or y == 0 or y is not iterable %}
+{%-                         do sub_items.append(y) %}
+{%-                     elif y is iterable and y is not mapping %}
+{%-                         do sub_items.extend(y) %}
+{%-                     endif %}
+{%-                 endfor %}
+{%-             else %}
+{%-                 do badly_configured.append("Bad grain value for layer " ~ layer_name ~ " and grain key '"~grain_key ~ "'")%}
 {%-             endif %}
-{%-         elif grains.layers is mapping %}
-{#-             # If the layer grain is a mapping, it is expected to be a dict specifying #}
-{#-             #   names for the following keys: soe,role,role,site,lan,host which will be processed in that order #}
-{%-             do selected_layers.extend(['soe', 'role', 'site', 'lan', 'host','private']) %}
 {%-         endif %}
+{%-         if sub_items %}
+{%-             do builder.append(sub_items) %}
+{%-         endif %}
+{%-     endfor %}
+{%-     set iterdata = {'rows': ['layers'] } %}
+{%-     set depth = builder|length %}
+{%-     set discard=[] %}
+
+_layers_builder_for_{{layer_name}}: {{builder|json}}
+
+{%-     for b in builder %}
+{%-         set prior_rows = iterdata['rows'] %}
+{%-         set new_rows = [] %}
+{%-         if b == '' %}
+{%-             do discard.append(True) %}
+{%-         elif discard %}
+{#-             # There is no break or continue in jinja #}
+{#-             # but we just do nothing from here on out #}
+{%-         elif b is string or b is not iterable %}
+{%-             for r in prior_rows %}
+{%-                 set check = r ~ '.' ~ b %}
+{%-                 if salt['roots.exists'](check,'pillar') %}
+{%-                     do new_rows.append(check) %}
+{%-                 else %}
+{%-                     do notfound.append(check) %}
+{%-                 endif %}
+{%-             endfor %}
+{%-         elif b is iterable and b is not mapping %}
+{%-             for r in prior_rows %}
+{%-                 for x in b %}
+{%-                     set check = r ~ '.' ~ x %}
+{%-                     if salt['roots.exists'](check,'pillar') %}
+{%-                         do new_rows.append(check) %}
+{%-                     else %}
+{%-                         do notfound.append(check) %}
+{%-                     endif %}
+{%-                 endfor %}
+{%-             endfor %}
+{%-         endif %}
+{%-         do iterdata.update({'rows': new_rows}) %}
+{%-     endfor %}
+
+
+{%-     if discard %}
+{%-         do iterdata.update({'rows':[]}) %}
+
+_layers_invalid: 
+     problem: no layers processed due to syntax error or empty value
+     badly_configured: {{badly_configured|json}}
+
 {%-     endif %}
 
-{%-     set attempted_loads = [] %}
+{%-     if 'rows' in iterdata and iterdata['rows'] %}
+{%-         do candidates.extend(iterdata['rows']) %}
+{%-     endif %}
 
-{%-     if selected_layers %}
+{#- # end for each layer in the defined sequence #}
+{%- endfor %}
 
-{#-         # This was the first implementation, but including multiple files #} 
-{#-         # with a jinja include leads to conflicting ID errors #}
-{%-         if False %}
-{%-             set prefix = '/' if slspath else '' %}
-{%-             for layer in selected_layers %}
-{%-                 set layer_filename = slspath ~ prefix ~ 'layers/' ~ layer ~ '.sls' %}
-{%-                 do attempted_loads.append(layer_filename) %}
-{%                  include(layer_filename) ignore missing %}
-{%-             endfor %}
-{%-         else %}
-
-{#-             # Hopefully using yaml include will work better #}
-
-{%- do selected_layers.append('lan-host') %}
-{#- Show in pillar which layers were selected, for troubleshooting #}
-selected_layers: {{selected_layers|json}}
-
-include:
-    {%-         for layer in selected_layers %}
-    {%-            do attempted_loads.append(layer) %}
-    - layers.{{layer}}
-    {%-         endfor %}
+{%- if candidates %}
+include: {{candidates|json}}
+{%- endif %}
 
 {#- Show in pillar which layers were included, for troubleshooting #}
 
-layer-include:
-    {%-         for layer in selected_layers %}
-    - layers.{{layer}}
-    {%-         endfor %}
+_layer_includes: {{candidates|json}}
 
-{%-         endif %}
-{%-     endif %}
-
-{#- Show in pillar which layers were attempted, for troubleshooting #}
-#attempted_layers: {{attempted_loads|json}}
-
-{%- endif %}
-
-load-sequence: {{salt.loadtracker.loaded()|json}}
+_layer_not_found: {{notfound|json}}

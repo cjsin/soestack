@@ -1,5 +1,19 @@
 {{ salt.loadtracker.load_pillar(sls) }}
 
+_layers_test:
+    defaults:     {{sls}}
+    defaults-value:  'defaults'
+    test_value:  'defaults'
+    additive:
+        - defaults
+
+layers_test:
+    defaults:     {{sls}}
+    defaults-value:  'defaults'
+    test_value:  'defaults'
+    additive:
+        - defaults
+
 include:
     # Load nuggets first
     - defaults.nuggets 
@@ -11,6 +25,7 @@ include:
     - defaults.branding
     - defaults.build-defaults
     - defaults.build-packages
+    - defaults.chromium
     - defaults.cups
     - defaults.docker
     - defaults.firewall
@@ -41,6 +56,8 @@ include:
     - defaults.service-sets
     - defaults.services
     - defaults.sudoers
-    - defaults.versions
     - defaults.timezone
     - defaults.thunderbird
+    - defaults.versions
+    - defaults.yum
+ 

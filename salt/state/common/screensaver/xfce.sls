@@ -3,6 +3,7 @@
 {%- if 'screensaver' in pillar and pillar.screensaver is mapping and 'x11' in pillar.screensaver and pillar.xscreensaver.x11 is mapping %}
 {%-     set config = pillar.screensaver.x11 %}
 
+# NOTE: I haven't found a way to set timeouts and locking yet
 .kioskrc:
     file.managed:
         - name:     /etc/xdg/xfce4/kiosk/kioskrc

@@ -1,7 +1,8 @@
-example-gpgdata:
+example-gpgdata: {}
+
     # To generate data to place here:
-    #   echo blah | /usr/local/sbin/salt-gpg-encrypt-stdin
-    should-decode-to-blah: |
+    #   echo blah | /usr/local/bin/salt-gpg-encrypt-stdin
+    {# should-decode-to-blah: |
         -----BEGIN PGP MESSAGE-----
         Version: GnuPG v2.0.22 (GNU/Linux)
 
@@ -14,4 +15,4 @@ example-gpgdata:
         S29SD5JSnSy1SACllKMODTCid8XZq/j1CxSDNu1Q0vJ9NF+yp/WKNBlHF/X5zCGL
         ww==
         =Sl5/
-        -----END PGP MESSAGE-----
+        -----END PGP MESSAGE----- #}

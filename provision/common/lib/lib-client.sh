@@ -2,7 +2,7 @@
 
 [[ -n "${SS_LOADED_COMMON_LIB}" ]] || . "${SS_DIR:=${BASH_SOURCE[0]%/provision/*}}"/provision/common/lib/lib.sh
 
-function validate_enrolment_tarball()
+function provision::salt::minion::validate-enrolment-tarball()
 {
     local tarf="${1}"
     if file "${tarf}" | egrep 'POSIX.tar' 
@@ -52,26 +52,31 @@ function validate_enrolment_tarball()
     fi
 }
 
-function salt_delete_key()
+function provision::salt::minion::delete-key()
 {
     if [[ -n "${SALT_MASTER}" ]]
     then  
-        curl -sSk "https://${SALT_MASTER}:9009/run" -d client=wheel -d username=salt-enrol -d 'tgt=*' -d password=d62da93aecc94bd6363d0c7d5fbea7248e8e0c9e15dfca0fb92c1e665760de9a -d eauth=pam -d fun=key.delete -d match="$(hostname -s)"
+        # This doesn't work with salt 2019.2 (tgt is an invalid keyword)
+        #curl -sSk "https://${SALT_MASTER}:9009/run" -d client=wheel -d username=salt-enrol -d 'tgt=*' -d password=d62da93aecc94bd6363d0c7d5fbea7248e8e0c9e15dfca0fb92c1e665760de9a -d eauth=pam -d fun=key.delete -d match="$(hostname -s)"
+        : ;
+        echo 'TODO - fix this!'
     else 
-        msg "NO salt master is configured."
+        msg "No salt master is configured."
     fi
 }
 
-function salt_minion_autoenrol()
+function provision::salt::minion::auto-enrol()
 {
     local mid="${1:-$(hostname -s)}"
     local useracct="${2:-salt-enrol}"
     local success=0
     # TODO - generate this
+    echo "TODO: how is this still working?"
     local pw=d62da93aecc94bd6363d0c7d5fbea7248e8e0c9e15dfca0fb92c1e665760de9a
 
-    salt_delete_key
-
+    echo "Salt master is '${SALT_MASTER}'"
+    provision::salt::minion::delete-key
+    echo curl -sSk https://${SALT_MASTER}:9009/keys
     local tarf=/root/minion_enrol.tar
     if ! curl -sSk https://${SALT_MASTER}:9009/keys \
         -d mid="${mid}" \
@@ -84,5 +89,5 @@ function salt_minion_autoenrol()
         return 1
     fi
 
-    validate_enrolment_tarball "${tarf}"
+    provision::salt::minion::validate-enrolment-tarball "${tarf}"
 }

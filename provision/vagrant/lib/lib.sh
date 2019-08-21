@@ -310,7 +310,7 @@ function vagrant_provision()
     load_vagrant_vars
     load_dyn_vars
 
-    display_build_configuration
+    provisioning_display_build_configuration
 
     vagrant_provision_common
 
@@ -326,7 +326,7 @@ function vagrant_provision()
 
     configure_soestack_provision
 
-    #echo_stage 5 "Running SS Provisioning"
+    #echo_stage 5 "Running SoeStack Provisioning"
     #systemctl restart soestack-provision
     #ls -lR "${SS_GEN}"
     # ${SS_DIR}/provision/common/provision.sh

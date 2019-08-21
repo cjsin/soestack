@@ -20,10 +20,21 @@
         - unless: systemctl list-units --type target | egrep '^{{runlevel}}(|[.]target)[[:space:]].*loaded.active[[:space:]]+active'
 {%-         endif %}
 
+{%-    set graphical_active = salt['cmd.shell']('systemctl is-active graphical.target') %}
+{%-    set runlevel_active = salt['cmd.shell']('systemctl is-active '~runlevel~'.target') %}
+{%-    set deactivate_graphical = graphical_active in ['active'] and runlevel not in ['graphical'] %}
+{%-    set activate_graphical = graphical_active not in ['active'] and runlevel in ['graphical'] %}
+{%-    set runlevel_inactive = runlevel_active not in ['active'] %}
+
+{%-    set isolate_required = deactivate_graphical or activate_graphical or runlevel_inactive %}
+
+{%- if isolate_required %}
+
 .isolate:
     cmd.run:
         - name:   systemd-bugfix-change-runlevel --force '{{runlevel}}'
-        - unless: systemctl list-units --type target | egrep '^{{runlevel}}(|[.]target)[[:space:]].*loaded.active[[:space:]]+active'
+        # - unless: systemctl list-units --type target | egrep '^{{runlevel}}(|[.]target)[[:space:]].*loaded.active[[:space:]]+active'
+{%- endif %}
 
 {%-     else %}
 {{ noop.notice('Unrecognised runlevel '+runlevel) }}

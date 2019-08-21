@@ -1,22 +1,25 @@
 {{ salt.loadtracker.load_pillar(sls) }}
 
 deployments:
-    managed_hosts:
+    ipa-hosts:
+        deploy_type: managed_hosts
+        roles:
+            - ipa-server-node
+        activated:   True
+        activated_where: {{sls}}
+        config:
+            domain: demo.com # NOTE, this domain may be overridden on a different lan
+            hosts:  managed-hosts:ipa-hosts
+            ipa:    True 
 
-        testenv-master:
-            host:      infra
-            activated:   True
-            activated_where: {{sls}}
-            config:
-                domain: demo # NOTE, this domain may be overridden on a different lan
-                hosts:  managed-hosts:testenv-master
-                ipa:    True 
+    hostfile-hosts:
+        deploy_type: managed_hosts
 
-        testenv-client:
-            host:      '.*'
-            activated:   True
-            activated_where: {{sls}}
-            config:
-                domain: demo # NOTE, this domain may be overridden on a different lan
-                hosts:  managed-hosts:testenv-client
-                ipa:    False
+        hosts:
+            - '.*'
+        activated:   True
+        activated_where: {{sls}}
+        config:
+            domain: demo.com # NOTE, this domain may be overridden on a different lan
+            hosts:  managed-hosts:hostfile-hosts
+            ipa:    False
