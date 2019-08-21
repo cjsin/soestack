@@ -25,6 +25,7 @@ include:
     - defaults.branding
     - defaults.build-defaults
     - defaults.build-packages
+    - defaults.chromium
     - defaults.cups
     - defaults.docker
     - defaults.firewall

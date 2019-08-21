@@ -21,17 +21,17 @@ deployment-sequence:
     - pxeboot_server
     - node_exporter_baremetal
     - prometheus_container
-    - grafana_baremetal
+    #- grafana_baremetal
     - grafana_container
     - nginx_container
     - gitlab_baremetal
     - elasticsearch_container
     - kibana_container
-    - kibana_baremetal
+    #- kibana_baremetal
     - logstash_container
     - logstash_baremetal
-    - kube_master
+    #- kube_master
     - gitlab_runner_baremetal
     
     - pgp_keyserver
-    - phpldapadmin
+    - phpldapadmin_baremetal

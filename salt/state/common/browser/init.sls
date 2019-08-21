@@ -1,2 +1,3 @@
 include:
     - .firefox
+    - .chromium

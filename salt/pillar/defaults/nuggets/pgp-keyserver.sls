@@ -24,31 +24,35 @@ nuggets:
         
         filesystem:
             defaults:
-                user:  sks
-                group: sks
-                dir_mode: '0755'
+                user:      sks
+                group:     sks
+                dir_mode:  '0755'
                 file_mode: '0644'
             dirs:
 
-                /srv:
-
                 /etc/systemd/system-preset:
-                    user: root
-                    group: root
+                    user:     root
+                    group:    root
 
-                /srv/sks:
+                /d/local/data:
+                    user:     root 
+                    group:    root
+                    mode:     '0755'
+                    makedirs: True
+
+                /d/local/data/sks:
                     mode:  '0755'
                     makedirs: True
 
-                /srv/sks/web:
+                /d/local/data/sks/web:
 
-                /srv/sks/nginx:
+                /d/local/data/sks/nginx:
                     user:  nginx
                     group: nginx
                     mode:  '0755'
                     makedirs: True
 
-                /srv/sks/nginx/html:
+                /d/local/data/sks/nginx/html:
                     user:  nginx
                     group: nginx
                     mode:  '0755'
@@ -59,9 +63,9 @@ nuggets:
                     group: root
 
             symlinks:
-                /srv/sks/web/index.html:
+                /d/local/data/sks/web/index.html:
                     target: /usr/share/doc/sks-1.1.6/sampleWeb/HTML5/index.html
-                /srv/sks/nginx/html/index.html:
+                /d/local/data/sks/nginx/html/index.html:
                     user:  nginx
                     group: nginx
                     mode:  '0755'
@@ -97,8 +101,8 @@ nuggets:
                         tcp_nodelay on;
                         client_max_body_size 8m;
 
-                        access_log  /srv/sks/nginx/access.log;
-                        error_log   /srv/sks/nginx/error.log;
+                        access_log  /d/local/data/sks/nginx/access.log;
+                        error_log   /d/local/data/sks/nginx/error.log;
                         rewrite_log on;
 
                         include /etc/nginx/mime.types;
@@ -117,7 +121,7 @@ nuggets:
                             server_name {{config.hostname}};
                             server_name {{config.nginx.bind_ip}};
 
-                            root /srv/sks/nginx/html;
+                            root /d/local/data/sks/nginx/html;
 
                             rewrite ^/stats /pks/lookup?op=stats;
                             rewrite ^/s/(.*) /pks/lookup?search=$1;
@@ -155,7 +159,7 @@ nuggets:
                 #    template: sks_nginx_conf
                 #    config_pillar:   :config
 
-                /srv/sks/DB_CONFIG:
+                /d/local/data/sks/DB_CONFIG:
                     user: sks
                     group: sks
                     contents: |
@@ -182,13 +186,13 @@ nuggets:
                         [Service]
                         Type=forking
                         PIDFile=/run/sks-web.pid
-                        WorkingDirectory=/srv/sks
+                        WorkingDirectory=/d/local/data/sks
                         # Nginx will fail to start if /run/nginx.pid already exists but has the wrong
                         # SELinux context. This might happen when running `nginx -t` from the cmdline.
                         # https://bugzilla.redhat.com/show_bug.cgi?id=1268621
                         ExecStartPre=/usr/bin/rm -f /run/sks-web.pid
-                        ExecStartPre=/usr/sbin/nginx -t -c /srv/sks/nginx.conf
-                        ExecStart=/usr/sbin/nginx -c /srv/sks/nginx.conf
+                        ExecStartPre=/usr/sbin/nginx -t -c /d/local/data/sks/nginx.conf
+                        ExecStart=/usr/sbin/nginx -c /d/local/data/sks/nginx.conf
                         ExecReload=/bin/kill -s HUP $MAINPID
                         KillSignal=SIGQUIT
                         TimeoutStopSec=5
@@ -212,22 +216,24 @@ nuggets:
                     mode: '0755'
                     contents: |
                         #!/bin/bash
-                        [[ -d /srv/sks/KDB ]] && exit 0
-                        [[ -d /srv         ]] || mkdir -p /srv 
-                        [[ -d /srv/sks     ]] || mkdir -p /srv/sks
-                        chown sks.sks /srv/sks 
-                        cd /srv/sks || exit 1
+                        data_dir="/d/local/data/sks"
+                        keys_dir="/etc/salt/gpgkeys"
+                        [[ -d "${data_dir}"/KDB ]] && exit 0
+                        [[ -d "${data_dir}"     ]] || mkdir -p "${data_dir}"
+
+                        chown sks.sks "${data_dir}"
+                        cd "${data_dir}" || exit 1
                         if [[ ! -d KDB ]]
                         then 
                             sks build
                             [[ -e KDB/DB_CONFIG ]] || ln -s ../DB_CONFIG KDB/DB_CONFIG
-                            ss_key=/etc/salt/gpgkeys/soestack-pub.gpg
-                            master_key=/etc/salt/gpgkeys/pubring.gpg
+                            ss_key="${keys_dir}/soestack-pub.gpg"
+                            master_key="${keys_dir}/pubring.gpg"
                             sks merge ${ss_key}
                             sks merge ${master_key}
                         fi 
-                        chown -R sks.sks /srv/sks/
-                        chown -R  nginx.nginx /srv/sks/nginx
+                        chown -R sks.sks "${data_dir}"
+                        chown -R  nginx.nginx "${data_dir}/nginx"
 
                 /etc/systemd/system-preset/99-sks-start-disabled.preset:
                     user: root

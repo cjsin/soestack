@@ -16,3 +16,9 @@ nuggets:
                     - phpldapadmin
         activate: {}
 
+        filesystem:
+            dirs:
+                /var/log/apache:
+                    user:  apache
+                    group: apache
+                    mode:  '0755'

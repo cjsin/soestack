@@ -21,6 +21,15 @@ package-sets:
                 - firefox
                 - gedit
                 - code
+                - # Fix screensaver for mate
+                - mate-applets
+                - mate-desktop
+                - mate-notification-daemon
+                - mate-panel
+                - mate-session-manager
+                - mate-settings-daemon
+                - openldap-clients
+
 
 
     basic-tools:

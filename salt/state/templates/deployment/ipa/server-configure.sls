@@ -16,10 +16,18 @@
     pkg.removed:
         - name: mod_ssl
 
+# The problem with just deleting this is that reinstalling or upgrading
+# the package (when an update becomes available) will put the new file there
+# which will break the IPA server. Therefore we instead just overwrite it
+# with empty contents. (So that yum/rpm will leave it there and just create '.rpmnew' files)
 {%- do dependent_states.append(['file', 'delete-ssl-conf']) %}
 {{sls}}.{{deployment_name}}.delete-ssl-conf:
-    file.absent:
+    file.managed:
         - name: /etc/httpd/conf.d/ssl.conf
+        - user: root
+        - group: root
+        - mode: '0644'
+        - contents: '# This file is intentionally left empty.'
 
 {%- do dependent_states.append(['file', 'patch-named-conf']) %}
 {{sls}}.{{deployment_name}}.patch-named-conf:

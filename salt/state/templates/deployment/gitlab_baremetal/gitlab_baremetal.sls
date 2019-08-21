@@ -170,6 +170,7 @@
     #    - enable: {{activated}} 
     cmd.run:
         - name: systemctl disable gitlab-runsvdir ; systemctl stop --no-ask-password gitlab-runsvdir
+        - unless: systemctl is-enabled gitlab-runsvdir | egrep '^disabled'
 
 
 {%-     else %}
@@ -180,6 +181,8 @@
 {{sls}}.gitlab-runsvdir:
     cmd.run:
         - name: systemctl enable gitlab-runsvdir ; systemctl start --no-ask-password gitlab-runsvdir
+        - unless: systemctl is-enabled gitlab-runsvdir | egrep '^enabled'
+
     #service.running:
     #    - name: gitlab-runsvdir 
     #    - enable: {{activated}} 

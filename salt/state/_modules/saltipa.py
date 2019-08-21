@@ -136,12 +136,17 @@ def check_ticket():
 def loggedin():
     os.environ[KRB5CCNAME] = salt_ticket 
     
-    cmd = [ 'klist', '-s' ]
+    #print("Run klist -s, using KRB5CCNAME={}".format(salt_ticket))
+    #cmd = [ 'klist', '-s' ]
+    #print("Check env:")
+    #env_out = __salt__['cmd.run_all'](["bash","-c",'/bin/env | grep KRB5 | sort'])
+    #print(pformat(env_out))
 
-    out = __salt__['cmd.run_all'](cmd,
-                                  output_loglevel='trace',
-                                  ignore_retcode=False,
-                                  python_shell=False)
+    #test_out = __salt__['cmd.run_all'](["bash","-c",'/bin/env | grep KRB5 ; klist'])
+    #print(pformat(test_out))
+
+    out = __salt__['cmd.run_all'](["bash","-c",'/bin/env | grep KRB5 ; klist -s'], output_loglevel='trace', ignore_retcode=False, python_shell=False)
+
     if out['retcode'] == 0:
         return True, "Logged in"
     else:

@@ -804,19 +804,20 @@ service-status:
             # - polkit
             # Can't disable NetworkManager in my test env as I need the wifi!
             # - NetworkManager
-            - libvirtd
-            - virtlockd
-            - virtlogd
-            - avahi-daemon
+            #- libvirtd
+            #- virtlockd
+            #- virtlogd
             - xinetd
-            - abrt-ccpp
-            - abrt-oops
-            - abrt-xorg
-            - abrtd
             - pulseaudio
             - tuned
             - lsmd
+        masked:
+            - avahi-daemon
             - kdump
+            - abrtd
+            - abrt-ccpp
+            - abrt-oops
+            - abrt-xorg
 
 service-reg:
     nexus_http:       nexus:7081

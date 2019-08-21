@@ -24,6 +24,8 @@ demo:
         primary_server: infra.demo.com
         reverse_zone:   '121.168.192.in-addr.arpa.'
         ipa_base_dn:    dc=demo,dc=com
+        groups_base_dn:  cn=groups,cn=accounts,dc=demo,dc=com
+        users_base_dn:  cn=users,cn=accounts,dc=demo,dc=com
         timezone:       UTC
 
     passwords: 

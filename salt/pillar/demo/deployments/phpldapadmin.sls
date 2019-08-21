@@ -26,23 +26,23 @@ deployments:
             servers:
                 IPA Server:
                     server:
-                        host: 127.0.0.1
+                        host: '!!demo.ips.infra'
                         port: 389
                         tls: false
+                        base: 
+                            - '!!demo.vars.ipa_base_dn'
+                        
                     appearance:
                         password_hash: ''
                     login:
                         attr: uid
+                        anon_bind: 1
+                        class:
+                            - posixAccount
                         base: 
-                            - cn=users
-                            - cn=accounts
-                            - dc=demo
-                            - dc=com
+                            - '!!demo.vars.users_base_dn'
                         auth_type: session 
-                        # bind_id: ''
-                        # bind_id: 'uid=admin,cn=users,cn=accounts,dc=demo,dc=com'
-                        # bind_pass: ''
-                        # bind_pass: 'secret'
+
         filesystem:
             templates:
                 phpldapadmin-httpd-conf:   salt://templates/deployment/phpldapadmin_baremetal/phpldapadmin-httpd.conf.jinja

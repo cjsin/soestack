@@ -4,6 +4,16 @@
 
 {%- if service_name and action %}
 
+{%-     if action == 'masked' %}
+
+{{sls}}.{{prefix}}service-{{service_name}}-{{action}}{{suffix}}:
+    cmd.run:
+        # - name: ln -sf /dev/null /etc/systemd/system/{{service_name}}.service 
+        - name:   systemctl mask '{{service_name}}' 
+        - unless: systemctl is-enabled '{{service_name}}' | egrep '^masked$'
+
+{%-     else %}
+
 {{sls}}.{{prefix}}service-{{service_name}}-{{action}}{{suffix}}:
     service.{{'running' if action == 'enabled' else ('dead' if action == 'disabled' else action) }}:
         - name:   {{service_name}}
@@ -13,4 +23,5 @@
         - enable: False
         {%- endif %}
 
+{%-     endif %}
 {%- endif %}
