@@ -10,4 +10,10 @@
         - contents_pillar: firefox:defaults
         - onlyif: test -d '{{prefdir}}'
 
+{{sls}}.redhat-deleted:
+    file.managed:
+        - name: {{prefdir}}/all-redhat.js
+        - onlyif: test -d '{{prefdir}}'
+        - contents: ''
+
 {%- endif %}

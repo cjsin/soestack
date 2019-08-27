@@ -2,4 +2,5 @@
 
 . /usr/local/bin/lib-gitlab.sh || die "Could not load lib-gitlab.sh"
 
-gitlab::import-repos::main "/soestack/test/repos" "test" 
+gitlab::import-repos::main "/soestack/test/repos" "test"  2>&1 | tee -a /var/log/provision/gitlab-import-test-repos.log 
+

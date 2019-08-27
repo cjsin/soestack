@@ -10,11 +10,46 @@
 {#- this particular service needs to be initialised the first time #}
 {%- if action in [ 'all', 'configure' ] %}
 
-# The nginx service uses the pgp keyserver port also
-{{sls}}.{{deployment_type}}.{{deployment_name}}.selinux-ports-{{action}}:
-    selinux.port_policy_present:
-        - name: tcp/11371
-        - sel_type: http_port_t
+{{sls}}.nginx-pgp-port-selinux-policy-te:
+    file.managed:
+        - name: /root/nginx-pgpkeyserver-port.te
+        - user: root
+        - group: root
+        - contents: |
+            module nginx-pgpkeyserver-port 1.0;
+            require {
+                type httpd_t;
+                type pgpkeyserver_port_t;
+                class tcp_socket name_bind;
+            }
+            # The nginx service for sks-web uses the pgp keyserver port also
+            allow httpd_t pgpkeyserver_port_t:tcp_socket name_bind;
+
+{{sls}}.nginx-pgp-port-selinux-policy-mod:
+    cmd.run:
+        - name: checkmodule -M -m -o /root/nginx-pgpkeyserver-port.mod /root/nginx-pgpkeyserver-port.te
+        - onchanges:
+            - file: {{sls}}.nginx-pgp-port-selinux-policy-te
+
+{{sls}}.nginx-pgp-port-selinux-policy-pp:
+    cmd.run:
+        - name: semodule_package -o /root/nginx-pgpkeyserver-port.pp -m /root/nginx-pgpkeyserver-port.mod
+        - onchanges:
+            - cmd: {{sls}}.nginx-pgp-port-selinux-policy-mod
+
+{{sls}}.nginx-pgp-port-selinux-policy-loaded:
+    selinux.module:
+        - name: nginx-pgpkeyserver-port
+        - module_state: 'Enabled' 
+        - install: True
+        - source: /root/nginx-pgpkeyserver-port.pp
+
+
+#{{sls}}.{{deployment_type}}.{{deployment_name}}.selinux-ports-{{action}}:
+#    selinux.port_policy_present:
+#        - name: tcp/11371
+#        - sel_type: http_port_t
+#        - unless: semanage port -l | egrep ^http_port_t | egrep '
 
 {%- endif %}
 

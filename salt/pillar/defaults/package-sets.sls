@@ -53,17 +53,40 @@ package-sets:
             # - extra-cmake-modules
             #- python2-scons
 
+    chromium-deps-1:
+        purpose: |
+            provide other packages needed to install chromium
+        centos,redhat:
+           - nss-mdns
+
+    chromium-deps-2:
+        purpose: |
+            provide other packages needed to install chromium
+        centos,redhat:
+            - avahi
+
+    chromium-deps-3:
+        purpose: |
+            provide other packages needed to install chromium.
+            chromium is a complete mess on redhat/centos - requiring dependencies from the OS, from EPEL, AND from RpmFusion
+        centos,redhat:
+            - minizip
+
     chromium-browser:
         purpose: |
             provide the chromium web browser
         centos,redhat,fedora:
-            updates:
-                - chromium
-                - chromium-headless
-                - chromium-libs
-                - chromium-libs-media
+            #order: os,bootstrap-rpmfusion,epel
+            #os: 
+            #    - minizip
+            #bootstrap-rpmfusion: 
+            #    - nss-mdns
             #rpmfusion-free-updates:
             #    - chromium-libs-media-freeworld
+            epel: 
+                - chromium 
+                - chromium-libs
+                - chromium-libs-media
 
     clamav-antivirus:
         purpose: |
@@ -149,7 +172,7 @@ package-sets:
 
     firefox-browser:
         purpose: |
-            provide the chromium web browser
+            provide the firefox web browser
         centos,redhat,fedora:
             any:
                 - firefox
@@ -299,7 +322,8 @@ package-sets:
             - xfdesktop
             - xfwm4
             - xfconf
-
+            - pulseaudio
+            - pavucontrol
     net-tools:
         purpose: |
             provide basic network tools (for example 'route', 'ip')

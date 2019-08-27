@@ -81,7 +81,7 @@ deployments:
                                 - grafana-admins
                                 - gitlab-admins
                         devuser:
-                            first-name: Dev2
+                            first-name: Dev1
                             surname:    User
                             groups: 
                                 - dev-users

@@ -1,7 +1,7 @@
 {{ salt.loadtracker.load_pillar(sls) }}
 
 deployment-sequence:
-    - managed_hosts
+    #- managed_hosts
 
     # NOTE the order of these is important, because for example
     # IPA will fail to install if Gitlab is running and using port 80,
@@ -17,6 +17,7 @@ deployment-sequence:
     - dovecot_server
 
     - ipa
+    - managed_hosts
     - simple_http
     - pxeboot_server
     - node_exporter_baremetal

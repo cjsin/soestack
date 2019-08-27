@@ -32,6 +32,7 @@ deployments:
                 - replica1
                 - processor2
                 - workstation3
+                - workstation4
 
             isos:
                 #netinstall: CentOS-7-x86_64-NetInstall-1810.iso

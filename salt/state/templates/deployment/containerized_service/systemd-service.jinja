@@ -10,8 +10,11 @@
 [Unit]
 Description={{container.description if ('description' in container and container.description) else service_name}}
 After=NetworkManager-wait-online.service network.target docker.service
+Requires=docker.service
 
 [Service]
+# Disable start timeouts because pulling the image can take a while
+TimeoutStartSec=0
 Environment=DOCKER_OPTIONS=
 Environment=PORTS=
 Environment=VOLUMES=
@@ -23,12 +26,14 @@ Environment=RM=--rm
 EnvironmentFile=-/etc/sysconfig/%p
 ExecStartPre=-/usr/bin/docker stop %p
 ExecStartPre=-/usr/bin/docker rm %p
-ExecStart=/usr/bin/docker run $(RM) --name %p {{privilege_flag}} $TZ $DOCKER_OPTIONS $PORTS $VOLUMES -v /etc/localtime:/etc/localtime $ENTRYPOINT $IMAGE $OPTIONS
-ExecStop=/usr/bin/docker stop %p
+ExecStartPre=-/usr/bin/docker pull $IMAGE 
+ExecStart=/usr/bin/docker run $RM --name %p {{privilege_flag}} $TZ $DOCKER_OPTIONS $PORTS $VOLUMES -v /etc/localtime:/etc/localtime $ENTRYPOINT $IMAGE $OPTIONS
+ExecStop=/usr/bin/docker stop $STOP_OPTIONS %p
 Type=simple
 User=root
 Group=root
 UMask=0007
+Restart=always
 
 [Install]
 WantedBy=multi-user.target

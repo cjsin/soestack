@@ -28,10 +28,11 @@ deployments:
                 - -v /d/local/data/ss-nexus-mirror:/nexus-data
             ports: 
                 - -p 192.168.121.103:7081-7085:8081-8085
-            entrypoint: /bin/bash
-            options:    
-                -  -c "/opt/sonatype/start-nexus-repository-manager.sh > /nexus-data/service.log 2>&1"
+            #entrypoint: /bin/bash
+            options: []
+            #    -  -c "/opt/sonatype/start-nexus-repository-manager.sh"
             storage:
                 - /d/local/data/ss-nexus-mirror
             user: 200
             group: 200
+            stop_options: --time=120

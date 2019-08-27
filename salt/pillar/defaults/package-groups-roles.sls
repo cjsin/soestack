@@ -130,3 +130,5 @@ package-groups:
     infra-server-node:
         package-sets:
             - admin-minimal-desktop
+        package-groups:
+            - browsers-group

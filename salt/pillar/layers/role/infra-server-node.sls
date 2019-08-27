@@ -52,3 +52,7 @@ deployments:
         activated:       True
         activated_where: {{sls}}
 
+    pxebooting:
+        activated:       True
+        activated_where: {{sls}}
+        

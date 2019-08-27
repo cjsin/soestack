@@ -76,6 +76,8 @@
     service.running:
         - name:     cups
         - enable:   True
+        - onchanges:
+            - cmd: {{sls}}::printers-file-update
 
 {%- else %}
 

@@ -184,19 +184,19 @@ deployments:
             hostname:     gitlab.demo.com
 
     ss-elk:
-        activated:       False
+        activated:       True
         activated_where: {{sls}}
 
     ss-kibana:
-        activated:       False
+        activated:       True
         activated_where: {{sls}}
 
     ss-logstash-sys:
-        activated:       False
+        activated:       True
         activated_where: {{sls}}
 
     ss-logstash-user:
-        activated:       False
+        activated:       True
         activated_where: {{sls}}
 
     ss-nexus-mirror:
@@ -340,7 +340,12 @@ managed-hosts:
             type:     client
             hostfile:
                 - workstation3
-
+        workstation4:
+            ip:       '!!demo.ips.workstation4'
+            mac:      '!!demo.macs.workstation4'
+            type:     client
+            hostfile:
+                - workstation4
         wildcard:
             ip:       '!!demo.ips.wildcard'
             type:     dns 

@@ -393,7 +393,7 @@
 
 {%-     set activated = 'activated' in deployment and deployment.activated %}
 
-{%-     for svc in [ 'dnsmasq', 'simple-http-pxe' ] %}
+{%-     for svc in [ 'dnsmasq', 'ss-pxe' ] %}
 
 {{sls}}.pxeboot_server.{{prefix}}.services.{{svc}}:
     service.{{'running' if activated else 'dead'}}:

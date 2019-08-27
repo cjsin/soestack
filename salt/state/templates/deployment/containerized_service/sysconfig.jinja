@@ -7,3 +7,4 @@ RM={{'--rm' if ('rm' in container and container.rm) else '' }}
 ENTRYPOINT={{'--entrypoint ' ~ container.entrypoint if ('entrypoint' in container and container.entrypoint) else ''}}
 IMAGE={{image_prefix}}{{container.image}}
 OPTIONS={{' '.join(container.options) if('options' in container and container.options) else ''}}
+STOP_OPTIONS={{' '.join(container.stop_options) if('stop_options' in container and container.stop_options) else ''}}

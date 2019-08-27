@@ -79,7 +79,7 @@
 
             for xxx in pw-gitlab-admin gitlab-runner-registration-token
             do
-                salt-secret "${xxx}" > /dev/null 2> /dev/null || generate-passwords "${xxx}" --min-length=20
+                salt-secret "${xxx}" > /dev/null 2> /dev/null || generate-passwords -passphrase -min-length=20 "${xxx}" 
             done
             
             export GITLAB_ROOT_PASSWORD=$(salt-secret "pw-gitlab-admin")
@@ -94,14 +94,18 @@
 
             start_time=$(date +%s)
             too_long=$((start_time+300)) #5 minutes means it's likely hung
-            (
+
+            function try_gitlab_reconfigure()
+            {
                 if gitlab-ctl reconfigure >> /var/log/gitlab-reconfigure.log 2>&1
                 then 
                     touch /var/log/gitlab-configured.success
                 fi
                 gitlab-retrieve-runner-token gitlab-runner-registration-token
-            ) &
+            }
+            try_gitlab_reconfigure &
             bg_pid=$!
+            attempts=2
             echo "Waiting for gitlab reconfigure (because systemd hangs)"
             while sleep 5
             do 
@@ -111,11 +115,24 @@
                     break
                 elif [[ "${now}" -gt "${too_long}" ]]
                 then
+                    echo "Gave up waiting for the gitlab reconfigure - systemctl must have hung as usual"
                     if ps -wef | egrep 'systemctl.*start.*runsvdir'
                     then
                         systemctl daemon-reexec
                         kill $bg_pid; 
+                        sleep 5
+                        too_long=$((now+300))
+                        ((attempts--))
+                        if ! (( attempts ))
+                        then 
+                       	    break 
+                        fi
+                        try_gitlab_reconfigure &
+                        bg_pid=$!
+                        echo "Trying gitlab reconfigure again (${attempts} more retries)"
                     fi
+                else
+                    echo "Time is ${now} and waiting till ${too_long} before giving up."
                 fi
             done 
 

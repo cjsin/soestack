@@ -1,8 +1,19 @@
 #!/bin/bash
 
+function run_diff()
+(
+    cd /etc/cups
+
+    test -f printers.conf || return 1
+
+    local count=$(diff printers.conf.ss printers.conf | egrep -v '^---|+++' | egrep '^[-+]' | egrep -v '^.(Type|ConfigTime|State|StateMessage|[#]|UUID) ' | egrep . | wc -l )
+
+    [[ "${count}" -gt 0 ]]
+)
+
 if [[ "${1}" == "check" ]]
 then 
-    if cd /etc/cups && test -f printers.conf && diff printers.conf.ss printers.conf | egrep -v '^---|+++' | egrep '^[-+]' | egrep -v '^.(Type|ConfigTime|State|StateMessage|[#]|UUID) ' | egrep .
+    if ! run_diff
     then 
         echo "File has unexpected differences."
         exit 1
@@ -24,4 +35,5 @@ then
     cp -a /etc/cups/printers.conf.ss /etc/cups/printers.conf
 
     (( stopstart )) && systemctl start cups 
+    exit 0
 fi

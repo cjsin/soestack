@@ -4,9 +4,17 @@
 
 function salt-deploy::usage()
 {
-    msg "Usage: salt-deploy deployment-name"
+    msg "Usage: salt-deploy [ <deployment-name> |  -type <deployment-type> ]"
     msg ""
-    msg "Run a salt state to (re)deploy only the specific named deployment"
+    msg "Run a salt state to (re)deploy only the specific named deployment, "
+    msg "  or all of the specified deployment type"
+    msg ""
+    msg "Options:"
+    msg "  --test=True                            enable test mode"
+    msg "  --state-output=<terse|full|changes>    set the output mode"
+    msg "  -ldebug | -lwarn | -linfo              set the output verbosity"
+    msg "  --name  | --names                      treat args as deployment names (run one)"
+    msg "  --type  | -type                        treat args as deployment types (run all of that type)"
 }
 
 function salt-deploy::process-argv()
@@ -24,7 +32,7 @@ function salt-deploy::process-argv()
             -type|--type)
                 mode="typed"
                 ;;
-            -name|--names)
+            -name|--name|-names|--names)
                 mode="named"
                 ;;
             -ldebug|-lwarn|-linfo)

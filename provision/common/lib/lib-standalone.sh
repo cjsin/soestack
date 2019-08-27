@@ -88,6 +88,13 @@ function configure_standalone_network()
             -r -e "s/^(NAME|DEVICE)=.*/\1=${NETDEV}/" 
         )
 
+        local network_changed=0
+        local prior_file=$(mktemp -t tmp_backup_XXXXXXXXX)
+        if [[ -f "${netcfgfile}" ]]
+        then 
+            cp -f "${netcfgfile}" "${prior_file}"
+        fi 
+
         msg "Network configuration file is ${netcfgfile}"
         if [[ -f "${netcfgfile}" ]] && grep -qi soestack "${netcfgfile}"
         then 
@@ -96,11 +103,17 @@ function configure_standalone_network()
             msg "Configuring network device from template"
             /bin/cp -f "${netcfgtemplate}" "${netcfgfile}"
             sed -i -r "${ip_edits[@]}" "${netcfgfile}"
+            ((network_changed++))
         fi 
 
         sed -i "${devname_edits[@]}" "${netcfgfile}"
- 
-        systemctl restart network
+        if ! cmp "${prior_file}" "${netcfgfile}"
+        then  
+            msg "Network configuration has changed - restart network"
+            systemctl restart network
+        else 
+            msg "Network configuration did not change - skip network restart"
+        fi
     else 
         notice "Network device was not autodetected or IP address and PREFIX not configured"
         notice " - skipping network configuration"
@@ -709,6 +722,18 @@ function configure_standalone_server()
 
 function switchover_to_nexus()
 {
+
+    # Before switching over, try to install various packages,
+    # because nexus is completely, totally and utterly, unreliable.
+    ensure_installed avahi
+    ensure_installed nss-mdns
+    ensure_installed minizip
+    ensure_installed yum-utils
+    ensure_installed createrepo
+    ensure_installed rpm-sign rpm-build dwz perl-srpm-macros redhat-rpm-config
+    ensure_installed diffstat indent patchutils 
+    ensure_installed gtk3 flac-libs at-spi2-core at-spi2-atk libcanberra-gtk3 libXScrnSaver :w
+    
     if start_nexus 
     then 
         msg "Disabling old yum repos and switching over to nexus bootstrap repos"

@@ -3,7 +3,9 @@
 {%- set deployment_type    = args.deployment_type %}
 {%- set deployment         = args.deployment %}
 {%- set config             = args.deployment.config if 'config' in deployment else {} %}
+{%- set version = pillar.versions.cots['gitlab-runner'].version %}
 {%- if not config %} 
+
 
 {{sls}}.{{prefix}}.gitlab-runner-config-missing{{suffix}}:
     noop.notice:
@@ -28,8 +30,8 @@
 {{sls}}.{{prefix}}.gitlab-runner-installed{{suffix}}:
     pkg.installed:
         - fromrepo: gitlab-runner
-        - pkgs: 
-            - gitlab-runner
+        - name:     gitlab-runner
+        - version:  {{version}}
 
 {%-     endif %}
 
@@ -43,6 +45,8 @@
     cmd.run:
         - name:   usermod -d '{{config.working_directory}}' '{{run_as_user}}'
         - unless: 'getent passwd gitlab-runner|cut -d: -f6 | grep -Fx "{{config.working_directory}}"'
+        - onlyif: test -f /etc/gitlab-runner
+
 {%-             endif %}
 
 {%-             if 'executors' in config and config.executors %}
@@ -57,6 +61,7 @@
     cmd.run:
         - name: usermod -a -G docker '{{run_as_user}}'
         - unless: groups '{{run_as_user}}' | egrep -q '.*:.* (docker)( |$)'
+        - onlyif: test -d /etc/gitlab-runner
 {%-                 endif %}
 {%-             endif %}
 {%-         endif %}
@@ -69,6 +74,7 @@
               --user {{run_as_user}}
 
         - unless: test -f /etc/systemd/system/gitlab-runner.service
+        - onlyif: test -d /etc/gitlab-runner
 
 {%-         if 'executors' in config and config.executors %}
 {%-             if registration_token != 'unset' %}
@@ -96,6 +102,7 @@
     cmd.run:
         - name:  '{{register_script}}'
         - unless: grep {{grains.host}}-{{executor_name}} /etc/gitlab-runner/config.toml
+        - onlyif: test -d /etc/gitlab-runner
     
 {%-                 endfor %}
 {%-             else %}
@@ -123,6 +130,7 @@
     service.{{'running' if activated else 'dead'}}:
         - name:   {{service_name}} 
         - enable: {{activated}} 
+        - onlyif: test -d /etc/gitlab-runner
 
 {%-     endif %}
 {%- endif %}

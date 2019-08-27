@@ -9,7 +9,10 @@ package-groups:
             provide the most important web browsers
         package-sets:
             # chromium-browser is broken/unailable due to broken epel zchunk issue
-            # - chromium-browser
+            - chromium-deps-1
+            - chromium-deps-2
+            - chromium-deps-3
+            - chromium-browser
             - firefox-browser
 
     development-tools-group:

@@ -75,21 +75,35 @@ function ipa::salt-lookup-managed-host()
     salt-call pillar.get "${managed_hosts_key}:${short_hostname}" --out key | grep -v 'Local Keys' | sed 's/:[[:space:]]*/=/'
 }
 
+function ipa::salt-lookup-pxe-client()
+{
+    local name="${1}"
+    local short_hostname="${name%%.*}"
+    salt-call pillar.get "deployments:pxebooting:config:clients" --out key | grep -v 'Local Keys' | sed 's/:[[:space:]]*/=/' | egrep "^${short_hostname}\$"
+}
+
 function ipa::salt-lookup()
 {
     local short_hostname="${1}"
     shift
     local lookup_what=( "${@}" )
-    local -a result=()
+    local -a main_result=()
     local -a ret=()
     local what=""
-    result=( $(ipa::salt-lookup-managed-host "${short_hostname}") )
+    main_result=( $(ipa::salt-lookup-managed-host "${short_hostname}") )
+    pxe_result=$(ipa::salt-lookup-pxe-client "${short_hostname}")
+    if [[ -n "${pxe_result}" ]]
+    then
+        main_result+=("pxe=allowed")
+    else
+        main_result+=("pxe=denied")
+    fi
 
     for what in "${lookup_what[@]}"
     do
         local found=""
         local result_item
-        for result_item in "${result[@]}"
+        for result_item in "${main_result[@]}"
         do 
             local key="${result_item%%=*}"
             if [[ "${key}" == "${what}" ]]
@@ -98,6 +112,7 @@ function ipa::salt-lookup()
                 break
             fi
         done
+        
         if [[ -z "${found}" ]]
         then
             msg "No salt '${what}' information found for host '${short_hostname}'"
@@ -138,16 +153,21 @@ function ipa::lookup-host-info()
 {
     local fqdn="${1}"
     local short_hostname="${fqdn%%.*}"
-    local -a salt_result=( $(ipa::salt-lookup "${short_hostname}" "ip" "mac") )
+    local -a salt_result=( $(ipa::salt-lookup "${short_hostname}" "ip" "mac" "pxe") )
     local ip="${salt_result[0]}"
     local mac="${salt_result[1]}"
+    local pxe="${salt_result[2]}"
     if [[ "${ip}" == "-" || "${mac}" == "-" ]]
     then 
         local -a file_result=( $(ipa::lookup-host-info-registered-hostfile "${fqdn}") )
         [[ "${ip}" == "-" ]] && ip="${file_result[0]}"
         [[ "${mac}" == "-" ]] && mac="${file_result[1]}"
     fi
-    echo "${ip}" "${mac}"
+    if [[ "${pxe}" != "allowed" ]]
+    then
+        pxe="denied"
+    fi
+    echo "${ip}" "${mac}" "${pxe}"
 }
 
 function ipa::reregister-check()
@@ -813,6 +833,16 @@ function ipa::host-add::process-argv()
         local -a lookup_results=( $(ipa::lookup-host-info "${fqdn}") )
         [[ -z "${host_ip}" && "${lookup_results[0]}" != "-" ]] && host_ip="${lookup_results[0]}"
         [[ -z "${mac}" && "${lookup_results[1]}" != "-" ]] && mac="${lookup_results[1]}"
+    fi
+
+    pxe_check=$(ipa::salt-lookup "${fqdn}" "pxe")
+
+    if [[ "${pxe_check}" != "allowed" ]]
+    then
+         err "Host ${fqdn} is not registered in Saltstack for PXE building"
+         err "(Check pillar key deployments.pxebooting.config.clients for "
+         err " allowed host names)."
+         return 2
     fi
 
     if (( register )) && [[ -z "${mac}" ]]

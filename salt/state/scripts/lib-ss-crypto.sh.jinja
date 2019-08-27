@@ -337,17 +337,17 @@ function crypto::generate-secrets::process-args()
                 crypto::generate-secrets::usage 
                 return 1
                 ;;
-            -random)
+            -random|--random)
                 style="random"
                 ;;
-            -passphrase)
+            -passphrase|--passphrase)
                 style="passphrase"
                 ;;
-            -allow-empty)
+            -allow-empty|--allow-empty)
                 min_length=0
                 ;;
-            -min-length=*)
-                min_length="${arg#-min-length=}"
+            -min-length=*|--min-length=*)
+                min_length="${arg#*=}"
                 if ! [[ "${min_length}" =~ ^[0-9][0-9]$ ]]
                 then
                     err "Invalid minimum length: '${min_length}'"
@@ -355,8 +355,8 @@ function crypto::generate-secrets::process-args()
                     return 2
                 fi
                 ;;
-            -length=*)
-                length="${arg#-length=}"
+            -length=*|--length=*)
+                length="${arg#*=}"
                 if ! [[ "${length}" =~ ^[0-9][0-9]$ ]]
                 then
                     err "Invalid length: '${length}'"
@@ -365,13 +365,13 @@ function crypto::generate-secrets::process-args()
                 fi
                 [[ -z "${min_length}" ]] && min_length="${length}"
                 ;;
-            -single)
+            -single|--single)
                 multi=0
                 ;;
-            -stdin)
+            -stdin|--stdin)
                 style="stdin"
                 ;;
-            -ask)
+            -ask|--ask)
                 style="ask"
                 ;;
             *)

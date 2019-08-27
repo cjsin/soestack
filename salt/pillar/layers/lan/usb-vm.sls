@@ -25,12 +25,13 @@ demo:
     ips:
         gateway:          192.168.188.1
         infra-gateway-ip: 192.168.188.101
+        workstation4:     192.168.121.244
     macs:
         infra:            '52:54:00:d5:19:d5'
         replica1:         '52:54:00:96:72:f9'
         processor2:       '52:54:00:b9:b8:d2'
         workstation3:     '52:54:00:01:02:03'
-
+        workstation4:     '!!demo.macs.workstation4' 
 deployments:
     pxebooting:
         config:

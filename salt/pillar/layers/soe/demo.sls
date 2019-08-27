@@ -898,6 +898,7 @@ firefox:
         pref("app.update.auto", false);
         pref("app.update.mode", 0);
         pref("app.update.service.enabled", false);
+        pref("app.update.autoInstallEnabled",       false);
 
         // Disable Add-ons compatibility checking
         pref("extensions.lastAppVersion",""); 
@@ -906,13 +907,15 @@ firefox:
         pref("browser.rights.3.shown", true);
 
         // Don't show WhatsNew on first run after every update
-        pref("browser.startup.homepage_override.mstone","ignore");
+        pref("browser.startup.homepage_override.mstone", "ignore");
 
         // Set default homepage - users can change
         // Requires a complex preference
         pref("browser.startup.homepage","data:text/plain,browser.startup.homepage=http://docs/");
         pref("startup.homepage_override_url",       "http://docs/");
         pref("startup.homepage_welcome_url",        "http://docs/");
+        pref("geo.wifi.uri", "");
+        pref("network.negotiate-auth.trusted-uris", "https://");
 
         // Disable the internal PDF viewer
         pref("pdfjs.disabled", true);
@@ -937,7 +940,37 @@ firefox:
         pref("toolkit.crashreporter.enabled", false);
         //Components.classes["@mozilla.org/toolkit/crash-reporter;1"].getService(Components.interfaces.nsICrashReporter).submitReports = false; 
 
+        // Shitty redhat disables this - enable it.
+        pref("media.gmp-gmpopenh264.provider.enabled",true);
+        pref("media.gmp-gmpopenh264.autoupdate",true);
+        pref("media.gmp-gmpopenh264.enabled",true);
+        pref("media.gmp-gmpopenh264.enabled",true);
 
+        pref("general.smoothScroll",                true);
+        pref("intl.locale.matchOS",                 true);
+        pref("toolkit.storage.synchronous",         0);
+        pref("toolkit.networkmanager.disable",      false);
+        pref("offline.autoDetect",                  true);
+        // don't know what this is but it could be useful
+        pref("browser.backspace_action",            2);
+        pref("browser.display.use_system_colors",   true);
+        pref("browser.download.folderList",         1);
+        pref("browser.link.open_external",          3);
+        pref("browser.shell.checkDefaultBrowser",   false);
+        pref("network.manage-offline-status",       true);
+        pref("extensions.shownSelectionUI",         true);
+        pref("ui.SpellCheckerUnderlineStyle",       1);
+        pref("plugins.notifyMissingFlash", false);
+        /* See https://bugzilla.redhat.com/show_bug.cgi?id=1226489 */
+        pref("browser.display.use_system_colors", false);
+        pref("layers.use-image-offscreen-surfaces", false);
+        /* Allow sending credetials to all https:// sites */
+        pref("security.use_sqldb", false);
+        
+        /* Use OS settings for UI language */
+        pref("intl.locale.requested", "");
+        /* See https://bugzilla.redhat.com/show_bug.cgi?id=1672424 */
+        pref("storage.nfs_filesystem", true);
 
 postfix:
     mode: client

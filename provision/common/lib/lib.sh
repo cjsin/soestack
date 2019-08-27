@@ -450,6 +450,7 @@ function configure_wireless()
         echo "BOOTPROTO=\"${proto}\""
         echo "DEVICE=\"${dev}\""
         echo "NAME=\"${dev}\""
+        echo "NM_CONTROLLED=\"no\""
         [[ "${ip}" != "dhcp" ]] && echo_data "IPADDR=\"${ip}\""
         [[ "${prefix}" != "dhcp" ]] && echo_data "PREFIX=\"${prefix}\""
         [[ "${gateway}" != "dhcp" ]] && echo_data "GATEWAY=\"${gateway}\""
@@ -464,6 +465,12 @@ function configure_wireless()
         /usr/lib/systemd/system/wpa_supplicant.service
     systemctl daemon-reload
     systemctl restart wpa_supplicant
+    sleep 2
+    wpa_cli scan
+    sleep 5
+    wpa_cli scan_results
+    sleep 2
+    wpa_cli reassociate
     ifup "${dev}"
 }
 

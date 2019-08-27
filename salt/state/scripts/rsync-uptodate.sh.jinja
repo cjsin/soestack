@@ -101,8 +101,11 @@ function process_args()
                 exclude+=("--exclude=${1}")
                 shift
                 ;;
+            -exclude=*|--exclude=*)
+                exclude+=("--exclude=${arg#*=}")
+                ;;
             *)
-                usage 0 "Invalid script usage. Please see the help text above."
+                usage 0 "Invalid script usage (arg '${arg}'). Please see the help text above."
                 ;;
         esac
     done
@@ -138,7 +141,7 @@ function main()
         rsync 
         -av  
         --info=stats0,flist0
-        "${exclude[@}}"
+        "${exclude[@]}"
     )
 
     if [[ "${dry}" != "real" ]]
@@ -157,6 +160,7 @@ function main()
     else
         mkdir -p "${b}"
         echo "Updating:"
+        echo "${cmd[@]}" "${a}"/ "${b}"/ 1>&2
         if "${cmd[@]}" "${a}/" "${b}/"
         then 
             echo "Success."

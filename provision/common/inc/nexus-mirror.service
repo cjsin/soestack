@@ -6,7 +6,9 @@ After=syslog.target network.target NetworkManager-wait-online.service docker.ser
 Type=simple
 ExecStartPre=/bin/mkdir -p /d/local/data/%N
 ExecStartPre=/bin/chown 200.200 /d/local/data/%N
+ExecStartPre=-/bin/docker rm %N
 ExecStart=/bin/docker run --rm --name %N -p 0.0.0.0:7081-7085:8081-8085 -v /d/local/data/%N:/nexus-data sonatype/nexus3:VERSION
+ExecStop=/bin/docker stop --time=120 %N
 User=root
 
 [Install]
