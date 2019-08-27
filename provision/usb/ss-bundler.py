@@ -12,6 +12,15 @@ from pprint import pprint, pformat
 from attrdict import AttrDict, AttrMap
 import itertools
 from collections import Iterable
+#from collections.iterable import Iterable
+
+bullshit_message="DeprecationWarning: Using or importing the ABCs from 'collections' instead of from 'collections.abc' is deprecated, and in 3.8 it will stop working"
+
+print("Python developers are _______. Seriously", file=sys.stderr)
+print("Why:? Because they dump the message {}".format(bullshit_message), file=sys.stderr)
+print("And yet, none of the following work. import collections.iterable, nor from collections.iterable import whatever", file=sys.stderr)
+print("So what do they expect? We just have to put up with their rubbish, unclear, warnings (threats).", file=sys.stderr)
+
 
 thismodule = sys.modules[__name__]
 
@@ -184,14 +193,14 @@ def read_lines(file):
 def read_file(bundle_file,ignoring=[]):
     if not os.path.exists(bundle_file):
         msg(f"Bundle file not found: {bundle_file}")
-        return False
+        return False, []
 
     lines = read_lines(bundle_file)
     lines = [ x for x in lines if x ]  # make a copy, discarding empties
 
     if not lines:
         msg(f"Could not read file {bundle_file}, or the file is empty")
-        return False 
+        return False, []
 
     accept = []
     num=0
@@ -220,16 +229,16 @@ def read_file(bundle_file,ignoring=[]):
 
     if not lines:
         msg(f"No valid directives seen in {bundle_file}, or the file is empty.")
-        return False 
+        return False, []
 
     if G.MODE != C.HELP:
         dv = Directives.VERSION
         if lines[0][0] != Directives.VERSION:
             msg(f'ERROR: No version header: Expected {dv.name}, saw {lines[0][0]}')
-            return False
+            return False, []
         elif len(lines[0]) < 2 or lines[0][1] != str(G.SUPPORTED_VERSION):
             msg(f"ERROR: Unsupported bundle file version {lines[0][1]} != {G.SUPPORTED_VERSION}")
-            return False
+            return False, []
         default_found=None
         def_lines = [x for x in lines if x[0] == Directives.DEFAULT and len(x) > 1]
         if def_lines:
@@ -257,21 +266,24 @@ def read_file(bundle_file,ignoring=[]):
         elif not G.MODES:
             G.MODES=[G.DEFAULT]
             msg(f"ERROR: Only '{G.DEFAULT}' mode supported with this file")
-            return False
+            return False, []
         elif G.MODE == C.DEFAULT:
             msg(f"!!Applying default mode {G.DEFAULT}")
             G.MODE=G.DEFAULT
         else:
             die(f"ERROR: Invalid mode '{G.MODE}' for this file: try one of {G.MODES}")
 
-    return lines
+    return True,lines
 
 def process_bundle(bundle_file):
     expected_successful = 0
     successful = 0
     skipped = 0
     
-    lines = read_file(bundle_file,ignoring=[])
+    success, lines = read_file(bundle_file,ignoring=[])
+    if not success:
+        msg(f"Failed reading file {bundle_file}")
+        return False
     num_lines = len(lines)
     msg(f"!!Processing {num_lines} accepted lines")
 
@@ -355,8 +367,11 @@ def preprocess_line(line):
                 ignoring = [ x.upper() for x in remainder ]
             else:
                 die(f"Extra tokens seen with load directive - This is a fatal error - just to be safe.")
-        new_lines = read_file(filename, ignoring)
-        return new_lines
+        success, new_lines = read_file(filename, ignoring)
+        if success:
+            return new_lines
+        else:
+            die(f"Failed including file {filename}")
     else:
         return [line]
 

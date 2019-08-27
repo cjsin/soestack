@@ -1155,7 +1155,7 @@ class ImageAccess(VerboseBase):
                 elif imgformat != 'raw':
                     die("Only raw imgformat supported for real devices")
                 if not os.access(self.usbfile, os.W_OK):
-                    self.msg("You do not have write access to device {self.usbfile}")
+                    self.msg(f"You do not have write access to device {self.usbfile}")
                     self.msg("You need to either run as root, or get access to this device.")
                     self.msg("Example commands:")
                     self.msg("   (as root): ")
